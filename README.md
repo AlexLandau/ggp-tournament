@@ -1,0 +1,1 @@
+Initial work on a tournament format specification
