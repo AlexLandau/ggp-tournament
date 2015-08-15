@@ -1,0 +1,33 @@
+name: Sample single-elimination tournament
+format: singleElimination
+rounds:
+  -
+    matches:
+      -
+        game: base/breakthrough
+        startClock: 60
+        playClock: 15
+      -
+        game: base/breakthrough
+        startClock: 60
+        playClock: 15
+      -
+        game: base/breakthrough
+        startClock: 60
+        playClock: 15
+  -
+    matches:
+      -
+        game: base/cephalopodMicro
+        startClock: 60
+        playClock: 15
+      -
+        game: base/cephalopodMicro
+        startClock: 60
+        playClock: 15
+      -
+        game: base/cephalopodMicro
+        startClock: 60
+        playClock: 15
+      
+    
