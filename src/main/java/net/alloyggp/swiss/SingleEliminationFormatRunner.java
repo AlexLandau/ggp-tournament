@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -13,7 +14,9 @@ import net.alloyggp.swiss.api.MatchResult.Outcome;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.MatchSpec;
 import net.alloyggp.swiss.api.Player;
+import net.alloyggp.swiss.api.PlayerScore;
 import net.alloyggp.swiss.api.RoundSpec;
+import net.alloyggp.swiss.api.Score;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.TournamentStandings;
 
@@ -254,6 +257,31 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 	public TournamentStandings getStandingsSoFar(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
 			List<MatchResult> resultsSoFar) {
 		// TODO Implement
+		//For each player, add a PlayerScore...
+		ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
+		Set<Player> eliminatedPlayers = getEliminatedPlayers(rounds, resultsSoFar);
+
+		ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
+		for (int i = 0; i < playersBestFirst.size(); i++) {
+			Player player = playersBestFirst.get(i);
+			Score score = new EliminationScore(!eliminatedPlayers.contains(player)); //In this case, just 1 if still alive, 0 otherwise
+			playerScores.add(PlayerScore.create(player, score, i));
+		}
 	}
 
+	private static class EliminationScore implements Score {
+		private final boolean stillAlive;
+
+		private EliminationScore(boolean stillAlive) {
+			this.stillAlive = stillAlive;
+		}
+
+		@Override
+		public int compareTo(Score o) {
+			if (!(o instanceof EliminationScore)) {
+				throw new RuntimeException("Incomparable scores being compared");
+			}
+			return Boolean.compare(stillAlive, ((EliminationScore)o).stillAlive);
+		}
+	}
 }

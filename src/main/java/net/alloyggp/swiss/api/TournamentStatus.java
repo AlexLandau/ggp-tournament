@@ -1,6 +1,7 @@
 package net.alloyggp.swiss.api;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -9,24 +10,29 @@ import com.google.common.collect.ImmutableList;
 @Immutable
 public class TournamentStatus {
 	private final TournamentSpec spec;
-	private final TournamentStandings initialSeeding;
+	private final Seeding initialSeeding;
 	private final ImmutableList<MatchResult> resultsSoFar;
 
-	private TournamentStatus(TournamentSpec spec, ImmutableList<MatchResult> resultsSoFar) {
+	private TournamentStatus(TournamentSpec spec, Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar) {
 		this.spec = spec;
+		this.initialSeeding = initialSeeding;
 		this.resultsSoFar = resultsSoFar;
 	}
 
-	public static TournamentStatus getInitialStatus(TournamentSpec spec) {
-		return new TournamentStatus(spec, ImmutableList.of());
+	public static TournamentStatus getInitialStatus(TournamentSpec spec, Seeding initialSeeding) {
+		return new TournamentStatus(spec, initialSeeding, ImmutableList.of());
 	}
 
-	public TournamentStatus withResult(MatchResult result) {
-		ImmutableList<MatchResult> newMatchResults = ImmutableList.<MatchResult>builder()
+	public TournamentStatus withNewResult(MatchResult newResult) {
+		return withNewResults(ImmutableList.of(newResult));
+	}
+
+	public TournamentStatus withNewResults(List<MatchResult> newResults) {
+		ImmutableList<MatchResult> allMatchResults = ImmutableList.<MatchResult>builder()
 				.addAll(resultsSoFar)
-				.add(result)
+				.addAll(newResults)
 				.build();
-		return new TournamentStatus(spec, newMatchResults);
+		return new TournamentStatus(spec, initialSeeding, allMatchResults);
 	}
 
 	public TournamentSpec getSpec() {
@@ -38,17 +44,10 @@ public class TournamentStatus {
 	}
 
 	public boolean isComplete() {
-		// TODO Implement
+		return getNextMatchesToRun().isEmpty();
 	}
 
-	public TournamentStatus withNewResults(List<MatchResult> results) {
-		// TODO Implement
-	}
-
-	public List<MatchSetup> getNextMatchesToRun() {
-		for (StageSpec stage : spec.getStages()) {
-			//Get matches for this stage
-
-		}
+	public Set<MatchSetup> getNextMatchesToRun() {
+		return spec.getMatchesToRun(initialSeeding, resultsSoFar);
 	}
 }

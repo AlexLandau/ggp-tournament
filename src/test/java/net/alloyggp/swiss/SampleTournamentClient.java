@@ -3,6 +3,7 @@ package net.alloyggp.swiss;
 import java.io.File;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -26,7 +27,7 @@ public class SampleTournamentClient {
 		TournamentStatus status = TournamentStatus.getInitialStatus(spec);
 		//Run matches until exhaustion...
 		while (!status.isComplete()) {
-			List<MatchSetup> nextMatches = status.getNextMatchesToRun();
+			Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
 			List<MatchResult> results = getRandomOutcomes(nextMatches);
 			status = status.withNewResults(results);
 		}
@@ -34,7 +35,7 @@ public class SampleTournamentClient {
 		System.out.println("Standings are: " + standings);
 	}
 
-	private List<MatchResult> getRandomOutcomes(List<MatchSetup> nextMatches) {
+	private List<MatchResult> getRandomOutcomes(Set<MatchSetup> nextMatches) {
 		return nextMatches.stream()
 		.map(setup -> MatchResult.getSuccessfulMatchResult(setup, getRandomGoals(), ImmutableList.of()))
 		.collect(Collectors.toList());

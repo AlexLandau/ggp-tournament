@@ -1,4 +1,4 @@
-Initial work on a tournament format specification
+Work-in-progress library for tournament format specification and deterministic scheduling
 
 Current priorities include deterministic behavior and concurrency-correctness.
 
