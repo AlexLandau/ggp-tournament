@@ -1,6 +1,7 @@
 package net.alloyggp.swiss;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -12,6 +13,8 @@ import com.google.common.collect.ImmutableList;
 
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
+import net.alloyggp.swiss.api.Player;
+import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.TournamentSpec;
 import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.api.TournamentStatus;
@@ -24,7 +27,8 @@ public class SampleTournamentClient {
 	@Test
 	public void testSingleElimination() {
 		TournamentSpec spec = TournamentSpec.parse(new File("singleElim.yaml"));
-		TournamentStatus status = TournamentStatus.getInitialStatus(spec);
+		Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5");
+		TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
 		//Run matches until exhaustion...
 		while (!status.isComplete()) {
 			Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
@@ -33,6 +37,13 @@ public class SampleTournamentClient {
 		}
 		TournamentStandings standings = status.getStandings();
 		System.out.println("Standings are: " + standings);
+	}
+
+	private Seeding toSeeding(String... playerNames) {
+		List<Player> playersBestFirst = Arrays.stream(playerNames)
+				.map(Player::create)
+				.collect(Collectors.toList());
+		return Seeding.create(playersBestFirst);
 	}
 
 	private List<MatchResult> getRandomOutcomes(Set<MatchSetup> nextMatches) {

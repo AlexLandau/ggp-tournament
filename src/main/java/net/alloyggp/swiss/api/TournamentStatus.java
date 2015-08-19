@@ -50,4 +50,8 @@ public class TournamentStatus {
 	public Set<MatchSetup> getNextMatchesToRun() {
 		return spec.getMatchesToRun(initialSeeding, resultsSoFar);
 	}
+
+	public TournamentStandings getStandings() {
+		return spec.getCurrentStandings(initialSeeding, resultsSoFar);
+	}
 }
