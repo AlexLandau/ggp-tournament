@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 @Immutable
 public class TournamentSpec {
@@ -32,16 +33,36 @@ public class TournamentSpec {
 	@SuppressWarnings("unchecked")
 	public static TournamentSpec parseYamlRootObject(Object yamlRoot) {
 		Map<String, Object> rootMap = (Map<String, Object>) yamlRoot;
+		Map<String, Game> games = parseGames(rootMap.get("games"));
 		String tournamentInternalName = (String) rootMap.get("nameInternal");
 		String tournamentDisplayName = (String) rootMap.get("nameDisplay");
 		List<StageSpec> stages = Lists.newArrayList();
 		int stageNum = 0;
 		for (Object yamlStage : (List<Object>) rootMap.get("stages")) {
-			stages.add(StageSpec.parseYaml(yamlStage, stageNum));
+			stages.add(StageSpec.parseYaml(yamlStage, stageNum, games));
 			stageNum++;
 		}
 		return new TournamentSpec(tournamentInternalName, tournamentDisplayName,
 				ImmutableList.copyOf(stages));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Game> parseGames(Object gamesYaml) {
+		Preconditions.checkNotNull(gamesYaml, "The YAML file must have a 'games' section.");
+		Map<String, Game> results = Maps.newHashMap();
+		for (Object gameYaml : (List<Object>) gamesYaml) {
+			Map<String, Object> gameMap = (Map<String, Object>) gameYaml;
+			String name = (String) gameMap.get("name");
+			String repository = (String) gameMap.get("repository");
+			int numRoles = (int) gameMap.get("numRoles");
+			boolean zeroSum = (boolean) gameMap.get("zeroSum");
+			Game game = Game.create(repository, name, numRoles, zeroSum);
+			if (results.containsKey(name)) {
+				throw new IllegalArgumentException("Can't have two games with the same name defined");
+			}
+			results.put(name, game);
+		}
+		return results;
 	}
 
 	public String getTournamentInternalName() {

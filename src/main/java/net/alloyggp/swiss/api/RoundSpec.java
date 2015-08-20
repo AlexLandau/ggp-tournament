@@ -18,11 +18,11 @@ public class RoundSpec {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static RoundSpec parseYaml(Object yamlRound) {
+	public static RoundSpec parseYaml(Object yamlRound, Map<String, Game> games) {
 		Map<String, Object> roundMap = (Map<String, Object>) yamlRound;
 		List<MatchSpec> matches = Lists.newArrayList();
 		for (Object yamlMatch : (List<Object>) roundMap.get("matches")) {
-			matches.add(MatchSpec.parseYaml(yamlMatch));
+			matches.add(MatchSpec.parseYaml(yamlMatch, games));
 		}
 		return new RoundSpec(ImmutableList.copyOf(matches));
 	}

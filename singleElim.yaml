@@ -1,36 +1,44 @@
+games:
+  - name: breakthrough
+    repository: games.ggp.org/base
+    numRoles: 2
+    zeroSum: true
+  - name: cephalopodMicro
+    repository: games.ggp.org/base
+    numRoles: 2
+    zeroSum: true
+
 nameDisplay: Sample single-elimination tournament
 nameInternal: singleElim
+
 stages:
-  -
-    format: singleElimination
+  - format: singleElimination
     rounds:
-      -
-        matches:
-          -
-            game: base/breakthrough
+      - matches:
+          - game: breakthrough
             startClock: 60
             playClock: 15
-          -
-            game: base/breakthrough
+            seedRoles: [0, 1]
+          - game: breakthrough
             startClock: 60
             playClock: 15
-          -
-            game: base/breakthrough
+            seedRoles: [1, 0]
+          - game: breakthrough
             startClock: 60
             playClock: 15
-      -
-        matches:
-          -
-            game: base/cephalopodMicro
+            seedRoles: [0, 1]
+      - matches:
+          - game: cephalopodMicro
             startClock: 60
             playClock: 15
-          -
-            game: base/cephalopodMicro
+            seedRoles: [1, 0]
+          - game: cephalopodMicro
             startClock: 60
             playClock: 15
-          -
-            game: base/cephalopodMicro
+            seedRoles: [0, 1]
+          - game: cephalopodMicro
             startClock: 60
             playClock: 15
+            seedRoles: [1, 0]
       
     

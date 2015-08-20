@@ -3,14 +3,18 @@ package net.alloyggp.swiss.api;
 public class Game {
 	private final String source;
 	private final String id;
+	private final int numRoles;
+	private final boolean zeroSum;
 
-	private Game(String source, String id) {
+	private Game(String source, String id, int numRoles, boolean zeroSum) {
 		this.source = source;
 		this.id = id;
+		this.numRoles = numRoles;
+		this.zeroSum = zeroSum;
 	}
 
-	public static Game create(String source, String id) {
-		return new Game(source, id);
+	public static Game create(String source, String id, int numRoles, boolean zeroSum) {
+		return new Game(source, id, numRoles, zeroSum);
 	}
 
 	public String getSource() {
@@ -19,6 +23,14 @@ public class Game {
 
 	public String getId() {
 		return id;
+	}
+
+	public int getNumRoles() {
+		return numRoles;
+	}
+
+	public boolean isZeroSum() {
+		return zeroSum;
 	}
 
 	@Override
@@ -54,6 +66,6 @@ public class Game {
 
 	@Override
 	public String toString() {
-		return "Game [source=" + source + ", id=" + id + "]";
+		return "Game [source=" + source + ", id=" + id + ", numRoles=" + numRoles + ", zeroSum=" + zeroSum + "]";
 	}
 }

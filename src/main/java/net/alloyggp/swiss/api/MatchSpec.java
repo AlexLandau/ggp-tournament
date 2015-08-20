@@ -1,5 +1,6 @@
 package net.alloyggp.swiss.api;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.concurrent.Immutable;
@@ -21,15 +22,19 @@ public class MatchSpec {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static MatchSpec parseYaml(Object yamlMatch) {
+	public static MatchSpec parseYaml(Object yamlMatch, Map<String, Game> games) {
 		Map<String, Object> matchMap = (Map<String, Object>) yamlMatch;
-		matchMap.get("game");
+		String gameName = (String) matchMap.get("game");
 		//TODO: Actually deal with games correctly
-		Game game = Game.create("foo", "bar");
+		Game game = games.get(gameName);
+		if (game == null) {
+			throw new IllegalArgumentException("Could not find game specification with name " + gameName + " in the YAML file.");
+		}
 		int startClock = (int) matchMap.get("startClock");
 		int playClock = (int) matchMap.get("playClock");
 		//TODO: Actual player seed order from YAML
-		ImmutableList<Integer> playerSeedOrder = ImmutableList.of(0, 1);
+		ImmutableList<Integer> playerSeedOrder = ImmutableList.copyOf(
+				(List<Integer>) matchMap.get("seedRoles"));
 		return new MatchSpec(game, startClock, playClock, playerSeedOrder);
 	}
 

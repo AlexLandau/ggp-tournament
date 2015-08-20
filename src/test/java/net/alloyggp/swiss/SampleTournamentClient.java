@@ -34,7 +34,7 @@ public class SampleTournamentClient {
 		while (!status.isComplete()) {
 			Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
 			List<MatchResult> results = getRandomOutcomes(nextMatches);
-			System.out.println("Random results: " + results);
+			System.out.println("Match results: " + results);
 			status = status.withNewResults(results);
 		}
 		TournamentStandings standings = status.getStandings();

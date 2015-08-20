@@ -29,12 +29,12 @@ public class StageSpec {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static StageSpec parseYaml(Object yamlStage, int stageNum) {
+	public static StageSpec parseYaml(Object yamlStage, int stageNum, Map<String, Game> games) {
 		Map<String, Object> stageMap = (Map<String, Object>) yamlStage;
 		String formatName = (String) stageMap.get("format");
 		List<RoundSpec> rounds = Lists.newArrayList();
 		for (Object yamlRound : (List<Object>) stageMap.get("rounds")) {
-			rounds.add(RoundSpec.parseYaml(yamlRound));
+			rounds.add(RoundSpec.parseYaml(yamlRound, games));
 		}
 		int playerCutoff = Integer.MAX_VALUE;
 		if (stageMap.containsKey("playerCutoff")) {
