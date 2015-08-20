@@ -19,4 +19,13 @@ public enum StageFormat {
 	private static interface FormatRunnerSupplier {
 		FormatRunner getRunner(String tournamentInternalName, int stageNum);
 	}
+
+	//TODO: specify in enum, yada yada
+	public static StageFormat parse(String formatName) {
+		switch (formatName) {
+		case "singleElimination":
+			return StageFormat.SINGLE_ELIMINATION;
+		}
+		throw new RuntimeException();
+	}
 }

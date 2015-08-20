@@ -1,5 +1,7 @@
 package net.alloyggp.swiss.api;
 
+import java.util.Map;
+
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.collect.ImmutableList;
@@ -16,6 +18,18 @@ public class MatchSpec {
 		this.startClock = startClock;
 		this.playClock = playClock;
 		this.playerSeedOrder = playerSeedOrder;
+	}
+
+	public static MatchSpec parseYaml(Object yamlMatch) {
+		Map<String, Object> matchMap = (Map<String, Object>) yamlMatch;
+		matchMap.get("game");
+		//TODO: Actually deal with games correctly
+		Game game = Game.create("foo", "bar");
+		int startClock = (int) matchMap.get("startClock");
+		int playClock = (int) matchMap.get("playClock");
+		//TODO: Actual player seed order from YAML
+		ImmutableList<Integer> playerSeedOrder = ImmutableList.of(0, 1);
+		return new MatchSpec(game, startClock, playClock, playerSeedOrder);
 	}
 
 	public Game getGame() {
@@ -38,4 +52,5 @@ public class MatchSpec {
 		}
 		return players.build();
 	}
+
 }

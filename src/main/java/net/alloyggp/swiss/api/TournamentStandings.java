@@ -21,4 +21,15 @@ public class TournamentStandings {
 	public ImmutableSortedSet<PlayerScore> getScores() {
 		return scores;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		int i = 1;
+		for (PlayerScore score : scores) {
+			sb.append(i).append(") ").append(score.getPlayer().getId()).append(" (").append(score.getScore()).append(")").append("\n");
+			i++;
+		}
+		return sb.toString();
+	}
 }

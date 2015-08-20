@@ -87,13 +87,13 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 			//If we're not a power of two, handle that
 			int numPlayers = playersByPosition.size();
 			int numRoundsLeft = getNumRounds(numPlayers);
-			if (numPlayers > (1 << numRoundsLeft)) {
+			if (numPlayers < getPlayersForNFullRounds(numRoundsLeft)) {
 				RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
 				int numNormalRounds = numRoundsLeft - 1;
-				int numPlayinMatches = numPlayers - (1 << numNormalRounds);
+				int numPlayinMatches = numPlayers - getPlayersForNFullRounds(numNormalRounds);
 				for (int i = 0; i < numPlayinMatches; i++) {
-					int position1 = (1 << numNormalRounds) - i - 1;
-					int position2 = (1 << numNormalRounds) + i;
+					int position1 = getPlayersForNFullRounds(numNormalRounds) - i - 1;
+					int position2 = getPlayersForNFullRounds(numNormalRounds) + i;
 					Player player1 = playersByPosition.get(position1);
 					Player player2 = playersByPosition.get(position2);
 					if (wonInRound(player1, numRoundsLeft, round)) {
@@ -105,7 +105,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 					} else {
 						//TODO: Do we want to define roles according to seeding rather than bracket position?
 						//If so, pass in seeding here
-						matchesToReturn.add(getNextMatchForPairing(player1, player2, numRoundsLeft, round));
+						matchesToReturn.add(getNextMatchForPairing(player1, player2, i, numRoundsLeft, round));
 					}
 				}
 				numRoundsLeft--;
@@ -116,7 +116,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 			//Now we handle the normal rounds
 			while (numRoundsLeft > 0) {
 				RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
-				int numPlayersLeft = (1 << numRoundsLeft);
+				int numPlayersLeft = getPlayersForNFullRounds(numRoundsLeft);
 				for (int i = 0; i < numPlayersLeft/2; i++) {
 					int position1 = i;
 					int position2 = numPlayersLeft - i - 1;
@@ -131,7 +131,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 					} else {
 						//TODO: Do we want to define roles according to seeding rather than bracket position?
 						//If so, pass in seeding here
-						matchesToReturn.add(getNextMatchForPairing(player1, player2, numRoundsLeft, round));
+						matchesToReturn.add(getNextMatchForPairing(player1, player2, i, numRoundsLeft, round));
 					}
 				}
 				numRoundsLeft--;
@@ -140,6 +140,12 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 				}
 			}
 			//We're at the end of the tournament
+		}
+
+		//1 -> 2 for finals
+		//2 -> 4 for semis
+		public int getPlayersForNFullRounds(int numRoundsLeft) {
+			return 1 << numRoundsLeft;
 		}
 		private RoundSpec getRoundForNumRoundsLeft(int numRoundsLeft) {
 			//Count from the end, not the beginning (so the last round is always the finals)
@@ -151,11 +157,12 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 			return rounds.get(index);
 		}
 
-		private MatchSetup getNextMatchForPairing(Player player1, Player player2, int numRoundsLeft, RoundSpec round) {
+		private MatchSetup getNextMatchForPairing(Player player1, Player player2, int pairingNum, int numRoundsLeft, RoundSpec round) {
 			List<MatchResult> completedSoFar = Lists.newArrayList();
 			List<MatchResult> abortedSoFar = Lists.newArrayList();
 			//First, gather all the non-abandoned results so far
 			for (MatchResult result : resultsSoFar) {
+				//TODO: Replace with MatchIds logic?
 				String matchId = result.getSetup().getMatchId();
 				int roundNumber = MatchIds.parseRoundNumber(matchId);
 				if (roundNumber != numRoundsLeft) {
@@ -195,7 +202,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
 			Preconditions.checkNotNull(specToUse);
 			//If we make it here, repeat the last match type
-			String matchId = MatchIds.create(tournamentInternalName, stageNum, numRoundsLeft, matchNum, priorMatchAttempts);
+			String matchId = MatchIds.create(tournamentInternalName, stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts);
 			//TODO: Correctly define roles?
 			//TODO: Accurate seeding
 			//TODO: Alternate roles each time if we do have to repeat the last match type
@@ -219,6 +226,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 			int pointsScored = 0;
 			int pointsAboveOpponent = 0;
 			for (MatchResult result : resultsSoFar) {
+				//TODO: Replace with MatchIds logic?
 				String matchId = result.getSetup().getMatchId();
 				int roundNumber = MatchIds.parseRoundNumber(matchId);
 				if (roundNumber != numRoundsLeft) {
@@ -268,7 +276,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 				num = num >> 1;
 				numRounds++;
 			}
-			if (numPlayers > (1 << numRounds)) {
+			if (numPlayers > getPlayersForNFullRounds(numRounds)) {
 				numRounds++;
 			}
 			return numRounds;
@@ -287,11 +295,6 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 			List<MatchResult> resultsSoFar) {
 		return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getMatchesToRun();
 	}
-
-
-//	private Set<Player> getEliminatedPlayers(ImmutableList<RoundSpec> rounds, List<MatchResult> resultsSoFar) {
-//		// TODO Implement
-//	}
 
 	private SingleEliminationFormatSimulator createAndRunSimulator(Seeding initialSeeding, ImmutableList<RoundSpec> rounds, List<MatchResult> resultsSoFar) {
 		return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding, rounds, resultsSoFar);
@@ -331,6 +334,15 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 			}
 			//Higher scores should be better; but lower is better here, so flip
 			return Integer.compare(((EliminationScore)o).roundEliminated, roundEliminated);
+		}
+
+		@Override
+		public String toString() {
+			if (roundEliminated == 0) {
+				return "in contention";
+			}
+			//TODO: This is confusing, change this (play-in round is round 1, etc.)
+			return "eliminated in round "+roundEliminated;
 		}
 	}
 }

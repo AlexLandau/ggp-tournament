@@ -1,5 +1,7 @@
 package net.alloyggp.swiss.api;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
@@ -7,6 +9,7 @@ import javax.annotation.concurrent.Immutable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 @Immutable
 public class TournamentSpec {
@@ -24,6 +27,20 @@ public class TournamentSpec {
 		this.tournamentInternalName = tournamentInternalName;
 		this.tournamentDisplayName = tournamentDisplayName;
 		this.stages = stages;
+	}
+
+	public static TournamentSpec parseYamlRootObject(Object yamlRoot) {
+		Map<String, Object> rootMap = (Map<String, Object>) yamlRoot;
+		String tournamentInternalName = (String) rootMap.get("nameInternal");
+		String tournamentDisplayName = (String) rootMap.get("nameDisplay");
+		List<StageSpec> stages = Lists.newArrayList();
+		int stageNum = 0;
+		for (Object yamlStage : (List<Object>) rootMap.get("stages")) {
+			stages.add(StageSpec.parseYaml(yamlStage, stageNum));
+			stageNum++;
+		}
+		return new TournamentSpec(tournamentInternalName, tournamentDisplayName,
+				ImmutableList.copyOf(stages));
 	}
 
 	public ImmutableList<StageSpec> getStages() {
