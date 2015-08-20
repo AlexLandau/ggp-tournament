@@ -29,6 +29,7 @@ public class TournamentSpec {
 		this.stages = stages;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static TournamentSpec parseYamlRootObject(Object yamlRoot) {
 		Map<String, Object> rootMap = (Map<String, Object>) yamlRoot;
 		String tournamentInternalName = (String) rootMap.get("nameInternal");
@@ -41,6 +42,14 @@ public class TournamentSpec {
 		}
 		return new TournamentSpec(tournamentInternalName, tournamentDisplayName,
 				ImmutableList.copyOf(stages));
+	}
+
+	public String getTournamentInternalName() {
+		return tournamentInternalName;
+	}
+
+	public String getTournamentDisplayName() {
+		return tournamentDisplayName;
 	}
 
 	public ImmutableList<StageSpec> getStages() {

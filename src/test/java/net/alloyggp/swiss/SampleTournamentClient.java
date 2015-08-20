@@ -28,7 +28,7 @@ public class SampleTournamentClient {
 	@Test
 	public void testSingleElimination() {
 		TournamentSpec spec = TournamentSpecParser.parse(new File("singleElim.yaml"));
-		Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5");
+		Seeding initialSeeding = toSeeding("1", "2", "3", "4");
 		TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
 		//Run matches until exhaustion...
 		while (!status.isComplete()) {

@@ -28,6 +28,7 @@ public class StageSpec {
 		this.playerCutoff = playerCutoff;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static StageSpec parseYaml(Object yamlStage, int stageNum) {
 		Map<String, Object> stageMap = (Map<String, Object>) yamlStage;
 		String formatName = (String) stageMap.get("format");

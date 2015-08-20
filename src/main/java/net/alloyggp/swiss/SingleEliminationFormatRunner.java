@@ -223,7 +223,6 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
 		private boolean wonInRound(Player player, int numRoundsLeft, RoundSpec round) {
 			int gamesPlayed = 0;
-			int pointsScored = 0;
 			int pointsAboveOpponent = 0;
 			for (MatchResult result : resultsSoFar) {
 				//TODO: Replace with MatchIds logic?
@@ -244,13 +243,12 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 				Preconditions.checkState(playerIndex == 0 || playerIndex == 1);
 				int oppIndex = 1 - playerIndex;
 				int oppPoints = result.getGoals().get(oppIndex);
-				pointsScored += playerPoints;
 				pointsAboveOpponent += (playerPoints - oppPoints);
 			}
-			return wonInRound(round, gamesPlayed, pointsScored, pointsAboveOpponent);
+			return wonInRound(round, gamesPlayed, pointsAboveOpponent);
 		}
 
-		private boolean wonInRound(RoundSpec round, int gamesPlayed, int pointsScored, int pointsAboveOpponent) {
+		private boolean wonInRound(RoundSpec round, int gamesPlayed, int pointsAboveOpponent) {
 			//We assume that any game can return 100/0...
 			//We end the round once one player has enough points to guarantee they're ahead at or after the
 			//end of the last scheduled match

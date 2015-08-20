@@ -17,6 +17,7 @@ public class RoundSpec {
 		this.matches = matches;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static RoundSpec parseYaml(Object yamlRound) {
 		Map<String, Object> roundMap = (Map<String, Object>) yamlRound;
 		List<MatchSpec> matches = Lists.newArrayList();

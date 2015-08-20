@@ -11,7 +11,6 @@ import org.yaml.snakeyaml.Yaml;
 public class TournamentSpecParser {
 
 	public static TournamentSpec parse(File file) {
-		Object yamlRoot;
 		try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
 			return TournamentSpec.parseYamlRootObject(new Yaml().load(in));
 		} catch (IOException e) {

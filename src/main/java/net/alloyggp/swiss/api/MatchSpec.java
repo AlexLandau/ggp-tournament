@@ -20,6 +20,7 @@ public class MatchSpec {
 		this.playerSeedOrder = playerSeedOrder;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static MatchSpec parseYaml(Object yamlMatch) {
 		Map<String, Object> matchMap = (Map<String, Object>) yamlMatch;
 		matchMap.get("game");

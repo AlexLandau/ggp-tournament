@@ -33,7 +33,8 @@ public class PlayerScore implements Comparable<PlayerScore> {
 	public int compareTo(PlayerScore o) {
 		return Comparator
 				.comparing(PlayerScore::getScore)
-				.thenComparing(PlayerScore::getSeedFromRoundStart).reversed() //preserve low seed -> better
+				.reversed() //lower PlayerScore is better; higher Score is better
+				.thenComparing(PlayerScore::getSeedFromRoundStart)
 				.compare(this, o);
 	}
 
