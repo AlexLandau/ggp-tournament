@@ -25,14 +25,12 @@ public class MatchSpec {
 	public static MatchSpec parseYaml(Object yamlMatch, Map<String, Game> games) {
 		Map<String, Object> matchMap = (Map<String, Object>) yamlMatch;
 		String gameName = (String) matchMap.get("game");
-		//TODO: Actually deal with games correctly
 		Game game = games.get(gameName);
 		if (game == null) {
 			throw new IllegalArgumentException("Could not find game specification with name " + gameName + " in the YAML file.");
 		}
 		int startClock = (int) matchMap.get("startClock");
 		int playClock = (int) matchMap.get("playClock");
-		//TODO: Actual player seed order from YAML
 		ImmutableList<Integer> playerSeedOrder = ImmutableList.copyOf(
 				(List<Integer>) matchMap.get("seedRoles"));
 		return new MatchSpec(game, startClock, playClock, playerSeedOrder);

@@ -16,12 +16,7 @@ import com.google.common.collect.Maps;
 public class TournamentSpec {
 	private final String tournamentInternalName;
 	private final String tournamentDisplayName;
-	//This could involve multiple formats...
-	//How should this interact with TournamentRunner?
-	//Typically you'd start with an initial seeding...
 	private final ImmutableList<StageSpec> stages;
-	//TODO: Also define transitions between stages
-	//e.g. turning standings into new seeds, or cutting the number of players
 
 	private TournamentSpec(String tournamentInternalName, String tournamentDisplayName,
 			ImmutableList<StageSpec> stages) {
@@ -80,7 +75,6 @@ public class TournamentSpec {
 	public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar) {
 		Seeding seeding = initialSeeding;
 		for (StageSpec stage : stages) {
-			//TODO: Fix seeding input
 			Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName, initialSeeding, resultsSoFar);
 			if (!matchesForStage.isEmpty()) {
 				return matchesForStage;
@@ -96,7 +90,6 @@ public class TournamentSpec {
 		Seeding seeding = initialSeeding;
 		TournamentStandings standings = null;
 		for (StageSpec stage : stages) {
-			//TODO: Fix seeding input
 			Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName, initialSeeding, resultsSoFar);
 			standings = stage.getStandingsSoFar(tournamentInternalName, seeding, resultsSoFar);
 			if (!matchesForStage.isEmpty()) {

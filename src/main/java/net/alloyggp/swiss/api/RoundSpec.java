@@ -10,7 +10,6 @@ import com.google.common.collect.Lists;
 
 @Immutable
 public class RoundSpec {
-	//How many games to win? ...
 	private final ImmutableList<MatchSpec> matches;
 
 	private RoundSpec(ImmutableList<MatchSpec> matches) {

@@ -3,7 +3,6 @@ package net.alloyggp.swiss;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//TODO: Currently these are not unique by player matching! Need to fix that
 public class MatchIds {
 
 	public static String create(String tournamentInternalName,
