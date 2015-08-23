@@ -76,9 +76,9 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 		}
 
 		public static SingleEliminationFormatSimulator createAndRun(String tournamentInternalName, int stageNum, Seeding initialSeeding,
-				ImmutableList<RoundSpec> rounds, List<MatchResult> resultsSoFar) {
+				ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
 			SingleEliminationFormatSimulator simulator = new SingleEliminationFormatSimulator(tournamentInternalName, stageNum, initialSeeding, rounds,
-					ImmutableList.copyOf(MatchResults.filterByStage(resultsSoFar, stageNum)));
+					ImmutableList.copyOf(resultsSoFar));
 			simulator.run();
 			return simulator;
 		}
@@ -291,17 +291,17 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
 	@Override
 	public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			List<MatchResult> resultsSoFar) {
+			Set<MatchResult> resultsSoFar) {
 		return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getMatchesToRun();
 	}
 
-	private SingleEliminationFormatSimulator createAndRunSimulator(Seeding initialSeeding, ImmutableList<RoundSpec> rounds, List<MatchResult> resultsSoFar) {
+	private SingleEliminationFormatSimulator createAndRunSimulator(Seeding initialSeeding, ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
 		return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding, rounds, resultsSoFar);
 	}
 
 	@Override
 	public TournamentStandings getStandingsSoFar(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			List<MatchResult> resultsSoFar) {
+			Set<MatchResult> resultsSoFar) {
 		ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
 		Map<Player, Integer> playerEliminationRounds = getPlayerEliminationRounds(initialSeeding, rounds, resultsSoFar);
 
@@ -315,7 +315,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 	}
 
 	private Map<Player, Integer> getPlayerEliminationRounds(Seeding initialSeeding,
-			ImmutableList<RoundSpec> rounds, List<MatchResult> resultsSoFar) {
+			ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
 		return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getPlayerEliminationRounds();
 	}
 

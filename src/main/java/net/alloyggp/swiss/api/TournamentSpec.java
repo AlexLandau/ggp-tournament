@@ -13,6 +13,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import net.alloyggp.swiss.MatchResults;
+
 @Immutable
 public class TournamentSpec {
 	private final String tournamentInternalName;
@@ -78,12 +80,14 @@ public class TournamentSpec {
 
 	public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar) {
 		Seeding seeding = initialSeeding;
-		for (StageSpec stage : stages) {
-			Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName, initialSeeding, resultsSoFar);
+		for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
+			StageSpec stage = stages.get(stageNum);
+			Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
+			Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName, initialSeeding, resultsInStage);
 			if (!matchesForStage.isEmpty()) {
 				return matchesForStage;
 			}
-			TournamentStandings standings = stage.getStandingsSoFar(tournamentInternalName, seeding, resultsSoFar);
+			TournamentStandings standings = stage.getStandingsSoFar(tournamentInternalName, seeding, resultsInStage);
 			seeding = stage.getSeedingsFromFinalStandings(standings);
 		}
 		//No stages had matches left; the tournament is over
@@ -93,10 +97,12 @@ public class TournamentSpec {
 	public TournamentStandings getCurrentStandings(Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar) {
 		Seeding seeding = initialSeeding;
 		TournamentStandings standings = null;
-		for (StageSpec stage : stages) {
-			Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName, initialSeeding, resultsSoFar);
+		for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
+			StageSpec stage = stages.get(stageNum);
+			Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
+			Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName, initialSeeding, resultsInStage);
 			standings = mixInStandings(standings,
-					stage.getStandingsSoFar(tournamentInternalName, seeding, resultsSoFar));
+					stage.getStandingsSoFar(tournamentInternalName, seeding, resultsInStage));
 			if (!matchesForStage.isEmpty()) {
 				return standings;
 			}

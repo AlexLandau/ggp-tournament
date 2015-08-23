@@ -49,12 +49,12 @@ public class StageSpec {
 				ImmutableList.copyOf(rounds), playerCutoff);
 	}
 
-	public Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding, List<MatchResult> resultsSoFar) {
+	public Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
 		FormatRunner runner = format.getRunner(tournamentInternalName, stageNum);
 		return runner.getMatchesToRun(initialSeeding, rounds, resultsSoFar);
 	}
 
-	public TournamentStandings getStandingsSoFar(String tournamentInternalName, Seeding initialSeeding, List<MatchResult> resultsSoFar) {
+	public TournamentStandings getStandingsSoFar(String tournamentInternalName, Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
 		FormatRunner runner = format.getRunner(tournamentInternalName, stageNum);
 		return runner.getStandingsSoFar(initialSeeding, rounds, resultsSoFar);
 	}

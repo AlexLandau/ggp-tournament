@@ -1,6 +1,5 @@
 package net.alloyggp.swiss;
 
-import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
@@ -14,9 +13,9 @@ import net.alloyggp.swiss.api.TournamentStandings;
 public interface FormatRunner {
 
 	Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			List<MatchResult> resultsSoFar);
+			Set<MatchResult> resultsSoFar);
 
 	TournamentStandings getStandingsSoFar(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			List<MatchResult> resultsSoFar);
+			Set<MatchResult> resultsSoFar);
 
 }

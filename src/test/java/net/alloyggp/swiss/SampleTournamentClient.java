@@ -27,8 +27,8 @@ import net.alloyggp.swiss.api.TournamentStatus;
 public class SampleTournamentClient {
 	@Test
 	public void testSingleElimination() {
-		TournamentSpec spec = TournamentSpecParser.parse(new File("testSpecs/singleElim.yaml"));
-		Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5");
+		TournamentSpec spec = TournamentSpecParser.parse(new File("testSpecs/singleElimTwoStages.yaml"));
+		Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
 		TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
 		//Run matches until exhaustion...
 		while (!status.isComplete()) {
@@ -36,6 +36,7 @@ public class SampleTournamentClient {
 			List<MatchResult> results = getRandomOutcomes(nextMatches);
 			System.out.println("Match results: " + results);
 			status = status.withNewResults(results);
+			System.out.println("Standings are: " + status.getStandings());
 		}
 		TournamentStandings standings = status.getStandings();
 		System.out.println("Standings are: " + standings);
