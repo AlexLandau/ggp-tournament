@@ -25,6 +25,9 @@ public class MatchResult {
 		}
 		if (goals.isPresent()) {
 			Preconditions.checkArgument(goals.get().size() == setup.getPlayers().size());
+			for (int goal : goals.get()) {
+				Preconditions.checkArgument(goal >= 0 && goal <= 100);
+			}
 		}
 		this.setup = setup;
 		this.outcome = outcome;

@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import net.alloyggp.swiss.FormatRunner;
@@ -48,5 +49,9 @@ public enum StageFormat {
 	@Override
 	public String toString() {
 		return yamlName;
+	}
+
+	public void validateRounds(ImmutableList<RoundSpec> rounds) {
+		//TODO: ....
 	}
 }

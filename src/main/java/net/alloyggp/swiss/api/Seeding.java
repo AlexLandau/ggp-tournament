@@ -2,7 +2,7 @@ package net.alloyggp.swiss.api;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -14,9 +14,9 @@ public class Seeding {
 		this.playersBestFirst = playersBestFirst;
 	}
 
-	public static Seeding createRandomSeeding(Set<Player> players) {
+	public static Seeding createRandomSeeding(Random random, List<Player> players) {
 		List<Player> playersList = Lists.newArrayList(players);
-		Collections.shuffle(playersList);
+		Collections.shuffle(playersList, random);
 		return create(playersList);
 	}
 

@@ -1,0 +1,91 @@
+# This isn't a very practical tournament format, but it lets us test the
+# stage transition and player cutoff mechanic with a simple, reliable format. 
+games:
+  - name: breakthrough
+    repository: games.ggp.org/base
+    numRoles: 2
+    zeroSum: true
+  - name: cephalopodMicro
+    repository: games.ggp.org/base
+    numRoles: 2
+    zeroSum: true
+  - name: hexPie
+    repository: games.ggp.org/base
+    numRoles: 2
+    zeroSum: true
+
+nameDisplay: Sample two-stage tournament
+nameInternal: singleElimTwoStages
+
+stages:
+  - format: singleElimination
+    rounds:
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+    playerCutoff: 4
+
+  - format: singleElimination
+    rounds:
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+          - game: hexPie
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]

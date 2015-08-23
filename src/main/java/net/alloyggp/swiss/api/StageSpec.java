@@ -3,15 +3,15 @@ package net.alloyggp.swiss.api;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import net.alloyggp.swiss.FormatRunner;
+import net.alloyggp.swiss.Seedings;
 
 @Immutable
 public class StageSpec {
@@ -22,6 +22,11 @@ public class StageSpec {
 	private final int playerCutoff;
 
 	private StageSpec(int stageNum, StageFormat format, ImmutableList<RoundSpec> rounds, int playerCutoff) {
+		Preconditions.checkArgument(stageNum >= 0);
+		Preconditions.checkNotNull(format);
+		Preconditions.checkArgument(!rounds.isEmpty());
+		Preconditions.checkArgument(playerCutoff > 0, "Player cutoff must be positive if present");
+		format.validateRounds(rounds);
 		this.stageNum = stageNum;
 		this.format = format;
 		this.rounds = rounds;
@@ -38,7 +43,7 @@ public class StageSpec {
 		}
 		int playerCutoff = Integer.MAX_VALUE;
 		if (stageMap.containsKey("playerCutoff")) {
-			playerCutoff = Integer.parseInt((String) stageMap.get("playerCutoff"));
+			playerCutoff = (int) stageMap.get("playerCutoff");
 		}
 		return new StageSpec(stageNum, StageFormat.parse(formatName),
 				ImmutableList.copyOf(rounds), playerCutoff);
@@ -55,12 +60,6 @@ public class StageSpec {
 	}
 
 	public Seeding getSeedingsFromFinalStandings(TournamentStandings standings) {
-		List<PlayerScore> playersBestFirst = ImmutableList.copyOf(standings.getScores()).reverse();
-		playersBestFirst = ImmutableList.copyOf(Iterables.limit(playersBestFirst, playerCutoff));
-		List<Player> players = playersBestFirst.stream()
-									.map(PlayerScore::getPlayer)
-									.collect(Collectors.toList());
-		return Seeding.create(players);
+		return Seedings.getSeedingsFromFinalStandings(standings, playerCutoff);
 	}
-
 }

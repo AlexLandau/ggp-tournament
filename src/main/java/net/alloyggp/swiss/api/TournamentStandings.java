@@ -1,7 +1,9 @@
 package net.alloyggp.swiss.api;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 
 public class TournamentStandings {
@@ -30,5 +32,11 @@ public class TournamentStandings {
 			i++;
 		}
 		return sb.toString();
+	}
+
+	public ImmutableList<Player> getPlayersBestFirst() {
+		return ImmutableList.copyOf(scores.stream()
+				.map(PlayerScore::getPlayer)
+				.collect(Collectors.toList()));
 	}
 }

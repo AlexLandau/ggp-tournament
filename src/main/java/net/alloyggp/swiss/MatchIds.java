@@ -3,6 +3,8 @@ package net.alloyggp.swiss;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Preconditions;
+
 public class MatchIds {
 
 	public static String create(String tournamentInternalName,
@@ -11,6 +13,11 @@ public class MatchIds {
 			int playerMatching,
 			int match,
 			int attempt) {
+		Preconditions.checkArgument(stage >= 0);
+		Preconditions.checkArgument(round >= 0);
+		Preconditions.checkArgument(playerMatching >= 0);
+		Preconditions.checkArgument(match >= 0);
+		Preconditions.checkArgument(attempt >= 0);
 		return tournamentInternalName + "-" + stage + "-" + round + "-" + playerMatching + "-" + match + "-" + attempt;
 	}
 
@@ -29,7 +36,7 @@ public class MatchIds {
 	}
 
 	public static int parsePlayerMatchingNumber(String matchId) {
-		return parseNthGroupAsNumber(matchId, 5);
+		return parseNthGroupAsNumber(matchId, 4);
 	}
 
 	public static int parseMatchNumber(String matchId) {

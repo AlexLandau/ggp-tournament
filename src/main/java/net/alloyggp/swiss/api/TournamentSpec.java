@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 @Immutable
 public class TournamentSpec {
@@ -20,6 +21,9 @@ public class TournamentSpec {
 
 	private TournamentSpec(String tournamentInternalName, String tournamentDisplayName,
 			ImmutableList<StageSpec> stages) {
+		Preconditions.checkNotNull(tournamentInternalName);
+		Preconditions.checkNotNull(tournamentDisplayName);
+		Preconditions.checkArgument(!stages.isEmpty());
 		this.tournamentInternalName = tournamentInternalName;
 		this.tournamentDisplayName = tournamentDisplayName;
 		this.stages = stages;
@@ -91,7 +95,8 @@ public class TournamentSpec {
 		TournamentStandings standings = null;
 		for (StageSpec stage : stages) {
 			Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName, initialSeeding, resultsSoFar);
-			standings = stage.getStandingsSoFar(tournamentInternalName, seeding, resultsSoFar);
+			standings = mixInStandings(standings,
+					stage.getStandingsSoFar(tournamentInternalName, seeding, resultsSoFar));
 			if (!matchesForStage.isEmpty()) {
 				return standings;
 			}
@@ -102,4 +107,68 @@ public class TournamentSpec {
 		return standings;
 	}
 
+	private TournamentStandings mixInStandings(TournamentStandings oldStandings, TournamentStandings newStandings) {
+		if (oldStandings == null) {
+			return newStandings;
+		}
+		//preserve old standings for players that didn't make the cut
+		Set<PlayerScore> allPlayerScores = Sets.newHashSet();
+		Set<Player> playersInNewerStandings = Sets.newHashSet();
+		for (PlayerScore score : newStandings.getScores()) {
+			allPlayerScores.add(PlayerScore.create(score.getPlayer(),
+					CutoffScore.madeCutoff(score),
+					score.getSeedFromRoundStart()));
+			playersInNewerStandings.add(score.getPlayer());
+		}
+		for (PlayerScore score : oldStandings.getScores()) {
+			if (!playersInNewerStandings.contains(score.getPlayer())) {
+				allPlayerScores.add(PlayerScore.create(score.getPlayer(),
+						CutoffScore.failedCutoff(score),
+						score.getSeedFromRoundStart()));
+			}
+		}
+		return TournamentStandings.create(allPlayerScores);
+	}
+
+	private static class CutoffScore implements Score {
+		private final boolean madeCutoff;
+		private final Score score;
+
+		private CutoffScore(boolean madeCutoff, Score score) {
+			this.madeCutoff = madeCutoff;
+			this.score = score;
+		}
+
+		public static CutoffScore failedCutoff(PlayerScore score) {
+			return new CutoffScore(false, score.getScore());
+		}
+
+		public static CutoffScore madeCutoff(PlayerScore score) {
+			return new CutoffScore(true, score.getScore());
+		}
+
+		@Override
+		public int compareTo(Score o) {
+			if (!(o instanceof CutoffScore)) {
+				throw new IllegalArgumentException();
+			}
+			CutoffScore other = (CutoffScore) o;
+			if (!madeCutoff && other.madeCutoff) {
+				return -1;
+			} else if (madeCutoff && !other.madeCutoff) {
+				return 1;
+			} else {
+				return score.compareTo(other.score);
+			}
+		}
+
+		@Override
+		public String toString() {
+			if (!madeCutoff) {
+				return "eliminated";
+			} else {
+				return score.toString();
+			}
+		}
+	}
 }

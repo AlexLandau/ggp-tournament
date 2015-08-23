@@ -77,7 +77,8 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
 		public static SingleEliminationFormatSimulator createAndRun(String tournamentInternalName, int stageNum, Seeding initialSeeding,
 				ImmutableList<RoundSpec> rounds, List<MatchResult> resultsSoFar) {
-			SingleEliminationFormatSimulator simulator = new SingleEliminationFormatSimulator(tournamentInternalName, stageNum, initialSeeding, rounds, ImmutableList.copyOf(resultsSoFar));
+			SingleEliminationFormatSimulator simulator = new SingleEliminationFormatSimulator(tournamentInternalName, stageNum, initialSeeding, rounds,
+					ImmutableList.copyOf(MatchResults.filterByStage(resultsSoFar, stageNum)));
 			simulator.run();
 			return simulator;
 		}
