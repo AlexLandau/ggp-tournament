@@ -7,6 +7,6 @@ package net.alloyggp.swiss.api;
  * by tournament format, and so is private.
  */
 public interface Score extends Comparable<Score> {
-	//TODO: Add a method that gives a meaningful string summary of the score
-	//for human consumption? Or leave out of the API here?
+    //TODO: Add a method that gives a meaningful string summary of the score
+    //for human consumption? Or leave out of the API here?
 }

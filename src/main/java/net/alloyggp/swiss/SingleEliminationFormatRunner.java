@@ -41,307 +41,340 @@ import net.alloyggp.swiss.api.TournamentStandings;
  *   the first round defined is reused for the additional rounds.
  */
 public class SingleEliminationFormatRunner implements FormatRunner {
-	private final String tournamentInternalName;
-	private final int stageNum;
+    private final String tournamentInternalName;
+    private final int stageNum;
 
-	private SingleEliminationFormatRunner(String tournamentInternalName, int stageNum) {
-		this.tournamentInternalName = tournamentInternalName;
-		this.stageNum = stageNum;
-	}
+    private SingleEliminationFormatRunner(String tournamentInternalName, int stageNum) {
+        this.tournamentInternalName = tournamentInternalName;
+        this.stageNum = stageNum;
+    }
 
-	public static SingleEliminationFormatRunner create(String tournamentInternalName, int stageNum) {
-		return new SingleEliminationFormatRunner(tournamentInternalName, stageNum);
-	}
+    public static SingleEliminationFormatRunner create(String tournamentInternalName, int stageNum) {
+        return new SingleEliminationFormatRunner(tournamentInternalName, stageNum);
+    }
 
-	//Mutable class; goes through the actual motions of the format and
-	//records the relevant information as it goes
-	@NotThreadSafe
-	private static class SingleEliminationFormatSimulator {
-		private final String tournamentInternalName;
-		private final int stageNum;
-		private final Seeding initialSeeding;
-		private final ImmutableList<RoundSpec> rounds;
-		private final ImmutableList<MatchResult> resultsSoFar;
-		private final Set<MatchSetup> matchesToReturn = Sets.newHashSet();
-		private final Map<Player, Integer> playerEliminationRounds = Maps.newHashMap();
+    //Mutable class; goes through the actual motions of the format and
+    //records the relevant information as it goes
+    @NotThreadSafe
+    private static class SingleEliminationFormatSimulator {
+        private final String tournamentInternalName;
+        private final int stageNum;
+        private final Seeding initialSeeding;
+        private final ImmutableList<RoundSpec> rounds;
+        private final ImmutableList<MatchResult> resultsSoFar;
+        private final Set<MatchSetup> matchesToReturn = Sets.newHashSet();
+        private final Map<Player, Integer> playerEliminationRounds = Maps.newHashMap();
 
-		//Use createAndRun instead
-		private SingleEliminationFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
-				ImmutableList<RoundSpec> rounds, ImmutableList<MatchResult> resultsSoFar) {
-			this.tournamentInternalName = tournamentInternalName;
-			this.stageNum = stageNum;
-			this.initialSeeding = initialSeeding;
-			this.rounds = rounds;
-			this.resultsSoFar = resultsSoFar;
-		}
+        //Use createAndRun instead
+        private SingleEliminationFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
+                ImmutableList<RoundSpec> rounds, ImmutableList<MatchResult> resultsSoFar) {
+            this.tournamentInternalName = tournamentInternalName;
+            this.stageNum = stageNum;
+            this.initialSeeding = initialSeeding;
+            this.rounds = rounds;
+            this.resultsSoFar = resultsSoFar;
+        }
 
-		public static SingleEliminationFormatSimulator createAndRun(String tournamentInternalName, int stageNum, Seeding initialSeeding,
-				ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
-			SingleEliminationFormatSimulator simulator = new SingleEliminationFormatSimulator(tournamentInternalName, stageNum, initialSeeding, rounds,
-					ImmutableList.copyOf(resultsSoFar));
-			simulator.run();
-			return simulator;
-		}
+        public static SingleEliminationFormatSimulator createAndRun(String tournamentInternalName,
+                int stageNum, Seeding initialSeeding,
+                ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+            SingleEliminationFormatSimulator simulator = new SingleEliminationFormatSimulator(
+                    tournamentInternalName, stageNum, initialSeeding, rounds,
+                    ImmutableList.copyOf(resultsSoFar));
+            simulator.run();
+            return simulator;
+        }
 
-		private void run() {
-			List<Player> playersByPosition = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
-			//If we're not a power of two, handle that
-			int numPlayers = playersByPosition.size();
-			int numRoundsLeft = getNumRounds(numPlayers);
-			if (numPlayers < getPlayersForNFullRounds(numRoundsLeft)) {
-				RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
-				int numNormalRounds = numRoundsLeft - 1;
-				int numPlayinMatches = numPlayers - getPlayersForNFullRounds(numNormalRounds);
-				for (int i = 0; i < numPlayinMatches; i++) {
-					int position1 = getPlayersForNFullRounds(numNormalRounds) - i - 1;
-					int position2 = getPlayersForNFullRounds(numNormalRounds) + i;
-					Player player1 = playersByPosition.get(position1);
-					Player player2 = playersByPosition.get(position2);
-					if (wonInRound(player1, numRoundsLeft, round)) {
-						playerEliminationRounds.put(player2, numRoundsLeft);
-					} else if (wonInRound(player2, numRoundsLeft, round)) {
-						playersByPosition.set(position1, player2);
-						playersByPosition.set(position2, player1);
-						playerEliminationRounds.put(player1, numRoundsLeft);
-					} else {
-						//TODO: Do we want to define roles according to seeding rather than bracket position?
-						//If so, pass in seeding here
-						matchesToReturn.add(getNextMatchForPairing(player1, player2, i, numRoundsLeft, round));
-					}
-				}
-				numRoundsLeft--;
-				if (!matchesToReturn.isEmpty()) {
-					return; //still in this round
-				}
-			}
-			//Now we handle the normal rounds
-			while (numRoundsLeft > 0) {
-				RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
-				int numPlayersLeft = getPlayersForNFullRounds(numRoundsLeft);
-				for (int i = 0; i < numPlayersLeft/2; i++) {
-					int position1 = i;
-					int position2 = numPlayersLeft - i - 1;
-					Player player1 = playersByPosition.get(position1);
-					Player player2 = playersByPosition.get(position2);
-					if (wonInRound(player1, numRoundsLeft, round)) {
-						playerEliminationRounds.put(player2, numRoundsLeft);
-					} else if (wonInRound(player2, numRoundsLeft, round)) {
-						playersByPosition.set(position1, player2);
-						playersByPosition.set(position2, player1);
-						playerEliminationRounds.put(player1, numRoundsLeft);
-					} else {
-						//TODO: Do we want to define roles according to seeding rather than bracket position?
-						//If so, pass in seeding here
-						matchesToReturn.add(getNextMatchForPairing(player1, player2, i, numRoundsLeft, round));
-					}
-				}
-				numRoundsLeft--;
-				if (!matchesToReturn.isEmpty()) {
-					return; //still in this round
-				}
-			}
-			//We're at the end of the tournament
-		}
+        private void run() {
+            List<Player> playersByPosition = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
+            //If we're not a power of two, handle that
+            int numPlayers = playersByPosition.size();
+            int numRoundsLeft = getNumRounds(numPlayers);
+            if (numPlayers < getPlayersForNFullRounds(numRoundsLeft)) {
+                RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
+                int numNormalRounds = numRoundsLeft - 1;
+                int numPlayinMatches = numPlayers - getPlayersForNFullRounds(numNormalRounds);
+                for (int i = 0; i < numPlayinMatches; i++) {
+                    int position1 = getPlayersForNFullRounds(numNormalRounds) - i - 1;
+                    int position2 = getPlayersForNFullRounds(numNormalRounds) + i;
+                    Player player1 = playersByPosition.get(position1);
+                    Player player2 = playersByPosition.get(position2);
+                    if (wonInRound(player1, numRoundsLeft, round)) {
+                        playerEliminationRounds.put(player2, numRoundsLeft);
+                    } else if (wonInRound(player2, numRoundsLeft, round)) {
+                        playersByPosition.set(position1, player2);
+                        playersByPosition.set(position2, player1);
+                        playerEliminationRounds.put(player1, numRoundsLeft);
+                    } else {
+                        //TODO: Do we want to define roles according to seeding rather than bracket position?
+                        //If so, pass in seeding here
+                        matchesToReturn.add(getNextMatchForPairing(player1, player2, i, numRoundsLeft, round));
+                    }
+                }
+                numRoundsLeft--;
+                if (!matchesToReturn.isEmpty()) {
+                    return; //still in this round
+                }
+            }
+            //Now we handle the normal rounds
+            while (numRoundsLeft > 0) {
+                RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
+                int numPlayersLeft = getPlayersForNFullRounds(numRoundsLeft);
+                for (int i = 0; i < (numPlayersLeft / 2); i++) {
+                    int position1 = i;
+                    int position2 = numPlayersLeft - i - 1;
+                    Player player1 = playersByPosition.get(position1);
+                    Player player2 = playersByPosition.get(position2);
+                    if (wonInRound(player1, numRoundsLeft, round)) {
+                        playerEliminationRounds.put(player2, numRoundsLeft);
+                    } else if (wonInRound(player2, numRoundsLeft, round)) {
+                        playersByPosition.set(position1, player2);
+                        playersByPosition.set(position2, player1);
+                        playerEliminationRounds.put(player1, numRoundsLeft);
+                    } else {
+                        //TODO: Do we want to define roles according to seeding rather than bracket position?
+                        //If so, pass in seeding here
+                        matchesToReturn.add(getNextMatchForPairing(player1, player2, i, numRoundsLeft, round));
+                    }
+                }
+                numRoundsLeft--;
+                if (!matchesToReturn.isEmpty()) {
+                    return; //still in this round
+                }
+            }
+            //We're at the end of the tournament
+        }
 
-		//1 -> 2 for finals
-		//2 -> 4 for semis
-		public int getPlayersForNFullRounds(int numRoundsLeft) {
-			return 1 << numRoundsLeft;
-		}
-		private RoundSpec getRoundForNumRoundsLeft(int numRoundsLeft) {
-			//Count from the end, not the beginning (so the last round is always the finals)
-			int index = rounds.size() - numRoundsLeft;
-			if (index < 0) {
-				//Repeat the first round until we hit the schedule
-				index = 0;
-			}
-			return rounds.get(index);
-		}
+        //1 -> 2 for finals
+        //2 -> 4 for semis
+        public int getPlayersForNFullRounds(int numRoundsLeft) {
+            return 1 << numRoundsLeft;
+        }
 
-		private MatchSetup getNextMatchForPairing(Player player1, Player player2, int pairingNum, int numRoundsLeft, RoundSpec round) {
-			List<MatchResult> completedSoFar = Lists.newArrayList();
-			List<MatchResult> abortedSoFar = Lists.newArrayList();
-			//First, gather all the non-abandoned results so far
-			for (MatchResult result : resultsSoFar) {
-				//TODO: Replace with MatchIds logic?
-				String matchId = result.getSetup().getMatchId();
-				int roundNumber = MatchIds.parseRoundNumber(matchId);
-				if (roundNumber != numRoundsLeft) {
-					continue;
-				}
-				if (!result.getSetup().getPlayers().contains(player1)) {
-					continue;
-				}
-				if (result.getOutcome() == Outcome.ABORTED) {
-					abortedSoFar.add(result);
-				} else {
-					completedSoFar.add(result);
-				}
-			}
+        private RoundSpec getRoundForNumRoundsLeft(int numRoundsLeft) {
+            //Count from the end, not the beginning (so the last round is always the finals)
+            int index = rounds.size() - numRoundsLeft;
+            if (index < 0) {
+                //Repeat the first round until we hit the schedule
+                index = 0;
+            }
+            return rounds.get(index);
+        }
 
-			//...
-			ImmutableList<MatchSpec> matches = round.getMatches();
-			MatchSpec specToUse = null;
-			for (int i = 0; i < matches.size(); i++) {
-				specToUse = matches.get(i);
-				if (haveCompleted(i, completedSoFar)) {
-					continue;
-				} else {
-					break;
-				}
-			}
-			int matchNum = 0;
-			while (haveCompleted(matchNum, completedSoFar)) {
-				matchNum++;
-			}
-			int priorMatchAttempts = 0;
-			for (MatchResult result : abortedSoFar) {
-				if (MatchIds.parseMatchNumber(result.getSetup().getMatchId()) == matchNum) {
-					priorMatchAttempts++;
-				}
-			}
+        private MatchSetup getNextMatchForPairing(Player player1, Player player2,
+                int pairingNum, int numRoundsLeft, RoundSpec round) {
+            List<MatchResult> completedSoFar = Lists.newArrayList();
+            List<MatchResult> abortedSoFar = Lists.newArrayList();
+            //First, gather all the non-abandoned results so far
+            for (MatchResult result : resultsSoFar) {
+                //TODO: Replace with MatchIds logic?
+                String matchId = result.getSetup().getMatchId();
+                int roundNumber = MatchIds.parseRoundNumber(matchId);
+                if (roundNumber != numRoundsLeft) {
+                    continue;
+                }
+                if (!result.getSetup().getPlayers().contains(player1)) {
+                    continue;
+                }
+                if (result.getOutcome() == Outcome.ABORTED) {
+                    abortedSoFar.add(result);
+                } else {
+                    completedSoFar.add(result);
+                }
+            }
 
-			Preconditions.checkNotNull(specToUse);
-			//If we make it here, repeat the last match type
-			String matchId = MatchIds.create(tournamentInternalName, stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts);
-			//TODO: Correctly define roles?
-			//TODO: Accurate seeding
-			//TODO: Alternate roles each time if we do have to repeat the last match type
-			return MatchSetup.create(matchId, specToUse, ImmutableList.of(player1, player2));
-		}
+            ImmutableList<MatchSpec> matches = round.getMatches();
+            MatchSpec specToUse = null;
+            for (int i = 0; i < matches.size(); i++) {
+                specToUse = matches.get(i);
+                if (haveCompleted(i, completedSoFar)) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+            int matchNum = 0;
+            while (haveCompleted(matchNum, completedSoFar)) {
+                matchNum++;
+            }
+            int priorMatchAttempts = 0;
+            for (MatchResult result : abortedSoFar) {
+                if (MatchIds.parseMatchNumber(result.getSetup().getMatchId()) == matchNum) {
+                    priorMatchAttempts++;
+                }
+            }
 
-		private boolean haveCompleted(int matchNumber, List<MatchResult> completedSoFar) {
-			for (MatchResult result : completedSoFar) {
-				Preconditions.checkArgument(result.getOutcome() == Outcome.COMPLETED);
-				String matchId = result.getSetup().getMatchId();
-				int resultMatchNumber = MatchIds.parseMatchNumber(matchId);
-				if (matchNumber == resultMatchNumber) {
-					return true;
-				}
-			}
-			return false;
-		}
+            Preconditions.checkNotNull(specToUse);
+            //If we make it here, repeat the last match type
+            String matchId = MatchIds.create(tournamentInternalName, stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts);
+            //TODO: Correctly define roles?
+            //TODO: Accurate seeding
+            //TODO: Alternate roles each time if we do have to repeat the last match type
+            return MatchSetup.create(matchId, specToUse, ImmutableList.of(player1, player2));
+        }
 
-		private boolean wonInRound(Player player, int numRoundsLeft, RoundSpec round) {
-			int gamesPlayed = 0;
-			int pointsAboveOpponent = 0;
-			for (MatchResult result : resultsSoFar) {
-				//TODO: Replace with MatchIds logic?
-				String matchId = result.getSetup().getMatchId();
-				int roundNumber = MatchIds.parseRoundNumber(matchId);
-				if (roundNumber != numRoundsLeft) {
-					continue;
-				}
-				if (!result.getSetup().getPlayers().contains(player)) {
-					continue;
-				}
-				if (result.getOutcome() == Outcome.ABORTED) {
-					continue;
-				}
-				gamesPlayed++;
-				int playerIndex = result.getSetup().getPlayers().indexOf(player);
-				int playerPoints = result.getGoals().get(playerIndex);
-				Preconditions.checkState(playerIndex == 0 || playerIndex == 1);
-				int oppIndex = 1 - playerIndex;
-				int oppPoints = result.getGoals().get(oppIndex);
-				pointsAboveOpponent += (playerPoints - oppPoints);
-			}
-			return wonInRound(round, gamesPlayed, pointsAboveOpponent);
-		}
+        private boolean haveCompleted(int matchNumber, List<MatchResult> completedSoFar) {
+            for (MatchResult result : completedSoFar) {
+                Preconditions.checkArgument(result.getOutcome() == Outcome.COMPLETED);
+                String matchId = result.getSetup().getMatchId();
+                int resultMatchNumber = MatchIds.parseMatchNumber(matchId);
+                if (matchNumber == resultMatchNumber) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-		private boolean wonInRound(RoundSpec round, int gamesPlayed, int pointsAboveOpponent) {
-			//We assume that any game can return 100/0...
-			//We end the round once one player has enough points to guarantee they're ahead at or after the
-			//end of the last scheduled match
-			//TODO: Maybe assign a threshold so TOs can schedule follow-up games with more flexibility?
-			if (gamesPlayed >= round.getMatches().size()) {
-				if (pointsAboveOpponent > 0) {
-					return true;
-				}
-			} else {
-				//Can we end the round early?
-				int gamesLeft = round.getMatches().size() - gamesPlayed;
-				if (pointsAboveOpponent > 100*gamesLeft) {
-					return true;
-				}
-			}
-			return false;
-		}
+        private boolean wonInRound(Player player, int numRoundsLeft, RoundSpec round) {
+            int gamesPlayed = 0;
+            int pointsAboveOpponent = 0;
+            for (MatchResult result : resultsSoFar) {
+                //TODO: Replace with MatchIds logic?
+                String matchId = result.getSetup().getMatchId();
+                int roundNumber = MatchIds.parseRoundNumber(matchId);
+                if (roundNumber != numRoundsLeft) {
+                    continue;
+                }
+                if (!result.getSetup().getPlayers().contains(player)) {
+                    continue;
+                }
+                if (result.getOutcome() == Outcome.ABORTED) {
+                    continue;
+                }
+                gamesPlayed++;
+                int playerIndex = result.getSetup().getPlayers().indexOf(player);
+                int playerPoints = result.getGoals().get(playerIndex);
+                Preconditions.checkState(playerIndex == 0 || playerIndex == 1);
+                int oppIndex = 1 - playerIndex;
+                int oppPoints = result.getGoals().get(oppIndex);
+                pointsAboveOpponent += (playerPoints - oppPoints);
+            }
+            return wonInRound(round, gamesPlayed, pointsAboveOpponent);
+        }
 
-		private int getNumRounds(int numPlayers) {
-			int numRounds = 0;
-			int num = numPlayers;
-			while (num > 1) {
-				num = num >> 1;
-				numRounds++;
-			}
-			if (numPlayers > getPlayersForNFullRounds(numRounds)) {
-				numRounds++;
-			}
-			return numRounds;
-		}
+        private boolean wonInRound(RoundSpec round, int gamesPlayed, int pointsAboveOpponent) {
+            //We assume that any game can return 100/0...
+            //We end the round once one player has enough points to guarantee they're ahead at or after the
+            //end of the last scheduled match
+            //TODO: Maybe assign a threshold so TOs can schedule follow-up games with more flexibility?
+            if (gamesPlayed >= round.getMatches().size()) {
+                if (pointsAboveOpponent > 0) {
+                    return true;
+                }
+            } else {
+                //Can we end the round early?
+                int gamesLeft = round.getMatches().size() - gamesPlayed;
+                if (pointsAboveOpponent > (100 * gamesLeft)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-		public Set<MatchSetup> getMatchesToRun() {
-			return ImmutableSet.copyOf(matchesToReturn);
-		}
-		public Map<Player, Integer> getPlayerEliminationRounds() {
-			return ImmutableMap.copyOf(playerEliminationRounds);
-		}
-	}
+        private int getNumRounds(int numPlayers) {
+            int numRounds = 0;
+            int num = numPlayers;
+            while (num > 1) {
+                num = num >> 1;
+                numRounds++;
+            }
+            if (numPlayers > getPlayersForNFullRounds(numRounds)) {
+                numRounds++;
+            }
+            return numRounds;
+        }
 
-	@Override
-	public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			Set<MatchResult> resultsSoFar) {
-		return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getMatchesToRun();
-	}
+        public Set<MatchSetup> getMatchesToRun() {
+            return ImmutableSet.copyOf(matchesToReturn);
+        }
 
-	private SingleEliminationFormatSimulator createAndRunSimulator(Seeding initialSeeding, ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
-		return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding, rounds, resultsSoFar);
-	}
+        public Map<Player, Integer> getPlayerEliminationRounds() {
+            return ImmutableMap.copyOf(playerEliminationRounds);
+        }
+    }
 
-	@Override
-	public TournamentStandings getStandingsSoFar(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			Set<MatchResult> resultsSoFar) {
-		ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
-		Map<Player, Integer> playerEliminationRounds = getPlayerEliminationRounds(initialSeeding, rounds, resultsSoFar);
+    @Override
+    public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
+            Set<MatchResult> resultsSoFar) {
+        return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getMatchesToRun();
+    }
 
-		ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
-		for (int i = 0; i < playersBestFirst.size(); i++) {
-			Player player = playersBestFirst.get(i);
-			Score score = new EliminationScore(playerEliminationRounds.getOrDefault(player, 0));
-			playerScores.add(PlayerScore.create(player, score, i));
-		}
-		return TournamentStandings.create(playerScores.build());
-	}
+    private SingleEliminationFormatSimulator createAndRunSimulator(Seeding initialSeeding,
+            ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+        return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
+                stageNum, initialSeeding, rounds, resultsSoFar);
+    }
 
-	private Map<Player, Integer> getPlayerEliminationRounds(Seeding initialSeeding,
-			ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
-		return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getPlayerEliminationRounds();
-	}
+    @Override
+    public TournamentStandings getStandingsSoFar(Seeding initialSeeding,
+            ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+        ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
+        Map<Player, Integer> playerEliminationRounds = getPlayerEliminationRounds(
+                initialSeeding, rounds, resultsSoFar);
 
-	private static class EliminationScore implements Score {
-		private final int roundEliminated; //0 if not yet eliminated
+        ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
+        for (int i = 0; i < playersBestFirst.size(); i++) {
+            Player player = playersBestFirst.get(i);
+            Score score = new EliminationScore(playerEliminationRounds.getOrDefault(player, 0));
+            playerScores.add(PlayerScore.create(player, score, i));
+        }
+        return TournamentStandings.create(playerScores.build());
+    }
 
-		private EliminationScore(int roundEliminated) {
-			this.roundEliminated = roundEliminated;
-		}
+    private Map<Player, Integer> getPlayerEliminationRounds(Seeding initialSeeding,
+            ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+        return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getPlayerEliminationRounds();
+    }
 
-		@Override
-		public int compareTo(Score o) {
-			if (!(o instanceof EliminationScore)) {
-				throw new RuntimeException("Incomparable scores being compared");
-			}
-			//Higher scores should be better; but lower is better here, so flip
-			return Integer.compare(((EliminationScore)o).roundEliminated, roundEliminated);
-		}
+    private static class EliminationScore implements Score {
+        private final int roundEliminated; //0 if not yet eliminated
 
-		@Override
-		public String toString() {
-			if (roundEliminated == 0) {
-				return "in contention";
-			}
-			//TODO: This is confusing, change this (play-in round is round 1, etc.)
-			return "eliminated in round "+roundEliminated;
-		}
-	}
+        private EliminationScore(int roundEliminated) {
+            this.roundEliminated = roundEliminated;
+        }
+
+        @Override
+        public int compareTo(Score other) {
+            if (!(other instanceof EliminationScore)) {
+                throw new RuntimeException("Incomparable scores being compared");
+            }
+            //Higher scores should be better; but lower is better here, so flip
+            return Integer.compare(((EliminationScore)other).roundEliminated, roundEliminated);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + roundEliminated;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            EliminationScore other = (EliminationScore) obj;
+            if (roundEliminated != other.roundEliminated) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            if (roundEliminated == 0) {
+                return "in contention";
+            }
+            //TODO: This is confusing, change this (play-in round is round 1, etc.)
+            return "eliminated in round " + roundEliminated;
+        }
+    }
 }

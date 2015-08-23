@@ -12,16 +12,16 @@ import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.TournamentStandings;
 
 public class Seedings {
-	private Seedings() {
-		//Not instantiable
-	}
+    private Seedings() {
+        //Not instantiable
+    }
 
-	public static Seeding getSeedingsFromFinalStandings(TournamentStandings standings, int playerCutoff) {
-		List<PlayerScore> playersBestFirst = ImmutableList.copyOf(
-				Iterables.limit(standings.getScores(), playerCutoff));
-		List<Player> players = playersBestFirst.stream()
-									.map(PlayerScore::getPlayer)
-									.collect(Collectors.toList());
-		return Seeding.create(players);
-	}
+    public static Seeding getSeedingsFromFinalStandings(TournamentStandings standings, int playerCutoff) {
+        List<PlayerScore> playersBestFirst = ImmutableList.copyOf(
+                Iterables.limit(standings.getScores(), playerCutoff));
+        List<Player> players = playersBestFirst.stream()
+                                    .map(PlayerScore::getPlayer)
+                                    .collect(Collectors.toList());
+        return Seeding.create(players);
+    }
 }

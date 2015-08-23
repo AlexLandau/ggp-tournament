@@ -1,5 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'pmd'
+apply plugin: 'findbugs'
+apply plugin: 'checkstyle'
 
 repositories {
     mavenCentral()
@@ -10,4 +13,12 @@ dependencies {
     compile 'com.google.guava:guava:14.0.1'
     compile 'com.google.code.findbugs:jsr305:3.0.0'
     testCompile 'junit:junit:4.11'
+}
+
+checkstyle {
+    toolVersion = '6.7'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.5'
 }

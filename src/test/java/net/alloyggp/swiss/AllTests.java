@@ -6,11 +6,11 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-		AssignedMatchesConsistencyTest.class,
-		MatchIdsTest.class,
-		MatchIdUniquenessTest.class,
-		MatchResultOrderingTest.class,
-		SeedingsTest.class})
+        AssignedMatchesConsistencyTest.class,
+        MatchIdsTest.class,
+        MatchIdUniquenessTest.class,
+        MatchResultOrderingTest.class,
+        SeedingsTest.class})
 public class AllTests {
 
 }

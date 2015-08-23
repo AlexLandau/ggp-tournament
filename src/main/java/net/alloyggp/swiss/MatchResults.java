@@ -10,28 +10,39 @@ import com.google.common.collect.SetMultimap;
 
 import net.alloyggp.swiss.api.MatchResult;
 
+/**
+ * Contains utility methods for dealing with {@link MatchResult}s.
+ */
 public class MatchResults {
-	private MatchResults() {
-		//Not instantiable
-	}
+    private MatchResults() {
+        //Not instantiable
+    }
 
-	public static Set<MatchResult> filterByStage(Collection<MatchResult> inputs, int stageNum) {
-		return inputs.stream()
-			.filter(result -> {
-				String matchId = result.getSetup().getMatchId();
-				int matchStage = MatchIds.parseStageNumber(matchId);
-				return matchStage == stageNum;
-			})
-			.collect(Collectors.toSet());
-	}
+    /**
+     * Returns only those {@link MatchResult}s that are from the given stage.
+     */
+    public static Set<MatchResult> filterByStage(Collection<MatchResult> inputs, int stageNum) {
+        return inputs.stream()
+            .filter(result -> {
+                    String matchId = result.getSetup().getMatchId();
+                    int matchStage = MatchIds.parseStageNumber(matchId);
+                    return matchStage == stageNum;
+                })
+            .collect(Collectors.toSet());
+    }
 
-	public static SetMultimap<Integer, MatchResult> mapByRound(List<MatchResult> resultsSoFar, int stageNum) {
-		SetMultimap<Integer, MatchResult> mapped = HashMultimap.create();
-		for (MatchResult result : filterByStage(resultsSoFar, stageNum)) {
-			String matchId = result.getSetup().getMatchId();
-			int matchRound = MatchIds.parseRoundNumber(matchId);
-			mapped.put(matchRound, result);
-		}
-		return mapped;
-	}
+    /**
+     * Returns a {@link SetMultimap} including all the {@link MatchResult}s from the given
+     * stage. The results are grouped by their round number.
+     */
+    public static SetMultimap<Integer, MatchResult> mapByRound(List<MatchResult> resultsSoFar,
+            int stageNum) {
+        SetMultimap<Integer, MatchResult> mapped = HashMultimap.create();
+        for (MatchResult result : filterByStage(resultsSoFar, stageNum)) {
+            String matchId = result.getSetup().getMatchId();
+            int matchRound = MatchIds.parseRoundNumber(matchId);
+            mapped.put(matchRound, result);
+        }
+        return mapped;
+    }
 }

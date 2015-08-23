@@ -10,12 +10,16 @@ import org.yaml.snakeyaml.Yaml;
 
 public class TournamentSpecParser {
 
-	public static TournamentSpec parse(File file) {
-		try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
-			return TournamentSpec.parseYamlRootObject(new Yaml().load(in));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    /**
+     * Loads and parses a tournament specification in YAML format and returns the
+     * specification.
+     */
+    public static TournamentSpec parse(File file) {
+        try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+            return TournamentSpec.parseYamlRootObject(new Yaml().load(in));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

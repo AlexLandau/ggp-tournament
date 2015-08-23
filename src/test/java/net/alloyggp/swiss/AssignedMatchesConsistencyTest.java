@@ -22,52 +22,52 @@ import net.alloyggp.swiss.api.TournamentStatus;
 /**
  * This is a fuzz test for the following invariant:
  *
- * Once a match setup has been returned, adding additional match results
+ * <p>Once a match setup has been returned, adding additional match results
  * to the tournament state will not cause that match setup to disappear
  * or alter in future returned sets of match setups.
  */
 @RunWith(Parameterized.class)
 public class AssignedMatchesConsistencyTest {
-	@Parameters(name = "{index}: {0} players, {1}")
-	public static Iterable<Object[]> data() {
-		return FuzzTests.getParameters();
-	}
+    @Parameters(name = "{index}: {0} players, {1}")
+    public static Iterable<Object[]> data() {
+        return FuzzTests.getParameters();
+    }
 
-	private final int numPlayers;
-	private final File yamlFile;
+    private final int numPlayers;
+    private final File yamlFile;
 
-	public AssignedMatchesConsistencyTest(int numPlayers, File yamlFile) {
-		this.numPlayers = numPlayers;
-		this.yamlFile = yamlFile;
-	}
+    public AssignedMatchesConsistencyTest(int numPlayers, File yamlFile) {
+        this.numPlayers = numPlayers;
+        this.yamlFile = yamlFile;
+    }
 
-	@Test
-	public void testMatchSetupsDoNotDisappear() {
-		TournamentSpec spec = TournamentSpecParser.parse(yamlFile);
-		for (long seed = 0L; seed < 100L; seed++) {
-			Random random = new Random(seed);
-			Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
-			TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
-			Set<MatchSetup> matchesAlreadyProposed = Sets.newHashSet();
-			while (true) {
-				//TODO: Make these return a List or SortedSet or something?
-				Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
-				if (!nextMatches.containsAll(matchesAlreadyProposed)) {
-					Assert.fail("With seed "+seed+", some match setups appeared and"
-							+ " then disappeared without receiving results: "
-							+ Sets.difference(matchesAlreadyProposed, nextMatches));
-				}
-				if (nextMatches.isEmpty()) {
-					break;
-				}
-				matchesAlreadyProposed.addAll(nextMatches);
-				//Pick one and choose a result for it
-				MatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
-				matchesAlreadyProposed.remove(matchToResolve);
-				MatchResult result = FuzzTests.getResult(random, matchToResolve);
-				status = status.withNewResult(result);
-			}
-		}
-	}
+    @Test
+    public void testMatchSetupsDoNotDisappear() {
+        TournamentSpec spec = TournamentSpecParser.parse(yamlFile);
+        for (long seed = 0L; seed < 100L; seed++) {
+            Random random = new Random(seed);
+            Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
+            TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
+            Set<MatchSetup> matchesAlreadyProposed = Sets.newHashSet();
+            while (true) {
+                //TODO: Make these return a List or SortedSet or something?
+                Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+                if (!nextMatches.containsAll(matchesAlreadyProposed)) {
+                    Assert.fail("With seed " + seed + ", some match setups appeared and"
+                            + " then disappeared without receiving results: "
+                            + Sets.difference(matchesAlreadyProposed, nextMatches));
+                }
+                if (nextMatches.isEmpty()) {
+                    break;
+                }
+                matchesAlreadyProposed.addAll(nextMatches);
+                //Pick one and choose a result for it
+                MatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
+                matchesAlreadyProposed.remove(matchToResolve);
+                MatchResult result = FuzzTests.getResult(random, matchToResolve);
+                status = status.withNewResult(result);
+            }
+        }
+    }
 
 }

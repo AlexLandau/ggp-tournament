@@ -25,42 +25,43 @@ import net.alloyggp.swiss.api.TournamentStatus;
  * the API should look like from a client's perspective...
  */
 public class SampleTournamentClient {
-	@Test
-	public void testSingleElimination() {
-		TournamentSpec spec = TournamentSpecParser.parse(new File("testSpecs/singleElimTwoStages.yaml"));
-		Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
-		TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
-		//Run matches until exhaustion...
-		while (!status.isComplete()) {
-			Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
-			List<MatchResult> results = getRandomOutcomes(nextMatches);
-			System.out.println("Match results: " + results);
-			status = status.withNewResults(results);
-			System.out.println("Standings are: " + status.getStandings());
-		}
-		TournamentStandings standings = status.getStandings();
-		System.out.println("Standings are: " + standings);
-	}
+    @Test
+    public void testSingleElimination() {
+        TournamentSpec spec = TournamentSpecParser.parse(new File("testSpecs/singleElimTwoStages.yaml"));
+        Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
+        TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
+        //Run matches until exhaustion...
+        while (!status.isComplete()) {
+            Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+            List<MatchResult> results = getRandomOutcomes(nextMatches);
+            System.out.println("Match results: " + results);
+            status = status.withNewResults(results);
+            System.out.println("Standings are: " + status.getStandings());
+        }
+        TournamentStandings standings = status.getStandings();
+        System.out.println("Standings are: " + standings);
+    }
 
-	private Seeding toSeeding(String... playerNames) {
-		List<Player> playersBestFirst = Arrays.stream(playerNames)
-				.map(Player::create)
-				.collect(Collectors.toList());
-		return Seeding.create(playersBestFirst);
-	}
+    private Seeding toSeeding(String... playerNames) {
+        List<Player> playersBestFirst = Arrays.stream(playerNames)
+                .map(Player::create)
+                .collect(Collectors.toList());
+        return Seeding.create(playersBestFirst);
+    }
 
-	private List<MatchResult> getRandomOutcomes(Set<MatchSetup> nextMatches) {
-		return nextMatches.stream()
-		.map(setup -> MatchResult.getSuccessfulMatchResult(setup, getRandomGoals(), ImmutableList.of()))
-		.collect(Collectors.toList());
-	}
+    private List<MatchResult> getRandomOutcomes(Set<MatchSetup> nextMatches) {
+        return nextMatches.stream()
+        .map(setup -> MatchResult.getSuccessfulMatchResult(setup, getRandomGoals(), ImmutableList.of()))
+        .collect(Collectors.toList());
+    }
 
-	private static final Random RAND = new Random();
-	private List<Integer> getRandomGoals() {
-		if (RAND.nextBoolean()) {
-			return ImmutableList.of(100, 0);
-		} else {
-			return ImmutableList.of(0, 100);
-		}
-	}
+    private static final Random RAND = new Random();
+
+    private List<Integer> getRandomGoals() {
+        if (RAND.nextBoolean()) {
+            return ImmutableList.of(100, 0);
+        } else {
+            return ImmutableList.of(0, 100);
+        }
+    }
 }

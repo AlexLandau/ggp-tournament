@@ -12,10 +12,10 @@ import net.alloyggp.swiss.api.TournamentStandings;
 
 public interface FormatRunner {
 
-	Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			Set<MatchResult> resultsSoFar);
+    Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
+            Set<MatchResult> resultsSoFar);
 
-	TournamentStandings getStandingsSoFar(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-			Set<MatchResult> resultsSoFar);
+    TournamentStandings getStandingsSoFar(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
+            Set<MatchResult> resultsSoFar);
 
 }
