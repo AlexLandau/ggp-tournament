@@ -51,17 +51,23 @@ public class StageSpec {
 
     public Set<MatchSetup> getMatchesToRun(String tournamentInternalName,
             Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
-        FormatRunner runner = format.getRunner(tournamentInternalName, stageNum);
-        return runner.getMatchesToRun(initialSeeding, rounds, resultsSoFar);
+        FormatRunner runner = format.getRunner();
+        return runner.getMatchesToRun(tournamentInternalName, initialSeeding, stageNum,
+                rounds, resultsSoFar);
     }
 
     public TournamentStandings getStandingsSoFar(String tournamentInternalName,
             Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
-        FormatRunner runner = format.getRunner(tournamentInternalName, stageNum);
-        return runner.getStandingsSoFar(initialSeeding, rounds, resultsSoFar);
+        FormatRunner runner = format.getRunner();
+        return runner.getStandingsSoFar(tournamentInternalName, initialSeeding, stageNum,
+                rounds, resultsSoFar);
     }
 
     public Seeding getSeedingsFromFinalStandings(TournamentStandings standings) {
         return Seedings.getSeedingsFromFinalStandings(standings, playerCutoff);
+    }
+
+    public ImmutableList<RoundSpec> getRounds() {
+        return rounds;
     }
 }

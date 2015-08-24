@@ -12,22 +12,18 @@ import net.alloyggp.swiss.SingleEliminationFormatRunner;
 
 public enum StageFormat {
     SINGLE_ELIMINATION("singleElimination",
-            (name, stageNum) -> SingleEliminationFormatRunner.create(name, stageNum)),
+            () -> SingleEliminationFormatRunner.create()),
     ;
     private final String yamlName;
-    private final FormatRunnerSupplier runnerSupplier;
+    private final Supplier<FormatRunner> runnerSupplier;
 
-    private StageFormat(String yamlName, FormatRunnerSupplier runnerSupplier) {
+    private StageFormat(String yamlName, Supplier<FormatRunner> runnerSupplier) {
         this.yamlName = yamlName;
         this.runnerSupplier = runnerSupplier;
     }
 
-    /*package-private*/ FormatRunner getRunner(String tournamentInternalName, int stageNum) {
-        return runnerSupplier.getRunner(tournamentInternalName, stageNum);
-    }
-
-    private static interface FormatRunnerSupplier {
-        FormatRunner getRunner(String tournamentInternalName, int stageNum);
+    /*package-private*/ FormatRunner getRunner() {
+        return runnerSupplier.get();
     }
 
     private static final Supplier<Map<String, StageFormat>> NAME_LOOKUP = Suppliers.memoize(() -> {
@@ -52,6 +48,6 @@ public enum StageFormat {
     }
 
     public void validateRounds(ImmutableList<RoundSpec> rounds) {
-        //TODO: ....
+        getRunner().validateRounds(rounds);
     }
 }

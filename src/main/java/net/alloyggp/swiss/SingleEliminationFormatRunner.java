@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import net.alloyggp.swiss.api.Game;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchResult.Outcome;
 import net.alloyggp.swiss.api.MatchSetup;
@@ -41,16 +42,13 @@ import net.alloyggp.swiss.api.TournamentStandings;
  *   the first round defined is reused for the additional rounds.
  */
 public class SingleEliminationFormatRunner implements FormatRunner {
-    private final String tournamentInternalName;
-    private final int stageNum;
+    private static final SingleEliminationFormatRunner INSTANCE = new SingleEliminationFormatRunner();
 
-    private SingleEliminationFormatRunner(String tournamentInternalName, int stageNum) {
-        this.tournamentInternalName = tournamentInternalName;
-        this.stageNum = stageNum;
+    private SingleEliminationFormatRunner() {
     }
 
-    public static SingleEliminationFormatRunner create(String tournamentInternalName, int stageNum) {
-        return new SingleEliminationFormatRunner(tournamentInternalName, stageNum);
+    public static SingleEliminationFormatRunner create() {
+        return INSTANCE;
     }
 
     //Mutable class; goes through the actual motions of the format and
@@ -294,23 +292,25 @@ public class SingleEliminationFormatRunner implements FormatRunner {
     }
 
     @Override
-    public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<RoundSpec> rounds,
-            Set<MatchResult> resultsSoFar) {
-        return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getMatchesToRun();
+    public Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding,
+            int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+        return createAndRunSimulator(tournamentInternalName, initialSeeding, stageNum, rounds, resultsSoFar)
+                .getMatchesToRun();
     }
 
-    private SingleEliminationFormatSimulator createAndRunSimulator(Seeding initialSeeding,
-            ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+    private SingleEliminationFormatSimulator createAndRunSimulator(String tournamentInternalName,
+            Seeding initialSeeding, int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
-                stageNum, initialSeeding, rounds, resultsSoFar);
+                stageNum, initialSeeding, ImmutableList.copyOf(rounds), resultsSoFar);
     }
 
     @Override
-    public TournamentStandings getStandingsSoFar(Seeding initialSeeding,
-            ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+    public TournamentStandings getStandingsSoFar(String tournamentInternalName,
+            Seeding initialSeeding, int stageNum, List<RoundSpec> rounds,
+            Set<MatchResult> resultsSoFar) {
         ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
         Map<Player, Integer> playerEliminationRounds = getPlayerEliminationRounds(
-                initialSeeding, rounds, resultsSoFar);
+                tournamentInternalName, initialSeeding, stageNum, rounds, resultsSoFar);
 
         ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
         for (int i = 0; i < playersBestFirst.size(); i++) {
@@ -321,9 +321,11 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         return TournamentStandings.create(playerScores.build());
     }
 
-    private Map<Player, Integer> getPlayerEliminationRounds(Seeding initialSeeding,
-            ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
-        return createAndRunSimulator(initialSeeding, rounds, resultsSoFar).getPlayerEliminationRounds();
+    private Map<Player, Integer> getPlayerEliminationRounds(String tournamentInternalName,
+            Seeding initialSeeding, int stageNum, List<RoundSpec> rounds,
+            Set<MatchResult> resultsSoFar) {
+        return createAndRunSimulator(tournamentInternalName, initialSeeding, stageNum, rounds, resultsSoFar)
+                .getPlayerEliminationRounds();
     }
 
     private static class EliminationScore implements Score {
@@ -375,6 +377,24 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             }
             //TODO: This is confusing, change this (play-in round is round 1, etc.)
             return "eliminated in round " + roundEliminated;
+        }
+    }
+
+    @Override
+    public void validateRounds(ImmutableList<RoundSpec> rounds) {
+        // Require that all games used be two-player and zero-sum
+        for (RoundSpec round : rounds) {
+            for (MatchSpec match : round.getMatches()) {
+                Game game = match.getGame();
+                if (game.getNumRoles() != 2) {
+                    throw new IllegalArgumentException("Only two-player games should "
+                            + "be used in a single-elimination format.");
+                }
+                if (!game.isFixedSum()) {
+                    throw new IllegalArgumentException("Only fixed-sum games should "
+                            + "be used in a single-elimination format.");
+                }
+            }
         }
     }
 }

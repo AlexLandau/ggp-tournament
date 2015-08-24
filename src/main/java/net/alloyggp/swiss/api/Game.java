@@ -4,17 +4,17 @@ public class Game {
     private final String source;
     private final String id;
     private final int numRoles;
-    private final boolean zeroSum;
+    private final boolean fixedSum;
 
-    private Game(String source, String id, int numRoles, boolean zeroSum) {
+    private Game(String source, String id, int numRoles, boolean fixedSum) {
         this.source = source;
         this.id = id;
         this.numRoles = numRoles;
-        this.zeroSum = zeroSum;
+        this.fixedSum = fixedSum;
     }
 
-    public static Game create(String source, String id, int numRoles, boolean zeroSum) {
-        return new Game(source, id, numRoles, zeroSum);
+    public static Game create(String source, String id, int numRoles, boolean fixedSum) {
+        return new Game(source, id, numRoles, fixedSum);
     }
 
     public String getSource() {
@@ -29,8 +29,8 @@ public class Game {
         return numRoles;
     }
 
-    public boolean isZeroSum() {
-        return zeroSum;
+    public boolean isFixedSum() {
+        return fixedSum;
     }
 
     @Override
@@ -73,6 +73,6 @@ public class Game {
 
     @Override
     public String toString() {
-        return "Game [source=" + source + ", id=" + id + ", numRoles=" + numRoles + ", zeroSum=" + zeroSum + "]";
+        return "Game [source=" + source + ", id=" + id + ", numRoles=" + numRoles + ", fixedSum=" + fixedSum + "]";
     }
 }

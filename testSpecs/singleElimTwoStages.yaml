@@ -4,15 +4,15 @@ games:
   - name: breakthrough
     repository: games.ggp.org/base
     numRoles: 2
-    zeroSum: true
+    fixedSum: true
   - name: cephalopodMicro
     repository: games.ggp.org/base
     numRoles: 2
-    zeroSum: true
+    fixedSum: true
   - name: hexPie
     repository: games.ggp.org/base
     numRoles: 2
-    zeroSum: true
+    fixedSum: true
 
 nameDisplay: Sample two-stage tournament
 nameInternal: singleElimTwoStages

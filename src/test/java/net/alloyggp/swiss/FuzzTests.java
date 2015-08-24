@@ -64,7 +64,7 @@ public class FuzzTests {
         if (game.getNumRoles() == 1) {
             return ImmutableList.of(getOneGoalValue(random));
         } else if (game.getNumRoles() == 2) {
-            if (game.isZeroSum()) {
+            if (game.isFixedSum()) {
                 int goal = getOneGoalValue(random);
                 return ImmutableList.of(goal, 100 - goal);
             } else {
@@ -72,7 +72,7 @@ public class FuzzTests {
             }
         } else {
             int numRoles = game.getNumRoles();
-            if (game.isZeroSum()) {
+            if (game.isFixedSum()) {
                 int winner = random.nextInt(numRoles);
                 List<Integer> goals = Lists.newArrayList(Collections.nCopies(numRoles, 0));
                 goals.set(winner, 100);

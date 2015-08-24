@@ -61,8 +61,8 @@ public class TournamentSpec {
             String name = (String) gameMap.get("name");
             String repository = (String) gameMap.get("repository");
             int numRoles = (int) gameMap.get("numRoles");
-            boolean zeroSum = (boolean) gameMap.get("zeroSum");
-            Game game = Game.create(repository, name, numRoles, zeroSum);
+            boolean fixedSum = (boolean) gameMap.get("fixedSum");
+            Game game = Game.create(repository, name, numRoles, fixedSum);
             if (results.containsKey(name)) {
                 throw new IllegalArgumentException("Can't have two games with the same name defined");
             }
