@@ -9,10 +9,13 @@ import com.google.common.collect.ImmutableMap;
 
 import net.alloyggp.swiss.FormatRunner;
 import net.alloyggp.swiss.SingleEliminationFormatRunner;
+import net.alloyggp.swiss.SwissFormat1Runner;
 
 public enum StageFormat {
     SINGLE_ELIMINATION("singleElimination",
             () -> SingleEliminationFormatRunner.create()),
+    SWISS1("swiss1",
+            () -> SwissFormat1Runner.create()),
     ;
     private final String yamlName;
     private final Supplier<FormatRunner> runnerSupplier;

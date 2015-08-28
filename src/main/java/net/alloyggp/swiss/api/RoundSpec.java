@@ -2,11 +2,13 @@ package net.alloyggp.swiss.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 @Immutable
 public class RoundSpec {
@@ -28,5 +30,15 @@ public class RoundSpec {
 
     public ImmutableList<MatchSpec> getMatches() {
         return matches;
+    }
+
+    public static Set<Game> getAllGames(ImmutableList<RoundSpec> rounds) {
+        Set<Game> results = Sets.newHashSet();
+        for (RoundSpec round : rounds) {
+            for (MatchSpec match : round.getMatches()) {
+                results.add(match.getGame());
+            }
+        }
+        return results;
     }
 }

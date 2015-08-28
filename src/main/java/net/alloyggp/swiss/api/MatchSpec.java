@@ -51,7 +51,7 @@ public class MatchSpec {
     }
 
     //From seed order (best first), to the order of their roles
-    public ImmutableList<Player> putInOrder(ImmutableList<Player> playersBestSeedFirst) {
+    public ImmutableList<Player> putInOrder(List<Player> playersBestSeedFirst) {
         ImmutableList.Builder<Player> players = ImmutableList.builder();
         for (int seed : playerSeedOrder) {
             players.add(playersBestSeedFirst.get(seed));

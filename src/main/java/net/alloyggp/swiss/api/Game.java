@@ -1,5 +1,8 @@
 package net.alloyggp.swiss.api;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+
 public class Game {
     private final String source;
     private final String id;
@@ -7,6 +10,9 @@ public class Game {
     private final boolean fixedSum;
 
     private Game(String source, String id, int numRoles, boolean fixedSum) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(source));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id));
+        Preconditions.checkArgument(numRoles > 0);
         this.source = source;
         this.id = id;
         this.numRoles = numRoles;

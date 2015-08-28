@@ -19,7 +19,7 @@ public class MatchSetup {
         this.playClock = playClock;
     }
 
-    public static MatchSetup create(String matchId, MatchSpec spec, ImmutableList<Player> playersHighestSeedFirst) {
+    public static MatchSetup create(String matchId, MatchSpec spec, List<Player> playersHighestSeedFirst) {
         return new MatchSetup(matchId, spec.getGame(), spec.putInOrder(playersHighestSeedFirst),
                 spec.getStartClock(), spec.getPlayClock());
     }

@@ -294,14 +294,9 @@ public class SingleEliminationFormatRunner implements FormatRunner {
     @Override
     public Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding,
             int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
-        return createAndRunSimulator(tournamentInternalName, initialSeeding, stageNum, rounds, resultsSoFar)
-                .getMatchesToRun();
-    }
-
-    private SingleEliminationFormatSimulator createAndRunSimulator(String tournamentInternalName,
-            Seeding initialSeeding, int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
-                stageNum, initialSeeding, ImmutableList.copyOf(rounds), resultsSoFar);
+                stageNum, initialSeeding, ImmutableList.copyOf(rounds), resultsSoFar)
+                .getMatchesToRun();
     }
 
     @Override
@@ -324,7 +319,8 @@ public class SingleEliminationFormatRunner implements FormatRunner {
     private Map<Player, Integer> getPlayerEliminationRounds(String tournamentInternalName,
             Seeding initialSeeding, int stageNum, List<RoundSpec> rounds,
             Set<MatchResult> resultsSoFar) {
-        return createAndRunSimulator(tournamentInternalName, initialSeeding, stageNum, rounds, resultsSoFar)
+        return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
+                stageNum, initialSeeding, ImmutableList.copyOf(rounds), resultsSoFar)
                 .getPlayerEliminationRounds();
     }
 
@@ -384,6 +380,10 @@ public class SingleEliminationFormatRunner implements FormatRunner {
     public void validateRounds(ImmutableList<RoundSpec> rounds) {
         // Require that all games used be two-player and zero-sum
         for (RoundSpec round : rounds) {
+            if (round.getMatches().isEmpty()) {
+                throw new IllegalArgumentException("Single-elimination rounds must have "
+                        + "at least one match.");
+            }
             for (MatchSpec match : round.getMatches()) {
                 Game game = match.getGame();
                 if (game.getNumRoles() != 2) {

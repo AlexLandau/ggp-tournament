@@ -1,0 +1,48 @@
+games:
+  - name: breakthrough
+    repository: games.ggp.org/base
+    numRoles: 2
+    fixedSum: true
+  - name: cephalopodMicro
+    repository: games.ggp.org/base
+    numRoles: 2
+    fixedSum: true
+
+nameDisplay: Sample Swiss tournament, 2p fixed sum games only
+nameInternal: swissSample
+
+stages:
+  - format: swiss1
+    rounds:
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+      
+    
