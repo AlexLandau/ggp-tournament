@@ -1,0 +1,63 @@
+nameDisplay: Sample Swiss tournament, >2p fixed-sum games
+nameInternal: swiss1Sample5
+
+games:
+  - name: game1
+    repository: games.ggp.org/base
+    numRoles: 3
+    fixedSum: true
+  - name: game2
+    repository: games.ggp.org/base
+    numRoles: 4
+    fixedSum: true
+  - name: game3
+    repository: games.ggp.org/base
+    numRoles: 4
+    fixedSum: true
+  - name: game4
+    repository: games.ggp.org/base
+    numRoles: 5
+    fixedSum: true
+  - name: game5
+    repository: games.ggp.org/base
+    numRoles: 3
+    fixedSum: true
+
+stages:
+  - format: swiss1
+    rounds:
+      - matches:
+          - game: game1
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1, 2]
+      - matches:
+          - game: game2
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1, 2, 3]
+      - matches:
+          - game: game3
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1, 2, 3]
+      - matches:
+          - game: game4
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1, 2, 3, 4]
+      - matches:
+          - game: game4
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1, 2, 3, 4]
+      - matches:
+          - game: game5
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 2, 0]
+      - matches:
+          - game: game5
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0, 2]

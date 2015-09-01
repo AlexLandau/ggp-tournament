@@ -63,6 +63,14 @@ public class StageSpec {
                 rounds, resultsSoFar);
     }
 
+    public int getStageNum() {
+        return stageNum;
+    }
+
+    public StageFormat getFormat() {
+        return format;
+    }
+
     public Seeding getSeedingsFromFinalStandings(TournamentStandings standings) {
         return Seedings.getSeedingsFromFinalStandings(standings, playerCutoff);
     }

@@ -1,66 +1,51 @@
-nameDisplay: Sample Swiss tournament, 2p fixed sum games and 1p games
-nameInternal: swiss1Sample2
+nameDisplay: Sample Swiss tournament, 2p non-fixed-sum games
+nameInternal: swiss1Sample3
 
 games:
-  - name: breakthrough
+  - name: gt1
     repository: games.ggp.org/base
     numRoles: 2
-    fixedSum: true
-  - name: cephalopodMicro
-    repository: games.ggp.org/base
-    numRoles: 2
-    fixedSum: true
-  - name: puzzle1
-    repository: games.ggp.org/base
-    numRoles: 1
     fixedSum: false
-  - name: puzzle2
+  - name: gt2
     repository: games.ggp.org/base
-    numRoles: 1
+    numRoles: 2
     fixedSum: false
 
 stages:
   - format: swiss1
     rounds:
       - matches:
-          - game: puzzle1
-            startClock: 120
-            playClock: 10
-            seedRoles: [0]
-      - matches:
-          - game: breakthrough
+          - game: gt1
             startClock: 60
             playClock: 15
             seedRoles: [0, 1]
       - matches:
-          - game: breakthrough
+          - game: gt1
             startClock: 60
             playClock: 15
             seedRoles: [0, 1]
       - matches:
-          - game: breakthrough
+          - game: gt1
             startClock: 60
             playClock: 15
             seedRoles: [0, 1]
       - matches:
-          - game: puzzle2
-            startClock: 120
-            playClock: 10
-            seedRoles: [0]
-      - matches:
-          - game: cephalopodMicro
+          - game: gt2
             startClock: 60
             playClock: 15
             seedRoles: [1, 0]
       - matches:
-          - game: cephalopodMicro
+          - game: gt2
             startClock: 60
             playClock: 15
             seedRoles: [1, 0]
       - matches:
-          - game: cephalopodMicro
+          - game: gt2
             startClock: 60
             playClock: 15
             seedRoles: [1, 0]
-      
-    
+      - matches:
+          - game: gt2
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
