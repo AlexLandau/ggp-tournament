@@ -1,9 +1,15 @@
 package net.alloyggp.swiss.api;
 
+import javax.annotation.concurrent.Immutable;
+
+import com.google.common.base.Preconditions;
+
+@Immutable
 public class Player {
     private final String id;
 
     private Player(String id) {
+        Preconditions.checkArgument(!id.contains(","), "Player names should not contain commas");
         this.id = id;
     }
 

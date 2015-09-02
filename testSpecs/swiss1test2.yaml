@@ -46,7 +46,6 @@ stages:
           - game: puzzle2
             startClock: 120
             playClock: 10
-            seedRoles: [0]
       - matches:
           - game: cephalopodMicro
             startClock: 60

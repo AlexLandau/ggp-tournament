@@ -26,13 +26,13 @@ import net.alloyggp.swiss.api.Game;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchResult.Outcome;
 import net.alloyggp.swiss.api.MatchSetup;
-import net.alloyggp.swiss.api.MatchSpec;
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.PlayerScore;
-import net.alloyggp.swiss.api.RoundSpec;
 import net.alloyggp.swiss.api.Score;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.TournamentStandings;
+import net.alloyggp.swiss.spec.MatchSpec;
+import net.alloyggp.swiss.spec.RoundSpec;
 
 public class SwissFormat1Runner implements FormatRunner {
     private static final SwissFormat1Runner INSTANCE = new SwissFormat1Runner();
@@ -110,7 +110,7 @@ public class SwissFormat1Runner implements FormatRunner {
                         String matchId = MatchIds.create(tournamentInternalName, stageNum,
                                 roundNum, groupNum, matchNum, attemptNum.get());
 
-                        matchesToRun.add(MatchSetup.create(matchId, match, players));
+                        matchesToRun.add(match.createMatchSetup(matchId, players));
                         break;
                     } else {
                         MatchResult result = getSuccessfulAttempt(groupNum, matchNum, roundResults);

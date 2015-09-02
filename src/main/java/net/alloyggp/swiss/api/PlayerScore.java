@@ -2,12 +2,15 @@ package net.alloyggp.swiss.api;
 
 import java.util.Comparator;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * Note: This class's natural ordering will put the best players at
  * the beginning of the list and the worse players at the end. It uses
  * the seeding from the beginning of the round as a starting point,
  * so it should never return compareTo() == 0 for two different players.
  */
+@Immutable
 public class PlayerScore implements Comparable<PlayerScore> {
     private final Player player;
     private final Score score;

@@ -9,15 +9,16 @@ import com.google.common.collect.ImmutableList;
 
 /**
  * An immutable object representing a particular state of a tournament. This includes
- * the specification of the tournament, the initial seeding of players, and
+ * the specification of the tournament, the initial seeding of players, and any match
+ * results obtained so far.
  */
 @Immutable
 public class TournamentStatus {
-    private final TournamentSpec spec;
+    private final Tournament spec;
     private final Seeding initialSeeding;
     private final ImmutableList<MatchResult> resultsSoFar;
 
-    private TournamentStatus(TournamentSpec spec, Seeding initialSeeding,
+    private TournamentStatus(Tournament spec, Seeding initialSeeding,
             ImmutableList<MatchResult> resultsSoFar) {
         this.spec = spec;
         this.initialSeeding = initialSeeding;
@@ -33,7 +34,7 @@ public class TournamentStatus {
      * tournaments, the client may want to use a pre-existing set of player rankings; in
      * other cases, a random seeding is sufficient.
      */
-    public static TournamentStatus getInitialStatus(TournamentSpec spec, Seeding initialSeeding) {
+    public static TournamentStatus getInitialStatus(Tournament spec, Seeding initialSeeding) {
         return new TournamentStatus(spec, initialSeeding, ImmutableList.of());
     }
 
@@ -57,7 +58,7 @@ public class TournamentStatus {
         return new TournamentStatus(spec, initialSeeding, allMatchResults);
     }
 
-    public TournamentSpec getSpec() {
+    public Tournament getSpec() {
         return spec;
     }
 

@@ -1,4 +1,4 @@
-package net.alloyggp.swiss.api;
+package net.alloyggp.swiss.spec;
 
 import java.util.List;
 import java.util.Map;
@@ -8,10 +8,17 @@ import javax.annotation.concurrent.Immutable;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import net.alloyggp.swiss.FormatRunner;
 import net.alloyggp.swiss.Seedings;
+import net.alloyggp.swiss.YamlUtils;
+import net.alloyggp.swiss.api.Game;
+import net.alloyggp.swiss.api.MatchResult;
+import net.alloyggp.swiss.api.MatchSetup;
+import net.alloyggp.swiss.api.Seeding;
+import net.alloyggp.swiss.api.TournamentStandings;
 
 @Immutable
 public class StageSpec {
@@ -33,9 +40,15 @@ public class StageSpec {
         this.playerCutoff = playerCutoff;
     }
 
+    private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
+            "format",
+            "rounds",
+            "playerCutoff"
+            );
     @SuppressWarnings("unchecked")
     public static StageSpec parseYaml(Object yamlStage, int stageNum, Map<String, Game> games) {
         Map<String, Object> stageMap = (Map<String, Object>) yamlStage;
+        YamlUtils.validateKeys(stageMap, "stage", ALLOWED_KEYS);
         String formatName = (String) stageMap.get("format");
         List<RoundSpec> rounds = Lists.newArrayList();
         for (Object yamlRound : (List<Object>) stageMap.get("rounds")) {

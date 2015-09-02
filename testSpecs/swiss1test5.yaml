@@ -30,7 +30,6 @@ stages:
           - game: game1
             startClock: 60
             playClock: 15
-            seedRoles: [0, 1, 2]
       - matches:
           - game: game2
             startClock: 60
@@ -40,17 +39,14 @@ stages:
           - game: game3
             startClock: 60
             playClock: 15
-            seedRoles: [0, 1, 2, 3]
       - matches:
           - game: game4
             startClock: 60
             playClock: 15
-            seedRoles: [0, 1, 2, 3, 4]
       - matches:
           - game: game4
             startClock: 60
             playClock: 15
-            seedRoles: [0, 1, 2, 3, 4]
       - matches:
           - game: game5
             startClock: 60

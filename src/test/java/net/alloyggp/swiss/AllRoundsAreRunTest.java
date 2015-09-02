@@ -14,13 +14,13 @@ import com.google.common.collect.ImmutableList;
 
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
-import net.alloyggp.swiss.api.RoundSpec;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.StageFormat;
-import net.alloyggp.swiss.api.StageSpec;
-import net.alloyggp.swiss.api.TournamentSpec;
 import net.alloyggp.swiss.api.TournamentSpecParser;
 import net.alloyggp.swiss.api.TournamentStatus;
+import net.alloyggp.swiss.spec.RoundSpec;
+import net.alloyggp.swiss.spec.StageFormat;
+import net.alloyggp.swiss.spec.StageSpec;
+import net.alloyggp.swiss.spec.TournamentSpec;
 
 /**
  * This is a fuzz test for the following invariant:
@@ -46,7 +46,7 @@ public class AllRoundsAreRunTest {
 
     @Test
     public void test() {
-        TournamentSpec spec = TournamentSpecParser.parse(yamlFile);
+        TournamentSpec spec = (TournamentSpec) TournamentSpecParser.parseYamlFile(yamlFile);
         for (long seed = 0L; seed < 100L; seed++) {
             Random random = new Random(seed);
             Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);

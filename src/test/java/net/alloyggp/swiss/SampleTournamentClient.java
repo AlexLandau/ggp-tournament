@@ -15,7 +15,7 @@ import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentSpec;
+import net.alloyggp.swiss.api.Tournament;
 import net.alloyggp.swiss.api.TournamentSpecParser;
 import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.api.TournamentStatus;
@@ -27,7 +27,7 @@ import net.alloyggp.swiss.api.TournamentStatus;
 public class SampleTournamentClient {
     @Test
     public void testSingleElimination() {
-        TournamentSpec spec = TournamentSpecParser.parse(new File("testSpecs/singleElimTwoStages.yaml"));
+        Tournament spec = TournamentSpecParser.parseYamlFile(new File("testSpecs/singleElimTwoStages.yaml"));
         Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
         TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
         //Run matches until exhaustion...

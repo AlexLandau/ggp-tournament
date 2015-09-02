@@ -1,4 +1,4 @@
-package net.alloyggp.swiss.api;
+package net.alloyggp.swiss.spec;
 
 import java.util.List;
 import java.util.Map;
@@ -14,9 +14,20 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import net.alloyggp.swiss.MatchResults;
+import net.alloyggp.swiss.YamlUtils;
+import net.alloyggp.swiss.api.Game;
+import net.alloyggp.swiss.api.MatchResult;
+import net.alloyggp.swiss.api.MatchSetup;
+import net.alloyggp.swiss.api.Player;
+import net.alloyggp.swiss.api.PlayerScore;
+import net.alloyggp.swiss.api.Score;
+import net.alloyggp.swiss.api.Seeding;
+import net.alloyggp.swiss.api.Tournament;
+import net.alloyggp.swiss.api.TournamentSpecParser;
+import net.alloyggp.swiss.api.TournamentStandings;
 
 @Immutable
-public class TournamentSpec {
+public class TournamentSpec implements Tournament {
     private final String tournamentInternalName;
     private final String tournamentDisplayName;
     private final ImmutableList<StageSpec> stages;
@@ -31,6 +42,12 @@ public class TournamentSpec {
         this.stages = stages;
     }
 
+    private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
+            "games",
+            "nameInternal",
+            "nameDisplay",
+            "stages"
+            );
     /**
      * Parses an already-loaded YAML object containing a tournament specification.
      *
@@ -39,6 +56,7 @@ public class TournamentSpec {
     @SuppressWarnings("unchecked")
     public static TournamentSpec parseYamlRootObject(Object yamlRoot) {
         Map<String, Object> rootMap = (Map<String, Object>) yamlRoot;
+        YamlUtils.validateKeys(rootMap, "root", ALLOWED_KEYS);
         Map<String, Game> games = parseGames(rootMap.get("games"));
         String tournamentInternalName = (String) rootMap.get("nameInternal");
         String tournamentDisplayName = (String) rootMap.get("nameDisplay");
@@ -71,10 +89,18 @@ public class TournamentSpec {
         return results;
     }
 
+    /* (non-Javadoc)
+     * @see net.alloyggp.swiss.api.Tournament#getTournamentInternalName()
+     */
+    @Override
     public String getTournamentInternalName() {
         return tournamentInternalName;
     }
 
+    /* (non-Javadoc)
+     * @see net.alloyggp.swiss.api.Tournament#getTournamentDisplayName()
+     */
+    @Override
     public String getTournamentDisplayName() {
         return tournamentDisplayName;
     }
@@ -83,9 +109,10 @@ public class TournamentSpec {
         return stages;
     }
 
-    /**
-     * Returns the set of matches that should be run in the given tournament state.
+    /* (non-Javadoc)
+     * @see net.alloyggp.swiss.api.Tournament#getMatchesToRun(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
      */
+    @Override
     public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
@@ -104,9 +131,10 @@ public class TournamentSpec {
         return ImmutableSet.of();
     }
 
-    /**
-     * Returns the standings in the given tournament state.
+    /* (non-Javadoc)
+     * @see net.alloyggp.swiss.api.Tournament#getCurrentStandings(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
      */
+    @Override
     public TournamentStandings getCurrentStandings(Seeding initialSeeding,
             ImmutableList<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;

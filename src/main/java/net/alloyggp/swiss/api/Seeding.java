@@ -3,10 +3,15 @@ package net.alloyggp.swiss.api;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.Immutable;
+
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
+@Immutable
 public class Seeding {
     private final ImmutableList<Player> playersBestFirst;
 
@@ -17,7 +22,8 @@ public class Seeding {
     /**
      * Creates a random seeding of the given players.
      *
-     * <p>To support fuzz testing, the source of randomness is explicitly provided.
+     * <p>To support fuzz testing (and paranoid clients who want to use
+     * secure RNGs), the source of randomness is explicitly provided.
      */
     public static Seeding createRandomSeeding(Random random, List<Player> players) {
         List<Player> playersList = Lists.newArrayList(players);
@@ -35,6 +41,38 @@ public class Seeding {
 
     public ImmutableList<Player> getPlayersBestFirst() {
         return playersBestFirst;
+    }
+
+    /**
+     * Turns the seeding into a single string so that clients may easily
+     * store it durably (e.g. in a database or on the file system). This
+     * allows the Seeding to be recovered by calling fromPersistedString
+     * with this as the argument.
+     *
+     * <p>It is recommended that clients store this value durably (along
+     * with the tournament specification and match results) instead of in
+     * memory so that if the server crashes, the tournament can be
+     * continued.
+     */
+    //TODO: Escape this string properly to prevent commas in player IDs
+    // along with newlines and other problems (instead of requiring them
+    // to not be in the player ID)
+    public String toPersistedString() {
+        return playersBestFirst.stream()
+            .map(Player::getId)
+            .collect(Collectors.joining(","));
+    }
+
+    /**
+     * Creates the seeding from a string previously created by
+     * {@link #toPersistedString()}.
+     */
+    public static Seeding fromPersistedString(String persistedString) {
+        List<Player> players = Lists.newArrayList();
+        for (String playerId : Splitter.on(",").split(persistedString)) {
+            players.add(Player.create(playerId));
+        }
+        return create(players);
     }
 
     @Override

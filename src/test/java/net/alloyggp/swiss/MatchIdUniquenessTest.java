@@ -16,7 +16,7 @@ import com.google.common.collect.Maps;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentSpec;
+import net.alloyggp.swiss.api.Tournament;
 import net.alloyggp.swiss.api.TournamentSpecParser;
 import net.alloyggp.swiss.api.TournamentStatus;
 
@@ -43,13 +43,13 @@ public class MatchIdUniquenessTest {
 
     @Test
     public void testMatchSetupsHaveUniqueIds() {
-        TournamentSpec spec = TournamentSpecParser.parse(yamlFile);
+        Tournament spec = TournamentSpecParser.parseYamlFile(yamlFile);
         for (long seed = 0L; seed < 100L; seed++) {
             testWithSeed(spec, seed);
         }
     }
 
-    private void testWithSeed(TournamentSpec spec, long seed) {
+    private void testWithSeed(Tournament spec, long seed) {
         Random random = new Random(seed);
         Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
         TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);

@@ -1,11 +1,19 @@
-package net.alloyggp.swiss.api;
+package net.alloyggp.swiss.spec;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
+import net.alloyggp.swiss.YamlUtils;
+import net.alloyggp.swiss.api.Game;
+import net.alloyggp.swiss.api.MatchSetup;
+import net.alloyggp.swiss.api.Player;
 
 @Immutable
 public class MatchSpec {
@@ -22,9 +30,16 @@ public class MatchSpec {
         this.playerSeedOrder = playerSeedOrder;
     }
 
+    private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
+            "game",
+            "startClock",
+            "playClock",
+            "seedRoles"
+            );
     @SuppressWarnings("unchecked")
     public static MatchSpec parseYaml(Object yamlMatch, Map<String, Game> games) {
         Map<String, Object> matchMap = (Map<String, Object>) yamlMatch;
+        YamlUtils.validateKeys(matchMap, "match", ALLOWED_KEYS);
         String gameName = (String) matchMap.get("game");
         Game game = games.get(gameName);
         if (game == null) {
@@ -33,8 +48,16 @@ public class MatchSpec {
         }
         int startClock = (int) matchMap.get("startClock");
         int playClock = (int) matchMap.get("playClock");
-        ImmutableList<Integer> playerSeedOrder = ImmutableList.copyOf(
-                (List<Integer>) matchMap.get("seedRoles"));
+        ImmutableList<Integer> playerSeedOrder;
+        if (matchMap.containsKey("seedRoles")) {
+            playerSeedOrder = ImmutableList.copyOf(
+                    (List<Integer>) matchMap.get("seedRoles"));
+        } else {
+            playerSeedOrder = ImmutableList.copyOf(
+                    IntStream.range(0, game.getNumRoles())
+                    .boxed().collect(Collectors.toList()));
+        }
+
         return new MatchSpec(game, startClock, playClock, playerSeedOrder);
     }
 
@@ -59,4 +82,8 @@ public class MatchSpec {
         return players.build();
     }
 
+    public MatchSetup createMatchSetup(String matchId, List<Player> playersHighestSeedFirst) {
+        return MatchSetup.create(matchId, game, putInOrder(playersHighestSeedFirst),
+                startClock, playClock);
+    }
 }

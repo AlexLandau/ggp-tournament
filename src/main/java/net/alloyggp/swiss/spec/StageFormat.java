@@ -1,4 +1,4 @@
-package net.alloyggp.swiss.api;
+package net.alloyggp.swiss.spec;
 
 import java.util.Map;
 

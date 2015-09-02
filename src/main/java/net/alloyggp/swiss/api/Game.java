@@ -1,8 +1,11 @@
 package net.alloyggp.swiss.api;
 
+import javax.annotation.concurrent.Immutable;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+@Immutable
 public class Game {
     private final String source;
     private final String id;

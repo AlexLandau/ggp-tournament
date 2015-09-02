@@ -23,7 +23,6 @@ stages:
           - game: gt1
             startClock: 60
             playClock: 15
-            seedRoles: [0, 1]
       - matches:
           - game: gt1
             startClock: 60
@@ -33,19 +32,15 @@ stages:
           - game: gt2
             startClock: 60
             playClock: 15
-            seedRoles: [1, 0]
       - matches:
           - game: gt2
             startClock: 60
             playClock: 15
-            seedRoles: [1, 0]
       - matches:
           - game: gt2
             startClock: 60
             playClock: 15
-            seedRoles: [1, 0]
       - matches:
           - game: gt2
             startClock: 60
             playClock: 15
-            seedRoles: [1, 0]

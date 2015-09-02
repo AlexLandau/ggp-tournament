@@ -2,8 +2,11 @@ package net.alloyggp.swiss.api;
 
 import java.util.List;
 
+import javax.annotation.concurrent.Immutable;
+
 import com.google.common.collect.ImmutableList;
 
+@Immutable
 public class MatchSetup {
     private final String matchId;
     private final Game game;
@@ -11,7 +14,8 @@ public class MatchSetup {
     private final int startClock;
     private final int playClock;
 
-    private MatchSetup(String matchId, Game game, ImmutableList<Player> players, int startClock, int playClock) {
+    private MatchSetup(String matchId, Game game, ImmutableList<Player> players, int startClock,
+            int playClock) {
         this.matchId = matchId;
         this.game = game;
         this.players = players;
@@ -19,9 +23,10 @@ public class MatchSetup {
         this.playClock = playClock;
     }
 
-    public static MatchSetup create(String matchId, MatchSpec spec, List<Player> playersHighestSeedFirst) {
-        return new MatchSetup(matchId, spec.getGame(), spec.putInOrder(playersHighestSeedFirst),
-                spec.getStartClock(), spec.getPlayClock());
+    public static MatchSetup create(String matchId, Game game, List<Player> players, int startClock,
+            int playClock) {
+        return new MatchSetup(matchId, game, ImmutableList.copyOf(players),
+                startClock, playClock);
     }
 
     public String getMatchId() {

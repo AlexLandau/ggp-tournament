@@ -7,9 +7,9 @@ import com.google.common.collect.ImmutableList;
 
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
-import net.alloyggp.swiss.api.RoundSpec;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.TournamentStandings;
+import net.alloyggp.swiss.spec.RoundSpec;
 
 public interface FormatRunner {
 

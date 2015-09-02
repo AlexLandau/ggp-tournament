@@ -21,7 +21,7 @@ import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentSpec;
+import net.alloyggp.swiss.api.Tournament;
 import net.alloyggp.swiss.api.TournamentSpecParser;
 import net.alloyggp.swiss.api.TournamentStatus;
 
@@ -49,7 +49,7 @@ public class MatchResultOrderingTest {
 
     @Test
     public void testMatchSetupsDoNotDisappear() {
-        TournamentSpec spec = TournamentSpecParser.parse(yamlFile);
+        Tournament spec = TournamentSpecParser.parseYamlFile(yamlFile);
         for (long seed = 0L; seed < 100L; seed++) {
             Random random = new Random(seed);
             Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);

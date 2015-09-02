@@ -19,13 +19,13 @@ import net.alloyggp.swiss.api.Game;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchResult.Outcome;
 import net.alloyggp.swiss.api.MatchSetup;
-import net.alloyggp.swiss.api.MatchSpec;
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.PlayerScore;
-import net.alloyggp.swiss.api.RoundSpec;
 import net.alloyggp.swiss.api.Score;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.TournamentStandings;
+import net.alloyggp.swiss.spec.MatchSpec;
+import net.alloyggp.swiss.spec.RoundSpec;
 
 /*
  * Non-obvious aspects of this format implementation:
@@ -208,7 +208,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             //TODO: Correctly define roles?
             //TODO: Accurate seeding
             //TODO: Alternate roles each time if we do have to repeat the last match type
-            return MatchSetup.create(matchId, specToUse, ImmutableList.of(player1, player2));
+            return specToUse.createMatchSetup(matchId, ImmutableList.of(player1, player2));
         }
 
         private boolean haveCompleted(int matchNumber, List<MatchResult> completedSoFar) {
