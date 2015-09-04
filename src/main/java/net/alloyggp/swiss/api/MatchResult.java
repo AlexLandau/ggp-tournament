@@ -35,8 +35,10 @@ public class MatchResult {
         this.errorsByTurnByRole = errorsByTurnByRole;
     }
 
-    public static MatchResult getAbortedMatchResult(MatchSetup setup, List<Map<Integer, String>> errorsByTurnByRole) {
-        return new MatchResult(setup, Outcome.ABORTED, Optional.absent(), immutify(errorsByTurnByRole));
+    public static MatchResult getAbortedMatchResult(MatchSetup setup,
+            List<Map<Integer, String>> errorsByTurnByRole) {
+        return new MatchResult(setup, Outcome.ABORTED, Optional.absent(),
+                immutify(errorsByTurnByRole));
     }
 
     public static MatchResult getSuccessfulMatchResult(MatchSetup setup, List<Integer> goals,

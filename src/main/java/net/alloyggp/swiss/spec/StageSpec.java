@@ -45,6 +45,7 @@ public class StageSpec {
             "rounds",
             "playerCutoff"
             );
+
     @SuppressWarnings("unchecked")
     public static StageSpec parseYaml(Object yamlStage, int stageNum, Map<String, Game> games) {
         Map<String, Object> stageMap = (Map<String, Object>) yamlStage;

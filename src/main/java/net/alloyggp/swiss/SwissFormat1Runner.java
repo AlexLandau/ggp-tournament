@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 import com.google.common.base.Optional;
@@ -53,12 +54,15 @@ public class SwissFormat1Runner implements FormatRunner {
         private final ImmutableList<RoundSpec> rounds;
         private final ImmutableList<MatchResult> resultsSoFar;
         private final Set<MatchSetup> matchesToRun = Sets.newHashSet();
+        //TODO: Double-check that all these stats are updated appropriately
+        private Game mostRecentGame = null; //of a fully completed round
         private final Map<Player, Integer> totalPointsScored = Maps.newHashMap();
         private final Map<Game, Map<Player, Integer>> pointsScoredByGame = Maps.newHashMap();
+        private final Map<Player, Integer> pointsFromByes = Maps.newHashMap();
         private final Multiset<Set<Player>> totalMatchupsSoFar = HashMultiset.create();
         private final Map<Game, Multiset<Set<Player>>> matchupsSoFarByGame = Maps.newHashMap();
         private final Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers = Maps.newHashMap();
-        private final Map<Integer, Map<Player, Multiset<Integer>>> nonFixedSumRoleAssignmentsSoFarByNumPlayers = Maps.newHashMap();
+//        private final Map<Integer, Map<Player, Multiset<Integer>>> nonFixedSumRoleAssignmentsSoFarByNumPlayers = Maps.newHashMap();
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
                 ImmutableList<RoundSpec> rounds, ImmutableList<MatchResult> resultsSoFar) {
@@ -143,7 +147,32 @@ public class SwissFormat1Runner implements FormatRunner {
                     for (Player player : unassignedPlayers) {
                         addToSumWithKey(player, byeScore, totalPointsScored);
                         addToSumWithKey(player, byeScore, pointsScoredByGame.get(game));
+                        addToSumWithKey(player, byeScore, pointsFromByes);
                     }
+                }
+                //Also...
+                updateMatchupStats(game, playerGroups);
+                this.mostRecentGame = game;
+            }
+        }
+
+        private void updateMatchupStats(Game game, List<List<Player>> playerGroups) {
+            for (List<Player> players : playerGroups) {
+                if (game.isFixedSum()) {
+                    if (game.getNumRoles() == 2) {
+                        matchupsSoFarByGame.get(game).add(ImmutableSet.of(players.get(0), players.get(1)));
+                    } else {
+                        throw new UnsupportedOperationException();
+                    }
+                } else {
+                    //TODO: Fix this
+                    for (int p1 = 0; p1 < players.size(); p1++) {
+                        for (int p2 = p1 + 1; p2 < players.size(); p2++) {
+                            nonFixedSumMatchupsSoFarByNumPlayers.get(game.getNumRoles())
+                                .add(ImmutableSet.of(players.get(p1), players.get(p2)));
+                        }
+                    }
+//                    nonFixedSumRoleAssignmentsSoFarByNumPlayers
                 }
             }
         }
@@ -193,7 +222,7 @@ public class SwissFormat1Runner implements FormatRunner {
             //Do something naive for now
             Multiset<Set<Player>> matchupsSoFar = nonFixedSumMatchupsSoFarByNumPlayers.get(numRoles);
             Preconditions.checkNotNull(matchupsSoFar);
-            Map<Player, Multiset<Integer>> roleAssignmentsSoFar = nonFixedSumRoleAssignmentsSoFarByNumPlayers.get(numRoles);
+//            Map<Player, Multiset<Integer>> roleAssignmentsSoFar = nonFixedSumRoleAssignmentsSoFarByNumPlayers.get(numRoles);
             List<Player> playersToAssign = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
             List<List<Player>> results = Lists.newArrayList();
             while (playersToAssign.size() >= numRoles) {
@@ -206,11 +235,13 @@ public class SwissFormat1Runner implements FormatRunner {
                     Ordering<Player> playerOrder = Ordering.from(
                             Comparator.<Player, Integer>comparing(p -> {
                                 //Sum of matchups against players already in group
-                                return playersInGroup.stream()
-                                    .map(playerInGroup -> ImmutableSet.of(p, playerInGroup))
-                                    .mapToInt(matchupsSoFar::count)
-                                    .sum();
-                            }).thenComparing(Comparator.comparing(initialSeeding.getPlayersBestFirst()::indexOf)));
+                                    return playersInGroup.stream()
+                                        .map(playerInGroup -> ImmutableSet.of(p, playerInGroup))
+                                        .mapToInt(matchupsSoFar::count)
+                                        .sum();
+                                })
+                            .thenComparing(Comparator.comparing(
+                                    initialSeeding.getPlayersBestFirst()::indexOf)));
                     Player playerToAdd = playerOrder.min(playersToAssign);
                     playersInGroup.add(playerToAdd);
                     playersToAssign.remove(playerToAdd);
@@ -329,6 +360,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private void setInitialTotalsToZero() {
             for (Player player : initialSeeding.getPlayersBestFirst()) {
                 totalPointsScored.put(player, 0);
+                pointsFromByes.put(player, 0);
             }
             Set<Integer> possiblePlayerCounts = Sets.newHashSet();
             for (Game game : RoundSpec.getAllGames(rounds)) {
@@ -342,11 +374,11 @@ public class SwissFormat1Runner implements FormatRunner {
             }
             for (int playerCount : possiblePlayerCounts) {
                 nonFixedSumMatchupsSoFarByNumPlayers.put(playerCount, HashMultiset.create());
-                Map<Player, Multiset<Integer>> nonFixedSumRoleAssignmentsSoFar = Maps.newHashMap();
-                for (Player player : initialSeeding.getPlayersBestFirst()) {
-                    nonFixedSumRoleAssignmentsSoFar.put(player, HashMultiset.create());
-                }
-                nonFixedSumRoleAssignmentsSoFarByNumPlayers.put(playerCount, nonFixedSumRoleAssignmentsSoFar);
+//                Map<Player, Multiset<Integer>> nonFixedSumRoleAssignmentsSoFar = Maps.newHashMap();
+//                for (Player player : initialSeeding.getPlayersBestFirst()) {
+//                    nonFixedSumRoleAssignmentsSoFar.put(player, HashMultiset.create());
+//                }
+//                nonFixedSumRoleAssignmentsSoFarByNumPlayers.put(playerCount, nonFixedSumRoleAssignmentsSoFar);
             }
 
         }
@@ -360,7 +392,15 @@ public class SwissFormat1Runner implements FormatRunner {
             ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
             for (int i = 0; i < playersBestFirst.size(); i++) {
                 Player player = playersBestFirst.get(i);
-                Score score = new SwissScore(totalPointsScored.get(player));
+                int mostRecentGamePoints = 0;
+                String mostRecentGameName = null;
+                if (mostRecentGame != null) {
+                    mostRecentGamePoints = pointsScoredByGame.get(mostRecentGame).get(player);
+                    mostRecentGameName = mostRecentGame.getId();
+                }
+                Score score = new SwissScore(totalPointsScored.get(player),
+                        mostRecentGameName, mostRecentGamePoints,
+                        pointsFromByes.get(player));
                 scores.add(PlayerScore.create(player, score, i));
             }
             return TournamentStandings.create(scores);
@@ -370,9 +410,17 @@ public class SwissFormat1Runner implements FormatRunner {
 
     private static class SwissScore implements Score {
         private final int pointsSoFar;
+        //Just for display purposes; this makes it more obvious why matchups are selected
+        private final @Nullable String mostRecentGameName;
+        private final int pointsInMostRecentGame;
+        private final int pointsFromByes;
 
-        public SwissScore(int pointsSoFar) {
+        public SwissScore(int pointsSoFar, @Nullable String mostRecentGameName,
+                int pointsInMostRecentGame, int pointsFromByes) {
             this.pointsSoFar = pointsSoFar;
+            this.mostRecentGameName = mostRecentGameName;
+            this.pointsInMostRecentGame = pointsInMostRecentGame;
+            this.pointsFromByes = pointsFromByes;
         }
 
         @Override
@@ -407,6 +455,20 @@ public class SwissFormat1Runner implements FormatRunner {
                 return false;
             }
             return true;
+        }
+
+        @Override
+        public String toString() {
+            String string;
+            if (mostRecentGameName == null) {
+                string = pointsSoFar + " total";
+            } else {
+                string = pointsSoFar + " total, " + pointsInMostRecentGame + " in " + mostRecentGameName;
+            }
+            if (pointsFromByes > 0) {
+                string += ", " + pointsFromByes + " from byes";
+            }
+            return string;
         }
     }
 
@@ -452,7 +514,7 @@ public class SwissFormat1Runner implements FormatRunner {
     public void validateRounds(ImmutableList<RoundSpec> rounds) {
         //TODO: Implement
         for (RoundSpec round : rounds) {
-            //Validates all matches are the same game
+            //Validates all matches in the round are the same game
             getOnlyGame(round);
         }
     }

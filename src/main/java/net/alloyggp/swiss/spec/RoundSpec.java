@@ -25,6 +25,7 @@ public class RoundSpec {
     private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
             "matches"
             );
+
     @SuppressWarnings("unchecked")
     public static RoundSpec parseYaml(Object yamlRound, Map<String, Game> games) {
         Map<String, Object> roundMap = (Map<String, Object>) yamlRound;

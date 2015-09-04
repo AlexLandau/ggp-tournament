@@ -3,9 +3,12 @@ package net.alloyggp.swiss.api;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.Immutable;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 
+@Immutable
 public class TournamentStandings {
     //We may have multiple groups, which should be treated separately...
     //Let's ignore this case for now; we may not have to support group play

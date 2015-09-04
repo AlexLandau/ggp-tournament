@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Player;
@@ -27,7 +25,7 @@ import net.alloyggp.swiss.api.TournamentStatus;
 public class SampleTournamentClient {
     @Test
     public void testSingleElimination() {
-        Tournament spec = TournamentSpecParser.parseYamlFile(new File("testSpecs/singleElimTwoStages.yaml"));
+        Tournament spec = TournamentSpecParser.parseYamlFile(new File("testSpecs/swiss1test1.yaml"));
         Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
         TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
         //Run matches until exhaustion...
@@ -50,18 +48,10 @@ public class SampleTournamentClient {
     }
 
     private List<MatchResult> getRandomOutcomes(Set<MatchSetup> nextMatches) {
+        Random random = new Random();
         return nextMatches.stream()
-        .map(setup -> MatchResult.getSuccessfulMatchResult(setup, getRandomGoals(), ImmutableList.of()))
+        .map(setup -> FuzzTests.getResult(random, setup))
         .collect(Collectors.toList());
     }
 
-    private static final Random RAND = new Random();
-
-    private List<Integer> getRandomGoals() {
-        if (RAND.nextBoolean()) {
-            return ImmutableList.of(100, 0);
-        } else {
-            return ImmutableList.of(0, 100);
-        }
-    }
 }

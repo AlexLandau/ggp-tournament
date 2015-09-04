@@ -36,6 +36,7 @@ public class MatchSpec {
             "playClock",
             "seedRoles"
             );
+
     @SuppressWarnings("unchecked")
     public static MatchSpec parseYaml(Object yamlMatch, Map<String, Game> games) {
         Map<String, Object> matchMap = (Map<String, Object>) yamlMatch;
