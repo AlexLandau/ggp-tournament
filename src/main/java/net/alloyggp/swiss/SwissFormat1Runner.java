@@ -11,18 +11,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Ordering;
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
-
 import net.alloyggp.swiss.api.Game;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchResult.Outcome;
@@ -34,6 +22,18 @@ import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.spec.MatchSpec;
 import net.alloyggp.swiss.spec.RoundSpec;
+
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 
 public class SwissFormat1Runner implements FormatRunner {
     private static final SwissFormat1Runner INSTANCE = new SwissFormat1Runner();
@@ -161,8 +161,15 @@ public class SwissFormat1Runner implements FormatRunner {
                 if (game.isFixedSum()) {
                     if (game.getNumRoles() == 2) {
                         matchupsSoFarByGame.get(game).add(ImmutableSet.of(players.get(0), players.get(1)));
+                        totalMatchupsSoFar.add(ImmutableSet.of(players.get(0), players.get(1)));
                     } else {
-                        throw new UnsupportedOperationException();
+                        for (int p1 = 0; p1 < players.size(); p1++) {
+                            for (int p2 = p1 + 1; p2 < players.size(); p2++) {
+                                matchupsSoFarByGame.get(game)
+                                    .add(ImmutableSet.of(players.get(p1), players.get(p2)));
+                                totalMatchupsSoFar.add(ImmutableSet.of(players.get(p1), players.get(p2)));
+                            }
+                        }
                     }
                 } else {
                     //TODO: Fix this
@@ -182,7 +189,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 if (game.getNumRoles() == 2) {
                     return maxScoreAchieved;
                 } else {
-                    throw new UnsupportedOperationException();
+                    return maxScoreAchieved;
                 }
             } else {
                 if (scoreCount > 0) {
@@ -206,7 +213,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 if (numRoles == 2) {
                     return getTwoPlayerFixedSumPlayerGroups(game);
                 } else {
-                    return getManyPlayerFixedSumPlayerGroups();
+                    return getManyPlayerFixedSumPlayerGroups(game);
                 }
             } else {
                 //Use quasi-random pairings
@@ -254,9 +261,29 @@ public class SwissFormat1Runner implements FormatRunner {
             return results;
         }
 
-        private List<List<Player>> getManyPlayerFixedSumPlayerGroups() {
-            // TODO Implement
-            throw new UnsupportedOperationException();
+        private List<List<Player>> getManyPlayerFixedSumPlayerGroups(Game game) {
+            List<List<Player>> groups = Lists.newArrayList();
+
+            Set<Player> assignedSoFar = Sets.newHashSet();
+            List<Player> overallPlayerRankings = getPlayerRankingsForGame(game);
+            int numPlayers = initialSeeding.getPlayersBestFirst().size();
+            while (numPlayers - assignedSoFar.size() >= game.getNumRoles()) {
+                List<Player> curGroup = Lists.newArrayList();
+                //First, get the best player left according to the rankings so far
+                Player firstPlayer = getFirstUnassignedPlayer(overallPlayerRankings, assignedSoFar);
+                curGroup.add(firstPlayer);
+                assignedSoFar.add(firstPlayer);
+                while (curGroup.size() < game.getNumRoles()) {
+                    //Now we look for the best opponent for those players
+                    List<Player> opponentRankings = getOpponentRankingsForPlayers(curGroup, game);
+                    Player opponent = getFirstUnassignedPlayer(opponentRankings, assignedSoFar);
+                    curGroup.add(opponent);
+                    assignedSoFar.add(opponent);
+                }
+                groups.add(ImmutableList.copyOf(curGroup));
+            }
+
+            return groups;
         }
 
         private List<List<Player>> getTwoPlayerFixedSumPlayerGroups(Game game) {
@@ -281,20 +308,33 @@ public class SwissFormat1Runner implements FormatRunner {
         }
 
         private List<Player> getOpponentRankingsForPlayer(Player firstPlayer, Game game) {
+            return getOpponentRankingsForPlayers(ImmutableList.of(firstPlayer), game);
+        }
+
+        private List<Player> getOpponentRankingsForPlayers(
+                List<Player> curGroup, Game game) {
             List<Player> allOpponents = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
-            allOpponents.remove(firstPlayer);
+            allOpponents.removeAll(curGroup);
 
             allOpponents.sort(Comparator.comparing(opponent -> {
                     //Higher points scored by game better
-                    //but discount 100 points per matchup already played in this game
-                    return pointsScoredByGame.get(game).get(opponent)
-                        - 100 * matchupsSoFarByGame.get(game).count(ImmutableSet.of(firstPlayer, opponent));
+                    //but discount 100/n points per matchup already played in this game
+                    double pointsScored = pointsScoredByGame.get(game).get(opponent);
+                    for (Player player : curGroup) {
+                        pointsScored -= (100.0 / curGroup.size())
+                                * matchupsSoFarByGame.get(game).count(ImmutableSet.of(player, opponent));
+                    }
+                    return pointsScored;
                 }
             ).thenComparing(Comparator.comparing(opponent -> {
                     //Higher total points scored better
-                    //but discount 100 points per matchup already played in any Swiss rounds
-                    return totalPointsScored.get(opponent)
-                        - 100 * totalMatchupsSoFar.count(ImmutableSet.of(firstPlayer, opponent));
+                    //but discount 100/n points per matchup already played in any Swiss rounds
+                    double pointsScored = totalPointsScored.get(opponent);
+                    for (Player player : curGroup) {
+                        pointsScored -= (100.0 / curGroup.size())
+                                * totalMatchupsSoFar.count(ImmutableSet.of(player, opponent));
+                    }
+                    return pointsScored;
                 }
             )).reversed()
                     .thenComparing(initialSeeding.getPlayersBestFirst()::indexOf));
