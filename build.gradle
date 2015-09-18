@@ -3,6 +3,8 @@ apply plugin: 'eclipse'
 apply plugin: 'pmd'
 apply plugin: 'findbugs'
 apply plugin: 'checkstyle'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 repositories {
     mavenCentral()
@@ -32,4 +34,68 @@ checkstyle {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.5'
+}
+
+// Define how we publish artifacts to Maven.
+// Derived from instructions on the Central Repository site:
+// http://central.sonatype.org/pages/gradle.html
+group = "net.alloyggp"
+version = "0.0.1"
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+artifacts {
+    archives javadocJar, sourcesJar
+}
+signing {
+    sign configurations.archives
+}
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+      pom.project {
+        name 'ggp-tournament'
+        packaging 'jar'
+        artifactId = "ggp-tournament"
+        description 'A library for GGP tournament specification and scheduling.'
+        url 'https://github.com/AlexLandau/ggp-tournament'
+
+        scm {
+          connection 'scm:git:git@github.com:AlexLandau/ggp-tournament.git'
+          developerConnection 'scm:git:git@github.com:AlexLandau/ggp-tournament.git'
+          url 'git@github.com:AlexLandau/ggp-tournament.git'
+        }
+
+        licenses {
+          license {
+            name 'The MIT License'
+            url 'http://opensource.org/licenses/MIT'
+          }
+        }
+
+        developers {
+          developer {
+            id 'AlexLandau'
+            name 'Alex Landau'
+            email 'alex@alloyggp.net'
+          }
+        }
+      }
+    }
+  }
 }
