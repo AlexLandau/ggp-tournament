@@ -49,7 +49,9 @@ public class FuzzTests {
                 new Object[] {3, testSpecFile("swiss1test4.yaml")},
                 new Object[] {10, testSpecFile("swiss1test5.yaml")},
                 new Object[] {9, testSpecFile("swiss1test5.yaml")},
-                new Object[] {3, testSpecFile("swiss1test5.yaml")}
+                new Object[] {3, testSpecFile("swiss1test5.yaml")},
+                new Object[] {6, testSpecFile("swiss1test6.yaml")},
+                new Object[] {7, testSpecFile("swiss1test6.yaml")}
                 );
     }
 

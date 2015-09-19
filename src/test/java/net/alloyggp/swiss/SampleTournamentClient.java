@@ -25,7 +25,7 @@ import net.alloyggp.swiss.api.TournamentStatus;
 public class SampleTournamentClient {
     @Test
     public void testSingleElimination() {
-        Tournament spec = TournamentSpecParser.parseYamlFile(new File("testSpecs/swiss1test1.yaml"));
+        Tournament spec = TournamentSpecParser.parseYamlFile(new File("testSpecs/swiss1test6.yaml"));
         Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
         TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
         //Run matches until exhaustion...

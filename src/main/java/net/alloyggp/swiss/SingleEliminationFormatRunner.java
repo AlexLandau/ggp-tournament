@@ -394,6 +394,10 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                     throw new IllegalArgumentException("Only fixed-sum games should "
                             + "be used in a single-elimination format.");
                 }
+                if (match.getWeight() != 1.0) {
+                    throw new IllegalArgumentException("Custom match weights are not "
+                            + "currently allowed in a single-elimination format.");
+                }
             }
         }
     }

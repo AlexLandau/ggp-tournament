@@ -7,6 +7,7 @@ import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -21,20 +22,24 @@ public class MatchSpec {
     private final int startClock;
     private final int playClock;
     private final ImmutableList<Integer> playerSeedOrder;
+    private final double weight;
 
     private MatchSpec(Game game, int startClock, int playClock,
-            ImmutableList<Integer> playerSeedOrder) {
+            ImmutableList<Integer> playerSeedOrder, double weight) {
+        Preconditions.checkArgument(weight >= 0.0);
         this.game = game;
         this.startClock = startClock;
         this.playClock = playClock;
         this.playerSeedOrder = playerSeedOrder;
+        this.weight = weight;
     }
 
     private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
             "game",
             "startClock",
             "playClock",
-            "seedRoles"
+            "seedRoles",
+            "weight"
             );
 
     @SuppressWarnings("unchecked")
@@ -58,8 +63,12 @@ public class MatchSpec {
                     IntStream.range(0, game.getNumRoles())
                     .boxed().collect(Collectors.toList()));
         }
+        double weight = 1.0;
+        if (matchMap.containsKey("weight")) {
+            weight = (double) matchMap.get("weight");
+        }
 
-        return new MatchSpec(game, startClock, playClock, playerSeedOrder);
+        return new MatchSpec(game, startClock, playClock, playerSeedOrder, weight);
     }
 
     public Game getGame() {
@@ -86,5 +95,9 @@ public class MatchSpec {
     public MatchSetup createMatchSetup(String matchId, List<Player> playersHighestSeedFirst) {
         return MatchSetup.create(matchId, game, putInOrder(playersHighestSeedFirst),
                 startClock, playClock);
+    }
+
+    public double getWeight() {
+        return weight;
     }
 }
