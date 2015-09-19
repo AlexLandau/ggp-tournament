@@ -132,6 +132,7 @@ public class SwissFormat1Runner implements FormatRunner {
                             maxScoreAchieved = Double.max(maxScoreAchieved, goalValue);
                             scoreSum += goalValue;
                             scoreCount++;
+                            this.mostRecentGame = game;
                         }
                     }
                 }
@@ -152,7 +153,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 }
                 //Also...
                 updateMatchupStats(game, playerGroups);
-                this.mostRecentGame = game;
+//                this.mostRecentGame = game;
             }
         }
 
