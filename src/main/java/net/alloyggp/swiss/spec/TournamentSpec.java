@@ -284,8 +284,8 @@ public class TournamentSpec implements Tournament {
         }
 
         @Override
-        public int compareTo(Score o) {
-            if (!(o instanceof EmptyScore)) {
+        public int compareTo(Score other) {
+            if (!(other instanceof EmptyScore)) {
                 throw new IllegalArgumentException("Incomparable scores being compared");
             }
             return 0;
