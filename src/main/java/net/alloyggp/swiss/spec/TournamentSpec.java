@@ -113,7 +113,7 @@ public class TournamentSpec implements Tournament {
      * @see net.alloyggp.swiss.api.Tournament#getMatchesToRun(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
      */
     @Override
-    public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar) {
+    public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, List<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
@@ -123,7 +123,7 @@ public class TournamentSpec implements Tournament {
             if (!matchesForStage.isEmpty()) {
                 return matchesForStage;
             }
-            TournamentStandings standings = stage.getStandingsSoFar(tournamentInternalName,
+            TournamentStandings standings = stage.getCurrentStandings(tournamentInternalName,
                     seeding, resultsInStage);
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
@@ -136,7 +136,7 @@ public class TournamentSpec implements Tournament {
      */
     @Override
     public TournamentStandings getCurrentStandings(Seeding initialSeeding,
-            ImmutableList<MatchResult> resultsSoFar) {
+            List<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
         TournamentStandings standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
@@ -145,7 +145,7 @@ public class TournamentSpec implements Tournament {
             Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     initialSeeding, resultsInStage);
             standings = mixInStandings(standings,
-                    stage.getStandingsSoFar(tournamentInternalName, seeding, resultsInStage));
+                    stage.getCurrentStandings(tournamentInternalName, seeding, resultsInStage));
             if (!matchesForStage.isEmpty()) {
                 return standings;
             }
@@ -255,4 +255,69 @@ public class TournamentSpec implements Tournament {
             }
         }
     }
+
+    @Override
+    public List<TournamentStandings> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar) {
+        List<TournamentStandings> result = Lists.newArrayList();
+        result.add(TournamentStandings.createForSeeding(initialSeeding));
+
+        Seeding seeding = initialSeeding;
+        for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
+            StageSpec stage = stages.get(stageNum);
+            Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
+            Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName,
+                    initialSeeding, resultsInStage);
+            result.addAll(stage.getStandingsHistory(tournamentInternalName, initialSeeding, resultsInStage));
+            if (!matchesForStage.isEmpty()) {
+                return result;
+            }
+            TournamentStandings standings = stage.getCurrentStandings(tournamentInternalName,
+                    seeding, resultsInStage);
+            seeding = stage.getSeedingsFromFinalStandings(standings);
+        }
+        return result;
+    }
+
+    public static class EmptyScore implements Score {
+        private EmptyScore() {
+            // Use create()
+        }
+
+        @Override
+        public int compareTo(Score o) {
+            if (!(o instanceof EmptyScore)) {
+                throw new IllegalArgumentException("Incomparable scores being compared");
+            }
+            return 0;
+        }
+
+        public static Score create() {
+            return new EmptyScore();
+        }
+
+        @Override
+        public int hashCode() {
+            return 1;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "initial seeding for stage";
+        }
+    }
+
 }

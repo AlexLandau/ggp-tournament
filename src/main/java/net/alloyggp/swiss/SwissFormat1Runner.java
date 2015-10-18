@@ -63,6 +63,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final Map<Game, Multiset<Set<Player>>> matchupsSoFarByGame = Maps.newHashMap();
         private final Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers = Maps.newHashMap();
 //        private final Map<Integer, Map<Player, Multiset<Integer>>> nonFixedSumRoleAssignmentsSoFarByNumPlayers = Maps.newHashMap();
+        private final List<TournamentStandings> standingsHistory = Lists.newArrayList();
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
                 ImmutableList<RoundSpec> rounds, ImmutableList<MatchResult> resultsSoFar) {
@@ -92,6 +93,11 @@ public class SwissFormat1Runner implements FormatRunner {
                 if (!matchesToRun.isEmpty()) {
                     //We're still finishing up this round, not ready to assign matches in the next one
                     return;
+                }
+                //If we didn't run the round due to the number of players being too low,
+                //skip the standings
+                if (!roundResults.isEmpty()) {
+                    standingsHistory.add(getStandings());
                 }
             }
         }
@@ -428,7 +434,7 @@ public class SwissFormat1Runner implements FormatRunner {
             return ImmutableSet.copyOf(matchesToRun);
         }
 
-        public TournamentStandings getStandings() {
+        private TournamentStandings getStandings() {
             Set<PlayerScore> scores = Sets.newHashSet();
             ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
             for (int i = 0; i < playersBestFirst.size(); i++) {
@@ -445,6 +451,10 @@ public class SwissFormat1Runner implements FormatRunner {
                 scores.add(PlayerScore.create(player, score, i));
             }
             return TournamentStandings.create(scores);
+        }
+
+        public List<TournamentStandings> getStandingsHistory() {
+            return ImmutableList.copyOf(standingsHistory);
         }
 
     }
@@ -540,10 +550,10 @@ public class SwissFormat1Runner implements FormatRunner {
     }
 
     @Override
-    public TournamentStandings getStandingsSoFar(String tournamentInternalName, Seeding initialSeeding, int stageNum,
+    public List<TournamentStandings> getStandingsHistory(String tournamentInternalName, Seeding initialSeeding, int stageNum,
             List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
-                ImmutableList.copyOf(rounds), resultsSoFar).getStandings();
+                ImmutableList.copyOf(rounds), resultsSoFar).getStandingsHistory();
     }
 
     private static Game getOnlyGame(RoundSpec round) {

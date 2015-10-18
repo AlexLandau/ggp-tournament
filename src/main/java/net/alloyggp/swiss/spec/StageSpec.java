@@ -70,11 +70,13 @@ public class StageSpec {
                 rounds, resultsSoFar);
     }
 
-    public TournamentStandings getStandingsSoFar(String tournamentInternalName,
+    public TournamentStandings getCurrentStandings(String tournamentInternalName,
             Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
-        FormatRunner runner = format.getRunner();
-        return runner.getStandingsSoFar(tournamentInternalName, initialSeeding, stageNum,
-                rounds, resultsSoFar);
+        List<TournamentStandings> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar);
+        if (standingsHistory.isEmpty()) {
+            return TournamentStandings.createForSeeding(initialSeeding);
+        }
+        return standingsHistory.get(standingsHistory.size() - 1);
     }
 
     public int getStageNum() {
@@ -91,5 +93,11 @@ public class StageSpec {
 
     public ImmutableList<RoundSpec> getRounds() {
         return rounds;
+    }
+
+    public List<TournamentStandings> getStandingsHistory(String tournamentInternalName,
+            Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
+        return format.getRunner().getStandingsHistory(tournamentInternalName, initialSeeding,
+                stageNum, rounds, resultsSoFar);
     }
 }

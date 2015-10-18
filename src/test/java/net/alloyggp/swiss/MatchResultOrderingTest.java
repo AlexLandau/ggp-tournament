@@ -23,6 +23,7 @@ import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.Tournament;
 import net.alloyggp.swiss.api.TournamentSpecParser;
+import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.api.TournamentStatus;
 
 /**
@@ -67,7 +68,8 @@ public class MatchResultOrderingTest {
                 resultsChosen.put(matchToResolve, result);
                 status = status.withNewResult(result);
             }
-            List<Player> finalStandings = status.getStandings().getPlayersBestFirst();
+            List<Player> finalStandings = status.getCurrentStandings().getPlayersBestFirst();
+            List<TournamentStandings> standingsHistory = status.getStandingsHistory();
 
             //Now do the second run through. Reset the status...
             status = TournamentStatus.getInitialStatus(spec, initialSeeding);
@@ -86,7 +88,8 @@ public class MatchResultOrderingTest {
                 status = status.withNewResult(result);
             }
             //And make sure the final standings are the same
-            assertEquals(finalStandings, status.getStandings().getPlayersBestFirst());
+            assertEquals(finalStandings, status.getCurrentStandings().getPlayersBestFirst());
+            assertEquals(standingsHistory, status.getStandingsHistory());
         }
     }
 

@@ -34,9 +34,9 @@ public class SampleTournamentClient {
             List<MatchResult> results = getRandomOutcomes(nextMatches);
             System.out.println("Match results: " + results);
             status = status.withNewResults(results);
-            System.out.println("Standings are: " + status.getStandings());
+            System.out.println("Standings are: " + status.getCurrentStandings());
         }
-        TournamentStandings standings = status.getStandings();
+        TournamentStandings standings = status.getCurrentStandings();
         System.out.println("Standings are: " + standings);
     }
 

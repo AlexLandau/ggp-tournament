@@ -8,7 +8,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
@@ -63,6 +62,8 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private final Set<MatchSetup> matchesToReturn = Sets.newHashSet();
         private final Map<Player, Integer> playerEliminationRounds = Maps.newHashMap();
 
+        private final List<TournamentStandings> standingsHistory = Lists.newArrayList();
+
         //Use createAndRun instead
         private SingleEliminationFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
                 ImmutableList<RoundSpec> rounds, ImmutableList<MatchResult> resultsSoFar) {
@@ -113,6 +114,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                 if (!matchesToReturn.isEmpty()) {
                     return; //still in this round
                 }
+                standingsHistory.add(getStandings());
             }
             //Now we handle the normal rounds
             while (numRoundsLeft > 0) {
@@ -139,6 +141,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                 if (!matchesToReturn.isEmpty()) {
                     return; //still in this round
                 }
+                standingsHistory.add(getStandings());
             }
             //We're at the end of the tournament
         }
@@ -286,8 +289,20 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             return ImmutableSet.copyOf(matchesToReturn);
         }
 
-        public Map<Player, Integer> getPlayerEliminationRounds() {
-            return ImmutableMap.copyOf(playerEliminationRounds);
+        private TournamentStandings getStandings() {
+            ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
+
+            ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
+            for (int i = 0; i < playersBestFirst.size(); i++) {
+                Player player = playersBestFirst.get(i);
+                Score score = new EliminationScore(playerEliminationRounds.getOrDefault(player, 0));
+                playerScores.add(PlayerScore.create(player, score, i));
+            }
+            return TournamentStandings.create(playerScores.build());
+        }
+
+        public List<TournamentStandings> getStandingsHistory() {
+            return ImmutableList.copyOf(standingsHistory);
         }
     }
 
@@ -300,28 +315,12 @@ public class SingleEliminationFormatRunner implements FormatRunner {
     }
 
     @Override
-    public TournamentStandings getStandingsSoFar(String tournamentInternalName,
-            Seeding initialSeeding, int stageNum, List<RoundSpec> rounds,
-            Set<MatchResult> resultsSoFar) {
-        ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
-        Map<Player, Integer> playerEliminationRounds = getPlayerEliminationRounds(
-                tournamentInternalName, initialSeeding, stageNum, rounds, resultsSoFar);
-
-        ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
-        for (int i = 0; i < playersBestFirst.size(); i++) {
-            Player player = playersBestFirst.get(i);
-            Score score = new EliminationScore(playerEliminationRounds.getOrDefault(player, 0));
-            playerScores.add(PlayerScore.create(player, score, i));
-        }
-        return TournamentStandings.create(playerScores.build());
-    }
-
-    private Map<Player, Integer> getPlayerEliminationRounds(String tournamentInternalName,
+    public List<TournamentStandings> getStandingsHistory(String tournamentInternalName,
             Seeding initialSeeding, int stageNum, List<RoundSpec> rounds,
             Set<MatchResult> resultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
                 stageNum, initialSeeding, ImmutableList.copyOf(rounds), resultsSoFar)
-                .getPlayerEliminationRounds();
+                .getStandingsHistory();
     }
 
     private static class EliminationScore implements Score {

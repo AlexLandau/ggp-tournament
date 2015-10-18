@@ -15,17 +15,6 @@ dependencies {
     testCompile 'junit:junit:4.11'
 }
 
-/*
- * It's convenient when working in Eclipse to have a test suite containing
- * all available tests. However, Gradle normally runs every test it can find
- * automatically, which would cause all tests to be run twice. This bit of
- * configuration prevents that from happening; Gradle just runs the test suite
- * instead.
- */
-test {
-    include 'net/alloyggp/swiss/AllTests.class'
-}
-
 checkstyle {
     toolVersion = '6.7'
 }

@@ -1,8 +1,7 @@
 package net.alloyggp.swiss.api;
 
+import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableList;
 
 /**
  * The main interface for a tournament specification.
@@ -19,11 +18,17 @@ public interface Tournament {
     /**
      * Returns the set of matches that should be run in the given tournament state.
      */
-    Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar);
+    Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, List<MatchResult> resultsSoFar);
 
     /**
-     * Returns the standings in the given tournament state.
+     * Returns the most recent standings in the given tournament state.
      */
-    TournamentStandings getCurrentStandings(Seeding initialSeeding, ImmutableList<MatchResult> resultsSoFar);
+    TournamentStandings getCurrentStandings(Seeding initialSeeding, List<MatchResult> resultsSoFar);
+
+    /**
+     * Returns a history of the standings throughout the tournament, starting with the initial
+     * seeding and progressing through each round.
+     */
+    List<TournamentStandings> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar);
 
 }

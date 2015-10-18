@@ -81,7 +81,11 @@ public class TournamentStatus {
         return spec.getMatchesToRun(initialSeeding, resultsSoFar);
     }
 
-    public TournamentStandings getStandings() {
+    public TournamentStandings getCurrentStandings() {
         return spec.getCurrentStandings(initialSeeding, resultsSoFar);
+    }
+
+    public List<TournamentStandings> getStandingsHistory() {
+        return spec.getStandingsHistory(initialSeeding, resultsSoFar);
     }
 }

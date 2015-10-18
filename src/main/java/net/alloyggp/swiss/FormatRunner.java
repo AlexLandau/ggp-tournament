@@ -16,7 +16,7 @@ public interface FormatRunner {
     Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding,
             int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar);
 
-    TournamentStandings getStandingsSoFar(String tournamentInternalName, Seeding initialSeeding,
+    List<TournamentStandings> getStandingsHistory(String tournamentInternalName, Seeding initialSeeding,
             int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar);
 
     void validateRounds(ImmutableList<RoundSpec> rounds);
