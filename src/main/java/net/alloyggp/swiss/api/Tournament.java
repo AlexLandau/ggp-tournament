@@ -23,12 +23,12 @@ public interface Tournament {
     /**
      * Returns the most recent standings in the given tournament state.
      */
-    TournamentStandings getCurrentStandings(Seeding initialSeeding, List<MatchResult> resultsSoFar);
+    Ranking getCurrentStandings(Seeding initialSeeding, List<MatchResult> resultsSoFar);
 
     /**
      * Returns a history of the standings throughout the tournament, starting with the initial
      * seeding and progressing through each round.
      */
-    List<TournamentStandings> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar);
+    List<Ranking> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar);
 
 }

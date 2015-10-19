@@ -11,8 +11,8 @@ import com.google.common.collect.Lists;
 
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.PlayerScore;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentStandings;
 
 public class SeedingsTest {
     @Test
@@ -24,7 +24,7 @@ public class SeedingsTest {
             scores.add(PlayerScore.create(player, new SimpleScore(i), i));
             players.add(player);
         }
-        TournamentStandings standings = TournamentStandings.create(scores);
+        Ranking standings = StandardRanking.create(scores);
         ArrayList<PlayerScore> scoresSorted = Lists.newArrayList(standings.getScores());
         assertEquals(Lists.reverse(scores), scoresSorted);
 

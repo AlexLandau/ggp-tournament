@@ -13,12 +13,13 @@ import com.google.common.collect.Lists;
 
 import net.alloyggp.swiss.FormatRunner;
 import net.alloyggp.swiss.Seedings;
+import net.alloyggp.swiss.StandardRanking;
 import net.alloyggp.swiss.YamlUtils;
 import net.alloyggp.swiss.api.Game;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentStandings;
 
 @Immutable
 public class StageSpec {
@@ -70,11 +71,11 @@ public class StageSpec {
                 rounds, resultsSoFar);
     }
 
-    public TournamentStandings getCurrentStandings(String tournamentInternalName,
+    public Ranking getCurrentStandings(String tournamentInternalName,
             Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
-        List<TournamentStandings> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar);
+        List<Ranking> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar);
         if (standingsHistory.isEmpty()) {
-            return TournamentStandings.createForSeeding(initialSeeding);
+            return StandardRanking.createForSeeding(initialSeeding);
         }
         return standingsHistory.get(standingsHistory.size() - 1);
     }
@@ -87,7 +88,7 @@ public class StageSpec {
         return format;
     }
 
-    public Seeding getSeedingsFromFinalStandings(TournamentStandings standings) {
+    public Seeding getSeedingsFromFinalStandings(Ranking standings) {
         return Seedings.getSeedingsFromFinalStandings(standings, playerCutoff);
     }
 
@@ -95,7 +96,7 @@ public class StageSpec {
         return rounds;
     }
 
-    public List<TournamentStandings> getStandingsHistory(String tournamentInternalName,
+    public List<Ranking> getStandingsHistory(String tournamentInternalName,
             Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
         return format.getRunner().getStandingsHistory(tournamentInternalName, initialSeeding,
                 stageNum, rounds, resultsSoFar);

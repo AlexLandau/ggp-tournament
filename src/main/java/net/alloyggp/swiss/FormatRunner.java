@@ -7,8 +7,8 @@ import com.google.common.collect.ImmutableList;
 
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.spec.RoundSpec;
 
 public interface FormatRunner {
@@ -16,7 +16,7 @@ public interface FormatRunner {
     Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding,
             int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar);
 
-    List<TournamentStandings> getStandingsHistory(String tournamentInternalName, Seeding initialSeeding,
+    List<Ranking> getStandingsHistory(String tournamentInternalName, Seeding initialSeeding,
             int stageNum, List<RoundSpec> rounds, Set<MatchResult> resultsSoFar);
 
     void validateRounds(ImmutableList<RoundSpec> rounds);

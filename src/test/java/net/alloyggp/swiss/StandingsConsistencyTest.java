@@ -16,10 +16,10 @@ import com.google.common.collect.Lists;
 
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.Tournament;
 import net.alloyggp.swiss.api.TournamentSpecParser;
-import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.api.TournamentStatus;
 
 /**
@@ -52,8 +52,8 @@ public class StandingsConsistencyTest {
             Random random = new Random(seed);
             Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
             TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
-            List<TournamentStandings> standingsSoFar = Lists.newArrayList();
-            standingsSoFar.add(TournamentStandings.createForSeeding(initialSeeding));
+            List<Ranking> standingsSoFar = Lists.newArrayList();
+            standingsSoFar.add(StandardRanking.createForSeeding(initialSeeding));
             verifyAndAddStandingsHistory(standingsSoFar, status.getStandingsHistory());
             while (true) {
                 //TODO: Make these return a List or SortedSet or something?
@@ -70,14 +70,14 @@ public class StandingsConsistencyTest {
         }
     }
 
-    private void verifyAndAddStandingsHistory(List<TournamentStandings> standingsSoFar,
-            List<TournamentStandings> standingsHistory) {
+    private void verifyAndAddStandingsHistory(List<Ranking> standingsSoFar,
+            List<Ranking> standingsHistory) {
         System.out.println("Standings so far: " + standingsSoFar);
         System.out.println("Standings history: " + standingsHistory);
         assertEquals(standingsSoFar, standingsHistory.subList(0, standingsSoFar.size()));
         if (standingsHistory.size() > standingsSoFar.size()) {
             assertEquals(1, standingsHistory.size() - standingsSoFar.size());
-            TournamentStandings newStandings = standingsHistory.get(standingsHistory.size() - 1);
+            Ranking newStandings = standingsHistory.get(standingsHistory.size() - 1);
             standingsSoFar.add(newStandings);
         }
     }

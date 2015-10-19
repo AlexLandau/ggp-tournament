@@ -4,7 +4,7 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Represents a player's aggregate score at some point in the tournament.
- * This is used to turn match results into {@link TournamentStandings}.
+ * This is used to turn match results into {@link Ranking}s.
  * The implementation may contain details for scoring that differ
  * by tournament format, and so is private.
  */

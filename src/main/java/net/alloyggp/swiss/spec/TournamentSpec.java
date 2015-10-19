@@ -14,17 +14,18 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import net.alloyggp.swiss.MatchResults;
+import net.alloyggp.swiss.StandardRanking;
 import net.alloyggp.swiss.YamlUtils;
 import net.alloyggp.swiss.api.Game;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.PlayerScore;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Score;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.Tournament;
 import net.alloyggp.swiss.api.TournamentSpecParser;
-import net.alloyggp.swiss.api.TournamentStandings;
 
 @Immutable
 public class TournamentSpec implements Tournament {
@@ -123,7 +124,7 @@ public class TournamentSpec implements Tournament {
             if (!matchesForStage.isEmpty()) {
                 return matchesForStage;
             }
-            TournamentStandings standings = stage.getCurrentStandings(tournamentInternalName,
+            Ranking standings = stage.getCurrentStandings(tournamentInternalName,
                     seeding, resultsInStage);
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
@@ -135,10 +136,10 @@ public class TournamentSpec implements Tournament {
      * @see net.alloyggp.swiss.api.Tournament#getCurrentStandings(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
      */
     @Override
-    public TournamentStandings getCurrentStandings(Seeding initialSeeding,
+    public Ranking getCurrentStandings(Seeding initialSeeding,
             List<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
-        TournamentStandings standings = null;
+        Ranking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
             Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
@@ -156,8 +157,8 @@ public class TournamentSpec implements Tournament {
         return standings;
     }
 
-    private TournamentStandings mixInStandings(TournamentStandings oldStandings,
-            TournamentStandings newStandings) {
+    private Ranking mixInStandings(Ranking oldStandings,
+            Ranking newStandings) {
         if (oldStandings == null) {
             return newStandings;
         }
@@ -177,7 +178,7 @@ public class TournamentSpec implements Tournament {
                         score.getSeedFromRoundStart()));
             }
         }
-        return TournamentStandings.create(allPlayerScores);
+        return StandardRanking.create(allPlayerScores);
     }
 
     private static class CutoffScore implements Score {
@@ -257,9 +258,9 @@ public class TournamentSpec implements Tournament {
     }
 
     @Override
-    public List<TournamentStandings> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar) {
-        List<TournamentStandings> result = Lists.newArrayList();
-        result.add(TournamentStandings.createForSeeding(initialSeeding));
+    public List<Ranking> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar) {
+        List<Ranking> result = Lists.newArrayList();
+        result.add(StandardRanking.createForSeeding(initialSeeding));
 
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
@@ -271,53 +272,10 @@ public class TournamentSpec implements Tournament {
             if (!matchesForStage.isEmpty()) {
                 return result;
             }
-            TournamentStandings standings = stage.getCurrentStandings(tournamentInternalName,
+            Ranking standings = stage.getCurrentStandings(tournamentInternalName,
                     seeding, resultsInStage);
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
         return result;
     }
-
-    public static class EmptyScore implements Score {
-        private EmptyScore() {
-            // Use create()
-        }
-
-        @Override
-        public int compareTo(Score other) {
-            if (!(other instanceof EmptyScore)) {
-                throw new IllegalArgumentException("Incomparable scores being compared");
-            }
-            return 0;
-        }
-
-        public static Score create() {
-            return new EmptyScore();
-        }
-
-        @Override
-        public int hashCode() {
-            return 1;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "initial seeding for stage";
-        }
-    }
-
 }

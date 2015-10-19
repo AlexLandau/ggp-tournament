@@ -12,10 +12,10 @@ import org.junit.Test;
 import net.alloyggp.swiss.api.MatchResult;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Player;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Seeding;
 import net.alloyggp.swiss.api.Tournament;
 import net.alloyggp.swiss.api.TournamentSpecParser;
-import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.api.TournamentStatus;
 
 /*
@@ -36,7 +36,7 @@ public class SampleTournamentClient {
             status = status.withNewResults(results);
             System.out.println("Standings are: " + status.getCurrentStandings());
         }
-        TournamentStandings standings = status.getCurrentStandings();
+        Ranking standings = status.getCurrentStandings();
         System.out.println("Standings are: " + standings);
     }
 

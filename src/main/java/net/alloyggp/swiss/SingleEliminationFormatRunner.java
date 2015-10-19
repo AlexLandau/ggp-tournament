@@ -20,9 +20,9 @@ import net.alloyggp.swiss.api.MatchResult.Outcome;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.PlayerScore;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Score;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.spec.MatchSpec;
 import net.alloyggp.swiss.spec.RoundSpec;
 
@@ -62,7 +62,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private final Set<MatchSetup> matchesToReturn = Sets.newHashSet();
         private final Map<Player, Integer> playerEliminationRounds = Maps.newHashMap();
 
-        private final List<TournamentStandings> standingsHistory = Lists.newArrayList();
+        private final List<Ranking> standingsHistory = Lists.newArrayList();
 
         //Use createAndRun instead
         private SingleEliminationFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
@@ -289,7 +289,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             return ImmutableSet.copyOf(matchesToReturn);
         }
 
-        private TournamentStandings getStandings() {
+        private Ranking getStandings() {
             ImmutableSortedSet.Builder<PlayerScore> playerScores = ImmutableSortedSet.naturalOrder();
 
             ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
@@ -298,10 +298,10 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                 Score score = new EliminationScore(playerEliminationRounds.getOrDefault(player, 0));
                 playerScores.add(PlayerScore.create(player, score, i));
             }
-            return TournamentStandings.create(playerScores.build());
+            return StandardRanking.create(playerScores.build());
         }
 
-        public List<TournamentStandings> getStandingsHistory() {
+        public List<Ranking> getStandingsHistory() {
             return ImmutableList.copyOf(standingsHistory);
         }
     }
@@ -315,7 +315,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
     }
 
     @Override
-    public List<TournamentStandings> getStandingsHistory(String tournamentInternalName,
+    public List<Ranking> getStandingsHistory(String tournamentInternalName,
             Seeding initialSeeding, int stageNum, List<RoundSpec> rounds,
             Set<MatchResult> resultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,

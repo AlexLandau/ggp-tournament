@@ -29,9 +29,9 @@ import net.alloyggp.swiss.api.MatchResult.Outcome;
 import net.alloyggp.swiss.api.MatchSetup;
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.PlayerScore;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Score;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentStandings;
 import net.alloyggp.swiss.spec.MatchSpec;
 import net.alloyggp.swiss.spec.RoundSpec;
 
@@ -63,7 +63,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final Map<Game, Multiset<Set<Player>>> matchupsSoFarByGame = Maps.newHashMap();
         private final Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers = Maps.newHashMap();
 //        private final Map<Integer, Map<Player, Multiset<Integer>>> nonFixedSumRoleAssignmentsSoFarByNumPlayers = Maps.newHashMap();
-        private final List<TournamentStandings> standingsHistory = Lists.newArrayList();
+        private final List<Ranking> standingsHistory = Lists.newArrayList();
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
                 ImmutableList<RoundSpec> rounds, ImmutableList<MatchResult> resultsSoFar) {
@@ -228,6 +228,8 @@ public class SwissFormat1Runner implements FormatRunner {
             }
         }
 
+        //TODO: Consider prioritizing certain players for byes? e.g. players
+        //doing worse in the tournament, those with fewer byes already?
         private List<List<Player>> getNonFixedSumPlayerGroups(int numRoles) {
 
             //Two-player: there's an elegant round-robin algorithm we
@@ -293,6 +295,9 @@ public class SwissFormat1Runner implements FormatRunner {
             return groups;
         }
 
+        //TODO: Avoid awarding another bye to a player; when only one player in
+        //assignedSoFar has NOT had a bye, (and the total number of players is
+        //odd,) remove that player and reserve them for a bye
         private List<List<Player>> getTwoPlayerFixedSumPlayerGroups(Game game) {
             List<List<Player>> groups = Lists.newArrayList();
 
@@ -434,7 +439,7 @@ public class SwissFormat1Runner implements FormatRunner {
             return ImmutableSet.copyOf(matchesToRun);
         }
 
-        private TournamentStandings getStandings() {
+        private Ranking getStandings() {
             Set<PlayerScore> scores = Sets.newHashSet();
             ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
             for (int i = 0; i < playersBestFirst.size(); i++) {
@@ -450,10 +455,10 @@ public class SwissFormat1Runner implements FormatRunner {
                         pointsFromByes.get(player));
                 scores.add(PlayerScore.create(player, score, i));
             }
-            return TournamentStandings.create(scores);
+            return StandardRanking.create(scores);
         }
 
-        public List<TournamentStandings> getStandingsHistory() {
+        public List<Ranking> getStandingsHistory() {
             return ImmutableList.copyOf(standingsHistory);
         }
 
@@ -550,7 +555,7 @@ public class SwissFormat1Runner implements FormatRunner {
     }
 
     @Override
-    public List<TournamentStandings> getStandingsHistory(String tournamentInternalName, Seeding initialSeeding, int stageNum,
+    public List<Ranking> getStandingsHistory(String tournamentInternalName, Seeding initialSeeding, int stageNum,
             List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
                 ImmutableList.copyOf(rounds), resultsSoFar).getStandingsHistory();

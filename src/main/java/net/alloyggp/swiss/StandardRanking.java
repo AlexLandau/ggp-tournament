@@ -1,4 +1,4 @@
-package net.alloyggp.swiss.api;
+package net.alloyggp.swiss;
 
 import java.util.Collection;
 import java.util.List;
@@ -10,22 +10,30 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 
-import net.alloyggp.swiss.spec.TournamentSpec.EmptyScore;
+import net.alloyggp.swiss.api.Player;
+import net.alloyggp.swiss.api.PlayerScore;
+import net.alloyggp.swiss.api.Ranking;
+import net.alloyggp.swiss.api.Score;
+import net.alloyggp.swiss.api.Seeding;
 
 @Immutable
-public class TournamentStandings {
+public class StandardRanking implements Ranking {
     //We may have multiple groups, which should be treated separately...
     //Let's ignore this case for now; we may not have to support group play
     private final ImmutableSortedSet<PlayerScore> scores;
 
-    private TournamentStandings(ImmutableSortedSet<PlayerScore> scores) {
+    private StandardRanking(ImmutableSortedSet<PlayerScore> scores) {
         this.scores = scores;
     }
 
-    public static TournamentStandings create(Collection<PlayerScore> scores) {
-        return new TournamentStandings(ImmutableSortedSet.copyOf(scores));
+    public static StandardRanking create(Collection<PlayerScore> scores) {
+        return new StandardRanking(ImmutableSortedSet.copyOf(scores));
     }
 
+    /* (non-Javadoc)
+     * @see net.alloyggp.swiss.api.Ranking#getScores()
+     */
+    @Override
     public ImmutableSortedSet<PlayerScore> getScores() {
         return scores;
     }
@@ -49,7 +57,7 @@ public class TournamentStandings {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        TournamentStandings other = (TournamentStandings) obj;
+        StandardRanking other = (StandardRanking) obj;
         if (scores == null) {
             if (other.scores != null) {
                 return false;
@@ -72,21 +80,65 @@ public class TournamentStandings {
         return sb.toString();
     }
 
+    /* (non-Javadoc)
+     * @see net.alloyggp.swiss.api.Ranking#getPlayersBestFirst()
+     */
+    @Override
     public ImmutableList<Player> getPlayersBestFirst() {
         return ImmutableList.copyOf(scores.stream()
                 .map(PlayerScore::getPlayer)
                 .collect(Collectors.toList()));
     }
 
-    //TODO: Can we keep this out of the API? Clients should only query standings,
-    //not create them
-    public static TournamentStandings createForSeeding(Seeding initialSeeding) {
+    public static StandardRanking createForSeeding(Seeding initialSeeding) {
         List<PlayerScore> scores = Lists.newArrayList();
         ImmutableList<Player> players = initialSeeding.getPlayersBestFirst();
         for (int i = 0; i < players.size(); i++) {
             Player player = players.get(i);
             scores.add(PlayerScore.create(player, EmptyScore.create(), i));
         }
-        return TournamentStandings.create(scores);
+        return StandardRanking.create(scores);
+    }
+
+    public static class EmptyScore implements Score {
+        private EmptyScore() {
+            // Use create()
+        }
+
+        @Override
+        public int compareTo(Score other) {
+            if (!(other instanceof EmptyScore)) {
+                throw new IllegalArgumentException("Incomparable scores being compared");
+            }
+            return 0;
+        }
+
+        public static Score create() {
+            return new EmptyScore();
+        }
+
+        @Override
+        public int hashCode() {
+            return 1;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "initial seeding for stage";
+        }
     }
 }

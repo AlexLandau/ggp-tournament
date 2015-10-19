@@ -8,15 +8,15 @@ import com.google.common.collect.Iterables;
 
 import net.alloyggp.swiss.api.Player;
 import net.alloyggp.swiss.api.PlayerScore;
+import net.alloyggp.swiss.api.Ranking;
 import net.alloyggp.swiss.api.Seeding;
-import net.alloyggp.swiss.api.TournamentStandings;
 
 public class Seedings {
     private Seedings() {
         //Not instantiable
     }
 
-    public static Seeding getSeedingsFromFinalStandings(TournamentStandings standings, int playerCutoff) {
+    public static Seeding getSeedingsFromFinalStandings(Ranking standings, int playerCutoff) {
         List<PlayerScore> playersBestFirst = ImmutableList.copyOf(
                 Iterables.limit(standings.getScores(), playerCutoff));
         List<Player> players = playersBestFirst.stream()
