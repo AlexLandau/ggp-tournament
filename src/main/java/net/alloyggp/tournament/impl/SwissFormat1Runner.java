@@ -9,16 +9,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
+import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -52,6 +56,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final int stageNum;
         private final Seeding initialSeeding;
         private final ImmutableList<RoundSpec> rounds;
+        private final ImmutableSet<MatchResult> resultsFromEarlierStages;
         private final ImmutableSet<MatchResult> resultsInStage;
         private final Set<MatchSetup> matchesToRun = Sets.newHashSet();
         //TODO: Double-check that all these stats are updated appropriately
@@ -66,28 +71,39 @@ public class SwissFormat1Runner implements FormatRunner {
         private final List<Ranking> standingsHistory = Lists.newArrayList();
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, ImmutableSet<MatchResult> resultsSoFar) {
+                ImmutableList<RoundSpec> rounds, ImmutableSet<MatchResult> resultsFromEarlierStages,
+                ImmutableSet<MatchResult> resultsInStage) {
             this.tournamentInternalName = tournamentInternalName;
             this.stageNum = stageNum;
             this.initialSeeding = initialSeeding;
             this.rounds = rounds;
-            this.resultsInStage = resultsSoFar;
+            this.resultsFromEarlierStages = resultsFromEarlierStages;
+            this.resultsInStage = resultsInStage;
         }
 
         public static SwissFormatSimulator createAndRun(String tournamentInternalName, int stageNum, Seeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
-            Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
+                ImmutableList<RoundSpec> rounds, Set<MatchResult> allResultsSoFar) {
+            Set<MatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
+            Set<MatchResult> resultsInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
             SwissFormatSimulator simulator = new SwissFormatSimulator(tournamentInternalName, stageNum, initialSeeding,
-                    rounds, ImmutableSet.copyOf(resultsInStage));
+                    rounds, ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsInStage));
             simulator.run();
             return simulator;
         }
 
         private void run() {
             setInitialTotalsToZero();
-
+            int roundNum = 0;
             SetMultimap<Integer, MatchResult> matchesByRound = MatchResults.mapByRound(resultsInStage, stageNum);
-            for (int roundNum = 0; roundNum < rounds.size(); roundNum++) {
+
+            @Nullable EndOfRoundState endOfRoundState = TournamentStateCache.getLatestCachedEndOfRoundState(tournamentInternalName, initialSeeding, resultsFromEarlierStages, stageNum, resultsInStage);
+            if (endOfRoundState != null) {
+                Swiss1EndOfRoundState state = (Swiss1EndOfRoundState) endOfRoundState;
+                roundNum = state.roundNum + 1;
+                loadCachedState(state);
+            }
+
+            for (/* roundNum already set */; roundNum < rounds.size(); roundNum++) {
                 RoundSpec round = rounds.get(roundNum);
                 Set<MatchResult> roundResults = matchesByRound.get(roundNum);
                 runRound(round, roundNum, roundResults);
@@ -96,10 +112,45 @@ public class SwissFormat1Runner implements FormatRunner {
                     return;
                 }
                 //If we didn't run the round due to the number of players being too low,
-                //skip the standings
+                //skip the standings and caching
                 if (!roundResults.isEmpty()) {
                     standingsHistory.add(getStandings());
+                    Swiss1EndOfRoundState state = Swiss1EndOfRoundState.create(roundNum,
+                            mostRecentGame, totalPointsScored, pointsScoredByGame,
+                            pointsFromByes, totalMatchupsSoFar, matchupsSoFarByGame,
+                            nonFixedSumMatchupsSoFarByNumPlayers, standingsHistory);
+
+                    TournamentStateCache.cacheEndOfRoundState(tournamentInternalName, initialSeeding, resultsFromEarlierStages, stageNum, resultsInStage, state);
                 }
+            }
+        }
+
+        private void loadCachedState(Swiss1EndOfRoundState state) {
+            totalPointsScored.putAll(state.totalPointsScored);
+            pointsFromByes.putAll(state.pointsFromByes);
+
+            Set<Integer> possiblePlayerCounts = Sets.newHashSet();
+            for (Game game : RoundSpec.getAllGames(rounds)) {
+                Map<Player, Double> pointsScoredForGame = pointsScoredByGame.get(game);
+                for (Player player : initialSeeding.getPlayersBestFirst()) {
+                    pointsScoredForGame.put(player, state.pointsScoredByGame.get(game).get(player));
+                }
+                for (Entry<ImmutableSet<Player>> entry : state.matchupsSoFarByGame.get(game).entrySet()) {
+                    matchupsSoFarByGame.get(game).add(Sets.newHashSet(entry.getElement()), entry.getCount());
+                }
+                possiblePlayerCounts.add(game.getNumRoles());
+            }
+            for (int playerCount : possiblePlayerCounts) {
+                for (Entry<ImmutableSet<Player>> entry : state.nonFixedSumMatchupsSoFarByNumPlayers.get(playerCount).entrySet()) {
+                    nonFixedSumMatchupsSoFarByNumPlayers.get(playerCount).add(Sets.newHashSet(entry.getElement()), entry.getCount());
+                }
+            }
+
+            mostRecentGame = state.mostRecentGame;
+            standingsHistory.addAll(state.standingsHistory);
+
+            for (Entry<ImmutableSet<Player>> entry : state.totalMatchupsSoFar.entrySet()) {
+                totalMatchupsSoFar.add(Sets.newHashSet(entry.getElement()), entry.getCount());
             }
         }
 
@@ -160,7 +211,6 @@ public class SwissFormat1Runner implements FormatRunner {
                 }
                 //Also...
                 updateMatchupStats(game, playerGroups);
-//                this.mostRecentGame = game;
             }
         }
 
@@ -582,6 +632,175 @@ public class SwissFormat1Runner implements FormatRunner {
         for (RoundSpec round : rounds) {
             //Validates all matches in the round are the same game
             getOnlyGame(round);
+        }
+    }
+
+    @Immutable
+    private static class Swiss1EndOfRoundState implements EndOfRoundState {
+        private final int roundNum;
+        private final Game mostRecentGame;
+        private final ImmutableMap<Player, Double> totalPointsScored;
+        private final ImmutableMap<Game, ImmutableMap<Player, Double>> pointsScoredByGame;
+        private final ImmutableMap<Player, Double> pointsFromByes;
+        private final ImmutableMultiset<ImmutableSet<Player>> totalMatchupsSoFar;
+        private final ImmutableMap<Game, ImmutableMultiset<ImmutableSet<Player>>> matchupsSoFarByGame;
+        private final ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<Player>>> nonFixedSumMatchupsSoFarByNumPlayers;
+        private final ImmutableList<Ranking> standingsHistory;
+
+        private Swiss1EndOfRoundState(int roundNum, Game mostRecentGame, ImmutableMap<Player, Double> totalPointsScored,
+                ImmutableMap<Game, ImmutableMap<Player, Double>> pointsScoredByGame,
+                ImmutableMap<Player, Double> pointsFromByes, ImmutableMultiset<ImmutableSet<Player>> totalMatchupsSoFar,
+                ImmutableMap<Game, ImmutableMultiset<ImmutableSet<Player>>> matchupsSoFarByGame,
+                ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<Player>>> nonFixedSumMatchupsSoFarByNumPlayers,
+                ImmutableList<Ranking> standingsHistory) {
+            this.roundNum = roundNum;
+            this.mostRecentGame = mostRecentGame;
+            this.totalPointsScored = totalPointsScored;
+            this.pointsScoredByGame = pointsScoredByGame;
+            this.pointsFromByes = pointsFromByes;
+            this.totalMatchupsSoFar = totalMatchupsSoFar;
+            this.matchupsSoFarByGame = matchupsSoFarByGame;
+            this.nonFixedSumMatchupsSoFarByNumPlayers = nonFixedSumMatchupsSoFarByNumPlayers;
+            this.standingsHistory = standingsHistory;
+        }
+
+        public static Swiss1EndOfRoundState create(int roundNum,
+                Game mostRecentGame,
+                Map<Player, Double> totalPointsScored,
+                Map<Game, Map<Player, Double>> pointsScoredByGame,
+                Map<Player, Double> pointsFromByes,
+                Multiset<Set<Player>> totalMatchupsSoFar,
+                Map<Game, Multiset<Set<Player>>> matchupsSoFarByGame,
+                Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers,
+                List<Ranking> standingsHistory) {
+            return new Swiss1EndOfRoundState(roundNum,
+                    mostRecentGame,
+                    ImmutableMap.copyOf(totalPointsScored),
+                    toImmutableMapValuedMap(pointsScoredByGame),
+                    ImmutableMap.copyOf(pointsFromByes),
+                    toImmutableSetEntriedMultiset(totalMatchupsSoFar),
+                    toImmutableMultisetOfSetsValuedMap(matchupsSoFarByGame),
+                    toImmutableMultisetOfSetsValuedMap(nonFixedSumMatchupsSoFarByNumPlayers),
+                    ImmutableList.copyOf(standingsHistory));
+        }
+
+        private static <K,T> ImmutableMap<K, ImmutableMultiset<ImmutableSet<T>>> toImmutableMultisetOfSetsValuedMap(
+                Map<K, Multiset<Set<T>>> map) {
+            return ImmutableMap.copyOf(Maps.transformValues(map, Swiss1EndOfRoundState::toImmutableSetEntriedMultiset));
+        }
+
+        private static <T> ImmutableMultiset<ImmutableSet<T>> toImmutableSetEntriedMultiset(
+                Multiset<Set<T>> multiset) {
+            ImmutableMultiset.Builder<ImmutableSet<T>> builder = ImmutableMultiset.builder();
+            for (Entry<Set<T>> entry : multiset.entrySet()) {
+                builder.addCopies(ImmutableSet.copyOf(entry.getElement()), entry.getCount());
+            }
+            return builder.build();
+        }
+
+        private static <K1,K2,V2> ImmutableMap<K1, ImmutableMap<K2, V2>> toImmutableMapValuedMap(
+                Map<K1, Map<K2, V2>> map) {
+            return ImmutableMap.copyOf(Maps.transformValues(map, ImmutableMap::copyOf));
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((matchupsSoFarByGame == null) ? 0 : matchupsSoFarByGame.hashCode());
+            result = prime * result + ((mostRecentGame == null) ? 0 : mostRecentGame.hashCode());
+            result = prime * result + ((nonFixedSumMatchupsSoFarByNumPlayers == null) ? 0
+                    : nonFixedSumMatchupsSoFarByNumPlayers.hashCode());
+            result = prime * result + ((pointsFromByes == null) ? 0 : pointsFromByes.hashCode());
+            result = prime * result + ((pointsScoredByGame == null) ? 0 : pointsScoredByGame.hashCode());
+            result = prime * result + roundNum;
+            result = prime * result + ((standingsHistory == null) ? 0 : standingsHistory.hashCode());
+            result = prime * result + ((totalMatchupsSoFar == null) ? 0 : totalMatchupsSoFar.hashCode());
+            result = prime * result + ((totalPointsScored == null) ? 0 : totalPointsScored.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Swiss1EndOfRoundState other = (Swiss1EndOfRoundState) obj;
+            if (matchupsSoFarByGame == null) {
+                if (other.matchupsSoFarByGame != null) {
+                    return false;
+                }
+            } else if (!matchupsSoFarByGame.equals(other.matchupsSoFarByGame)) {
+                return false;
+            }
+            if (mostRecentGame == null) {
+                if (other.mostRecentGame != null) {
+                    return false;
+                }
+            } else if (!mostRecentGame.equals(other.mostRecentGame)) {
+                return false;
+            }
+            if (nonFixedSumMatchupsSoFarByNumPlayers == null) {
+                if (other.nonFixedSumMatchupsSoFarByNumPlayers != null) {
+                    return false;
+                }
+            } else if (!nonFixedSumMatchupsSoFarByNumPlayers.equals(other.nonFixedSumMatchupsSoFarByNumPlayers)) {
+                return false;
+            }
+            if (pointsFromByes == null) {
+                if (other.pointsFromByes != null) {
+                    return false;
+                }
+            } else if (!pointsFromByes.equals(other.pointsFromByes)) {
+                return false;
+            }
+            if (pointsScoredByGame == null) {
+                if (other.pointsScoredByGame != null) {
+                    return false;
+                }
+            } else if (!pointsScoredByGame.equals(other.pointsScoredByGame)) {
+                return false;
+            }
+            if (roundNum != other.roundNum) {
+                return false;
+            }
+            if (standingsHistory == null) {
+                if (other.standingsHistory != null) {
+                    return false;
+                }
+            } else if (!standingsHistory.equals(other.standingsHistory)) {
+                return false;
+            }
+            if (totalMatchupsSoFar == null) {
+                if (other.totalMatchupsSoFar != null) {
+                    return false;
+                }
+            } else if (!totalMatchupsSoFar.equals(other.totalMatchupsSoFar)) {
+                return false;
+            }
+            if (totalPointsScored == null) {
+                if (other.totalPointsScored != null) {
+                    return false;
+                }
+            } else if (!totalPointsScored.equals(other.totalPointsScored)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "Swiss1EndOfRoundState [roundNum=" + roundNum + ", mostRecentGame=" + mostRecentGame
+                    + ", totalPointsScored=" + totalPointsScored + ", pointsScoredByGame=" + pointsScoredByGame
+                    + ", pointsFromByes=" + pointsFromByes + ", totalMatchupsSoFar=" + totalMatchupsSoFar
+                    + ", matchupsSoFarByGame=" + matchupsSoFarByGame + ", nonFixedSumMatchupsSoFarByNumPlayers="
+                    + nonFixedSumMatchupsSoFarByNumPlayers + ", standingsHistory=" + standingsHistory + "]";
         }
     }
 }
