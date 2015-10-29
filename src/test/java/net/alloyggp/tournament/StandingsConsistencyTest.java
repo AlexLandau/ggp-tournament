@@ -57,7 +57,6 @@ public class StandingsConsistencyTest {
             standingsSoFar.add(StandardRanking.createForSeeding(initialSeeding));
             verifyAndAddStandingsHistory(standingsSoFar, status.getStandingsHistory());
             while (true) {
-                //TODO: Make these return a List or SortedSet or something?
                 Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
                 if (nextMatches.isEmpty()) {
                     break;
@@ -73,8 +72,6 @@ public class StandingsConsistencyTest {
 
     private void verifyAndAddStandingsHistory(List<Ranking> standingsSoFar,
             List<Ranking> standingsHistory) {
-        System.out.println("Standings so far: " + standingsSoFar);
-        System.out.println("Standings history: " + standingsHistory);
         assertEquals(standingsSoFar, standingsHistory.subList(0, standingsSoFar.size()));
         if (standingsHistory.size() > standingsSoFar.size()) {
             assertEquals(1, standingsHistory.size() - standingsSoFar.size());

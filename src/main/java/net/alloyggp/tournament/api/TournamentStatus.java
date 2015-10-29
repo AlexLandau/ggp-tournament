@@ -1,11 +1,13 @@
 package net.alloyggp.tournament.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * An immutable object representing a particular state of a tournament. This includes
@@ -16,10 +18,10 @@ import com.google.common.collect.ImmutableList;
 public class TournamentStatus {
     private final Tournament spec;
     private final Seeding initialSeeding;
-    private final ImmutableList<MatchResult> resultsSoFar;
+    private final ImmutableSet<MatchResult> resultsSoFar;
 
     private TournamentStatus(Tournament spec, Seeding initialSeeding,
-            ImmutableList<MatchResult> resultsSoFar) {
+            ImmutableSet<MatchResult> resultsSoFar) {
         this.spec = spec;
         this.initialSeeding = initialSeeding;
         this.resultsSoFar = resultsSoFar;
@@ -35,7 +37,7 @@ public class TournamentStatus {
      * other cases, a random seeding is sufficient.
      */
     public static TournamentStatus getInitialStatus(Tournament spec, Seeding initialSeeding) {
-        return new TournamentStatus(spec, initialSeeding, ImmutableList.of());
+        return new TournamentStatus(spec, initialSeeding, ImmutableSet.of());
     }
 
     /**
@@ -50,8 +52,8 @@ public class TournamentStatus {
      * Returns a new TournamentStatus object that includes the given results in addition
      * to the results already known.
      */
-    public TournamentStatus withNewResults(List<MatchResult> newResults) {
-        ImmutableList<MatchResult> allMatchResults = ImmutableList.<MatchResult>builder()
+    public TournamentStatus withNewResults(Collection<MatchResult> newResults) {
+        ImmutableSet<MatchResult> allMatchResults = ImmutableSet.<MatchResult>builder()
                 .addAll(resultsSoFar)
                 .addAll(newResults)
                 .build();
@@ -62,7 +64,7 @@ public class TournamentStatus {
         return spec;
     }
 
-    public ImmutableList<MatchResult> getResultsSoFar() {
+    public ImmutableSet<MatchResult> getResultsSoFar() {
         return resultsSoFar;
     }
 

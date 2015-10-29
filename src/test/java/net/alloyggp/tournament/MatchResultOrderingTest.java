@@ -57,7 +57,6 @@ public class MatchResultOrderingTest {
             TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
             Map<MatchSetup, MatchResult> resultsChosen = Maps.newHashMap();
             while (true) {
-                //TODO: Make these return a List or SortedSet or something?
                 Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
                 if (nextMatches.isEmpty()) {
                     break;

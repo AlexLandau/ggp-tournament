@@ -114,7 +114,7 @@ public class TournamentSpec implements Tournament {
      * @see net.alloyggp.swiss.api.Tournament#getMatchesToRun(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
      */
     @Override
-    public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, List<MatchResult> resultsSoFar) {
+    public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
@@ -137,16 +137,15 @@ public class TournamentSpec implements Tournament {
      */
     @Override
     public Ranking getCurrentStandings(Seeding initialSeeding,
-            List<MatchResult> resultsSoFar) {
+            Set<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
         Ranking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
             Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    initialSeeding, resultsInStage);
+                    initialSeeding, resultsSoFar);
             standings = mixInStandings(standings,
-                    stage.getCurrentStandings(tournamentInternalName, seeding, resultsInStage));
+                    stage.getCurrentStandings(tournamentInternalName, seeding, resultsSoFar));
             if (!matchesForStage.isEmpty()) {
                 return standings;
             }
@@ -258,22 +257,21 @@ public class TournamentSpec implements Tournament {
     }
 
     @Override
-    public List<Ranking> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar) {
+    public List<Ranking> getStandingsHistory(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
         List<Ranking> result = Lists.newArrayList();
         result.add(StandardRanking.createForSeeding(initialSeeding));
 
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
             Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    initialSeeding, resultsInStage);
-            result.addAll(stage.getStandingsHistory(tournamentInternalName, initialSeeding, resultsInStage));
+                    initialSeeding, resultsSoFar);
+            result.addAll(stage.getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar));
             if (!matchesForStage.isEmpty()) {
                 return result;
             }
             Ranking standings = stage.getCurrentStandings(tournamentInternalName,
-                    seeding, resultsInStage);
+                    seeding, resultsSoFar);
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
         return result;

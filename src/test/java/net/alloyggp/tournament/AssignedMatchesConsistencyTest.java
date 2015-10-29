@@ -50,7 +50,6 @@ public class AssignedMatchesConsistencyTest {
             TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
             Set<MatchSetup> matchesAlreadyProposed = Sets.newHashSet();
             while (true) {
-                //TODO: Make these return a List or SortedSet or something?
                 Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
                 if (!nextMatches.containsAll(matchesAlreadyProposed)) {
                     Assert.fail("With seed " + seed + ", some match setups appeared and"

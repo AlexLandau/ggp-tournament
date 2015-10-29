@@ -18,17 +18,17 @@ public interface Tournament {
     /**
      * Returns the set of matches that should be run in the given tournament state.
      */
-    Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, List<MatchResult> resultsSoFar);
+    Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
 
     /**
      * Returns the most recent standings in the given tournament state.
      */
-    Ranking getCurrentStandings(Seeding initialSeeding, List<MatchResult> resultsSoFar);
+    Ranking getCurrentStandings(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
 
     /**
      * Returns a history of the standings throughout the tournament, starting with the initial
      * seeding and progressing through each round.
      */
-    List<Ranking> getStandingsHistory(Seeding initialSeeding, List<MatchResult> resultsSoFar);
+    List<Ranking> getStandingsHistory(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
 
 }

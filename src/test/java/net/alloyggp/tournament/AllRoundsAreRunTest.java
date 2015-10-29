@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import net.alloyggp.tournament.api.MatchResult;
 import net.alloyggp.tournament.api.MatchSetup;
@@ -53,7 +53,6 @@ public class AllRoundsAreRunTest {
             Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
             TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
             while (true) {
-                //TODO: Make these return a List or SortedSet or something?
                 Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
                 if (nextMatches.isEmpty()) {
                     break;
@@ -92,7 +91,7 @@ public class AllRoundsAreRunTest {
             .min().getAsInt();
     }
 
-    private void checkResultExists(ImmutableList<MatchResult> resultsSoFar, int stageNum, int roundNum) {
+    private void checkResultExists(ImmutableSet<MatchResult> resultsSoFar, int stageNum, int roundNum) {
         for (MatchResult result : resultsSoFar) {
             String matchId = result.getSetup().getMatchId();
             if (MatchIds.parseStageNumber(matchId) == stageNum

@@ -25,13 +25,13 @@ import com.google.common.collect.Sets;
 
 import net.alloyggp.tournament.api.Game;
 import net.alloyggp.tournament.api.MatchResult;
+import net.alloyggp.tournament.api.MatchResult.Outcome;
 import net.alloyggp.tournament.api.MatchSetup;
 import net.alloyggp.tournament.api.Player;
 import net.alloyggp.tournament.api.PlayerScore;
 import net.alloyggp.tournament.api.Ranking;
 import net.alloyggp.tournament.api.Score;
 import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.api.MatchResult.Outcome;
 import net.alloyggp.tournament.spec.MatchSpec;
 import net.alloyggp.tournament.spec.RoundSpec;
 
@@ -52,7 +52,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final int stageNum;
         private final Seeding initialSeeding;
         private final ImmutableList<RoundSpec> rounds;
-        private final ImmutableList<MatchResult> resultsSoFar;
+        private final ImmutableSet<MatchResult> resultsInStage;
         private final Set<MatchSetup> matchesToRun = Sets.newHashSet();
         //TODO: Double-check that all these stats are updated appropriately
         private Game mostRecentGame = null; //of a fully completed round
@@ -66,18 +66,19 @@ public class SwissFormat1Runner implements FormatRunner {
         private final List<Ranking> standingsHistory = Lists.newArrayList();
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, ImmutableList<MatchResult> resultsSoFar) {
+                ImmutableList<RoundSpec> rounds, ImmutableSet<MatchResult> resultsSoFar) {
             this.tournamentInternalName = tournamentInternalName;
             this.stageNum = stageNum;
             this.initialSeeding = initialSeeding;
             this.rounds = rounds;
-            this.resultsSoFar = resultsSoFar;
+            this.resultsInStage = resultsSoFar;
         }
 
         public static SwissFormatSimulator createAndRun(String tournamentInternalName, int stageNum, Seeding initialSeeding,
                 ImmutableList<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+            Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
             SwissFormatSimulator simulator = new SwissFormatSimulator(tournamentInternalName, stageNum, initialSeeding,
-                    rounds, ImmutableList.copyOf(resultsSoFar));
+                    rounds, ImmutableSet.copyOf(resultsInStage));
             simulator.run();
             return simulator;
         }
@@ -85,7 +86,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private void run() {
             setInitialTotalsToZero();
 
-            SetMultimap<Integer, MatchResult> matchesByRound = MatchResults.mapByRound(resultsSoFar, stageNum);
+            SetMultimap<Integer, MatchResult> matchesByRound = MatchResults.mapByRound(resultsInStage, stageNum);
             for (int roundNum = 0; roundNum < rounds.size(); roundNum++) {
                 RoundSpec round = rounds.get(roundNum);
                 Set<MatchResult> roundResults = matchesByRound.get(roundNum);
@@ -539,9 +540,9 @@ public class SwissFormat1Runner implements FormatRunner {
 
     @Override
     public Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding, int stageNum,
-            List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+            List<RoundSpec> rounds, Set<MatchResult> allResultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
-                ImmutableList.copyOf(rounds), resultsSoFar).getMatchesToRun();
+                ImmutableList.copyOf(rounds), allResultsSoFar).getMatchesToRun();
     }
 
     public static Set<Player> getUnassignedPlayers(Collection<Player> allPlayers, List<List<Player>> playerGroups) {
@@ -556,9 +557,9 @@ public class SwissFormat1Runner implements FormatRunner {
 
     @Override
     public List<Ranking> getStandingsHistory(String tournamentInternalName, Seeding initialSeeding, int stageNum,
-            List<RoundSpec> rounds, Set<MatchResult> resultsSoFar) {
+            List<RoundSpec> rounds, Set<MatchResult> allResultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
-                ImmutableList.copyOf(rounds), resultsSoFar).getStandingsHistory();
+                ImmutableList.copyOf(rounds), allResultsSoFar).getStandingsHistory();
     }
 
     private static Game getOnlyGame(RoundSpec round) {

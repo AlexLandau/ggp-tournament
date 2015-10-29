@@ -55,7 +55,6 @@ public class MatchIdUniquenessTest {
         TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
         Map<String, MatchSetup> matchSetupsById = Maps.newHashMap();
         while (true) {
-            //TODO: Make these return a List or SortedSet or something?
             Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
             for (MatchSetup setup : nextMatches) {
                 String matchId = setup.getMatchId();
