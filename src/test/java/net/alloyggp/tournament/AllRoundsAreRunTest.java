@@ -1,6 +1,5 @@
 package net.alloyggp.tournament;
 
-import java.io.File;
 import java.util.Random;
 import java.util.Set;
 
@@ -15,7 +14,6 @@ import com.google.common.collect.ImmutableSet;
 import net.alloyggp.tournament.api.MatchResult;
 import net.alloyggp.tournament.api.MatchSetup;
 import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.api.TournamentSpecParser;
 import net.alloyggp.tournament.api.TournamentStatus;
 import net.alloyggp.tournament.impl.MatchIds;
 import net.alloyggp.tournament.spec.RoundSpec;
@@ -38,22 +36,22 @@ public class AllRoundsAreRunTest {
     }
 
     private final int numPlayers;
-    private final File yamlFile;
+    private final String testSpec;
 
-    public AllRoundsAreRunTest(int numPlayers, File yamlFile) {
+    public AllRoundsAreRunTest(int numPlayers, String testSpec) {
         this.numPlayers = numPlayers;
-        this.yamlFile = yamlFile;
+        this.testSpec = testSpec;
     }
 
     @Test
     public void test() {
-        TournamentSpec spec = (TournamentSpec) TournamentSpecParser.parseYamlFile(yamlFile);
+        TournamentSpec spec = TestSpecs.load(testSpec);
         for (long seed = 0L; seed < 100L; seed++) {
             Random random = new Random(seed);
             Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
             TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
             while (true) {
-                Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+                Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
                 if (nextMatches.isEmpty()) {
                     break;
                 }

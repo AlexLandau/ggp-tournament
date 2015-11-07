@@ -1,6 +1,5 @@
 package net.alloyggp.tournament;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -34,31 +33,27 @@ public class FuzzTests {
      */
     public static Iterable<Object[]> getParameters() {
         return ImmutableList.of(
-                new Object[] {6, testSpecFile("singleElim.yaml")},
-                new Object[] {8, testSpecFile("singleElim.yaml")},
-                new Object[] {7, testSpecFile("singleElimTwoStages.yaml")},
-                new Object[] {8, testSpecFile("singleElimTwoStages.yaml")},
-                new Object[] {10, testSpecFile("swiss1test1.yaml")},
-                new Object[] {9, testSpecFile("swiss1test1.yaml")},
-                new Object[] {10, testSpecFile("swiss1test2.yaml")},
-                new Object[] {9, testSpecFile("swiss1test2.yaml")},
-                new Object[] {10, testSpecFile("swiss1test3.yaml")},
-                new Object[] {9, testSpecFile("swiss1test3.yaml")},
-                new Object[] {10, testSpecFile("swiss1test4.yaml")},
-                new Object[] {9, testSpecFile("swiss1test4.yaml")},
-                new Object[] {3, testSpecFile("swiss1test4.yaml")},
-                new Object[] {10, testSpecFile("swiss1test5.yaml")},
-                new Object[] {9, testSpecFile("swiss1test5.yaml")},
-                new Object[] {3, testSpecFile("swiss1test5.yaml")},
-                new Object[] {6, testSpecFile("swiss1test6.yaml")},
-                new Object[] {7, testSpecFile("swiss1test6.yaml")},
-                new Object[] {7, testSpecFile("swiss1test7.yaml")},
-                new Object[] {8, testSpecFile("swiss1test7.yaml")}
+                new Object[] {6, ("singleElim")},
+                new Object[] {8, ("singleElim")},
+                new Object[] {7, ("singleElimTwoStages")},
+                new Object[] {8, ("singleElimTwoStages")},
+                new Object[] {10, ("swiss1test1")},
+                new Object[] {9, ("swiss1test1")},
+                new Object[] {10, ("swiss1test2")},
+                new Object[] {9, ("swiss1test2")},
+                new Object[] {10, ("swiss1test3")},
+                new Object[] {9, ("swiss1test3")},
+                new Object[] {10, ("swiss1test4")},
+                new Object[] {9, ("swiss1test4")},
+                new Object[] {3, ("swiss1test4")},
+                new Object[] {10, ("swiss1test5")},
+                new Object[] {9, ("swiss1test5")},
+                new Object[] {3, ("swiss1test5")},
+                new Object[] {6, ("swiss1test6")},
+                new Object[] {7, ("swiss1test6")},
+                new Object[] {7, ("swiss1test7")},
+                new Object[] {8, ("swiss1test7")}
                 );
-    }
-
-    private static File testSpecFile(String filename) {
-        return new File(new File("testSpecs"), filename);
     }
 
     /**
@@ -70,10 +65,10 @@ public class FuzzTests {
      */
     public static MatchResult getResult(Random random, MatchSetup match) {
         if (random.nextDouble() > 0.7) {
-            return MatchResult.getAbortedMatchResult(match, Lists.newArrayList());
+            return MatchResult.getAbortedMatchResult(match);
         }
         List<Integer> goals = getGoals(random, match.getGame());
-        return MatchResult.getSuccessfulMatchResult(match, goals, Lists.newArrayList());
+        return MatchResult.getSuccessfulMatchResult(match, goals);
     }
 
     private static List<Integer> getGoals(Random random, Game game) {

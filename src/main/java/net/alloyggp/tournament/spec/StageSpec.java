@@ -12,8 +12,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import net.alloyggp.tournament.api.Game;
+import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.MatchSetup;
 import net.alloyggp.tournament.api.Ranking;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.impl.FormatRunner;
@@ -64,7 +64,7 @@ public class StageSpec {
                 ImmutableList.copyOf(rounds), playerCutoff);
     }
 
-    public Set<MatchSetup> getMatchesToRun(String tournamentInternalName,
+    public NextMatchesResult getMatchesToRun(String tournamentInternalName,
             Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
         FormatRunner runner = format.getRunner();
         return runner.getMatchesToRun(tournamentInternalName, initialSeeding, stageNum,

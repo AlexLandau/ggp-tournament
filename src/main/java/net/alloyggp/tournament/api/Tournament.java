@@ -18,7 +18,7 @@ public interface Tournament {
     /**
      * Returns the set of matches that should be run in the given tournament state.
      */
-    Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
+    NextMatchesResult getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
 
     /**
      * Returns the most recent standings in the given tournament state.

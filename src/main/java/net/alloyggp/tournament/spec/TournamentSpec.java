@@ -14,8 +14,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import net.alloyggp.tournament.api.Game;
+import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.MatchSetup;
 import net.alloyggp.tournament.api.Player;
 import net.alloyggp.tournament.api.PlayerScore;
 import net.alloyggp.tournament.api.Ranking;
@@ -24,6 +24,7 @@ import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.api.Tournament;
 import net.alloyggp.tournament.api.TournamentSpecParser;
 import net.alloyggp.tournament.impl.MatchResults;
+import net.alloyggp.tournament.impl.StandardNextMatchesResult;
 import net.alloyggp.tournament.impl.StandardRanking;
 import net.alloyggp.tournament.impl.YamlUtils;
 
@@ -114,14 +115,14 @@ public class TournamentSpec implements Tournament {
      * @see net.alloyggp.swiss.api.Tournament#getMatchesToRun(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
      */
     @Override
-    public Set<MatchSetup> getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
+    public NextMatchesResult getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
             Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
-            Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName,
+            NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     initialSeeding, resultsInStage);
-            if (!matchesForStage.isEmpty()) {
+            if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return matchesForStage;
             }
             Ranking standings = stage.getCurrentStandings(tournamentInternalName,
@@ -129,7 +130,7 @@ public class TournamentSpec implements Tournament {
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
         //No stages had matches left; the tournament is over
-        return ImmutableSet.of();
+        return StandardNextMatchesResult.createEmpty();
     }
 
     /* (non-Javadoc)
@@ -142,11 +143,11 @@ public class TournamentSpec implements Tournament {
         Ranking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName,
+            NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     initialSeeding, resultsSoFar);
             standings = mixInStandings(standings,
                     stage.getCurrentStandings(tournamentInternalName, seeding, resultsSoFar));
-            if (!matchesForStage.isEmpty()) {
+            if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return standings;
             }
             seeding = stage.getSeedingsFromFinalStandings(standings);
@@ -264,10 +265,10 @@ public class TournamentSpec implements Tournament {
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            Set<MatchSetup> matchesForStage = stage.getMatchesToRun(tournamentInternalName,
+            NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     initialSeeding, resultsSoFar);
             result.addAll(stage.getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar));
-            if (!matchesForStage.isEmpty()) {
+            if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return result;
             }
             Ranking standings = stage.getCurrentStandings(tournamentInternalName,

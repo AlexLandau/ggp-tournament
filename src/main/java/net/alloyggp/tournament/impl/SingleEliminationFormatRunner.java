@@ -1,9 +1,11 @@
 package net.alloyggp.tournament.impl;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -20,6 +22,7 @@ import net.alloyggp.tournament.api.Game;
 import net.alloyggp.tournament.api.MatchResult;
 import net.alloyggp.tournament.api.MatchResult.Outcome;
 import net.alloyggp.tournament.api.MatchSetup;
+import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.Player;
 import net.alloyggp.tournament.api.PlayerScore;
 import net.alloyggp.tournament.api.Ranking;
@@ -65,6 +68,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private final ImmutableSet<MatchResult> resultsSoFarInStage;
         private final Set<MatchSetup> matchesToReturn = Sets.newHashSet();
         private final Map<Player, Integer> playerEliminationRounds = Maps.newHashMap();
+        private @Nullable ZonedDateTime latestStartTimeSeen = null;
 
         private final List<Ranking> standingsHistory = Lists.newArrayList();
 
@@ -106,8 +110,11 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                 matchesToReturn.addAll(status.matchesToReturn);
                 playerEliminationRounds.putAll(status.playerEliminationRounds);
                 standingsHistory.addAll(status.standingsHistory);
+                latestStartTimeSeen = status.latestStartTimeSeen;
                 numRoundsLeft = status.numRoundsLeft - 1;
             }
+
+            handleStartTimesForRoundsBefore(numRoundsLeft);
             if (numPlayers < getPlayersForNFullRounds(numRoundsLeft)) {
                 runInitialPlayInRound(playersByPosition, numPlayers, numRoundsLeft);
                 if (!matchesToReturn.isEmpty()) {
@@ -132,6 +139,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         public void runInitialPlayInRound(List<Player> playersByPosition, int numPlayers, int numRoundsLeft) {
             RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
+            handleStartTimeForRound(round);
             int numNormalRounds = numRoundsLeft - 1;
             int numPlayinMatches = numPlayers - getPlayersForNFullRounds(numNormalRounds);
             for (int i = 0; i < numPlayinMatches; i++) {
@@ -143,6 +151,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         public void runNormalRound(List<Player> playersByPosition, int numRoundsLeft) {
             RoundSpec round = getRoundForNumRoundsLeft(numRoundsLeft);
+            handleStartTimeForRound(round);
             int numPlayersLeft = getPlayersForNFullRounds(numRoundsLeft);
             for (int i = 0; i < (numPlayersLeft / 2); i++) {
                 int position1 = i;
@@ -168,6 +177,25 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             }
         }
 
+        private void handleStartTimeForRound(RoundSpec round) {
+            if (round.getStartTime().isPresent()) {
+                ZonedDateTime roundStartTime = round.getStartTime().get();
+                if (latestStartTimeSeen == null
+                        || latestStartTimeSeen.isBefore(roundStartTime)) {
+                    latestStartTimeSeen = roundStartTime;
+                }
+            }
+        }
+
+        private void handleStartTimesForRoundsBefore(int numRoundsLeft) {
+            int curRound = rounds.size();
+            while (curRound > numRoundsLeft) {
+                RoundSpec round = getRoundForNumRoundsLeft(curRound);
+                handleStartTimeForRound(round);
+                curRound--;
+            }
+        }
+
         private void cacheEndOfRoundStatus(int roundNum, List<Player> playersByPosition) {
             TournamentStateCache.cacheEndOfRoundState(
                     tournamentInternalName,
@@ -180,6 +208,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                             matchesToReturn,
                             playerEliminationRounds,
                             standingsHistory,
+                            latestStartTimeSeen,
                             roundNum));
         }
 
@@ -322,8 +351,9 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             return numRounds;
         }
 
-        public Set<MatchSetup> getMatchesToRun() {
-            return ImmutableSet.copyOf(matchesToReturn);
+        public NextMatchesResult getMatchesToRun() {
+            return StandardNextMatchesResult.create(ImmutableSet.copyOf(matchesToReturn),
+                    latestStartTimeSeen);
         }
 
         private Ranking getStandings() {
@@ -349,26 +379,29 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         public final ImmutableSet<MatchSetup> matchesToReturn;
         public final ImmutableMap<Player, Integer> playerEliminationRounds;
         public final ImmutableList<Ranking> standingsHistory;
+        public final @Nullable ZonedDateTime latestStartTimeSeen;
         public final int numRoundsLeft;
 
         private SingleEliminationRoundStatus(ImmutableList<Player> playersByPosition,
                 ImmutableSet<MatchSetup> matchesToReturn, ImmutableMap<Player, Integer> playerEliminationRounds,
-                ImmutableList<Ranking> standingsHistory, int numRoundsLeft) {
+                ImmutableList<Ranking> standingsHistory, ZonedDateTime latestStartTimeSeen, int numRoundsLeft) {
             this.playersByPosition = playersByPosition;
             this.matchesToReturn = matchesToReturn;
             this.playerEliminationRounds = playerEliminationRounds;
             this.standingsHistory = standingsHistory;
+            this.latestStartTimeSeen = latestStartTimeSeen;
             this.numRoundsLeft = numRoundsLeft;
         }
 
         public static SingleEliminationRoundStatus create(List<Player> playersByPosition,
                 Set<MatchSetup> matchesToReturn, Map<Player, Integer> playerEliminationRounds,
-                List<Ranking> standingsHistory, int numRoundsLeft) {
+                List<Ranking> standingsHistory, ZonedDateTime latestStartTimeSeen, int numRoundsLeft) {
             return new SingleEliminationRoundStatus(
                     ImmutableList.copyOf(playersByPosition),
                     ImmutableSet.copyOf(matchesToReturn),
                     ImmutableMap.copyOf(playerEliminationRounds),
                     ImmutableList.copyOf(standingsHistory),
+                    latestStartTimeSeen,
                     numRoundsLeft);
         }
 
@@ -376,6 +409,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
+            result = prime * result + ((latestStartTimeSeen == null) ? 0 : latestStartTimeSeen.hashCode());
             result = prime * result + ((matchesToReturn == null) ? 0 : matchesToReturn.hashCode());
             result = prime * result + numRoundsLeft;
             result = prime * result + ((playerEliminationRounds == null) ? 0 : playerEliminationRounds.hashCode());
@@ -396,6 +430,13 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                 return false;
             }
             SingleEliminationRoundStatus other = (SingleEliminationRoundStatus) obj;
+            if (latestStartTimeSeen == null) {
+                if (other.latestStartTimeSeen != null) {
+                    return false;
+                }
+            } else if (!latestStartTimeSeen.equals(other.latestStartTimeSeen)) {
+                return false;
+            }
             if (matchesToReturn == null) {
                 if (other.matchesToReturn != null) {
                     return false;
@@ -434,12 +475,13 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         public String toString() {
             return "SingleEliminationRoundStatus [playersByPosition=" + playersByPosition + ", matchesToReturn="
                     + matchesToReturn + ", playerEliminationRounds=" + playerEliminationRounds + ", standingsHistory="
-                    + standingsHistory + ", numRoundsLeft=" + numRoundsLeft + "]";
+                    + standingsHistory + ", latestStartTimeSeen=" + latestStartTimeSeen + ", numRoundsLeft="
+                    + numRoundsLeft + "]";
         }
     }
 
     @Override
-    public Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding,
+    public NextMatchesResult getMatchesToRun(String tournamentInternalName, Seeding initialSeeding,
             int stageNum, List<RoundSpec> rounds, Set<MatchResult> allResultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
                 stageNum, initialSeeding, ImmutableList.copyOf(rounds), allResultsSoFar)

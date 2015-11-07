@@ -2,7 +2,6 @@ package net.alloyggp.tournament.api;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -73,13 +72,13 @@ public class TournamentStatus {
      * run.
      */
     public boolean isComplete() {
-        return getNextMatchesToRun().isEmpty();
+        return getNextMatchesToRun().getMatchesToRun().isEmpty();
     }
 
     /**
      * Returns the next set of matches to run.
      */
-    public Set<MatchSetup> getNextMatchesToRun() {
+    public NextMatchesResult getNextMatchesToRun() {
         return spec.getMatchesToRun(initialSeeding, resultsSoFar);
     }
 

@@ -1,5 +1,6 @@
 package net.alloyggp.tournament.impl;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import net.alloyggp.tournament.api.Game;
 import net.alloyggp.tournament.api.MatchResult;
 import net.alloyggp.tournament.api.MatchResult.Outcome;
 import net.alloyggp.tournament.api.MatchSetup;
+import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.Player;
 import net.alloyggp.tournament.api.PlayerScore;
 import net.alloyggp.tournament.api.Ranking;
@@ -50,6 +52,7 @@ public class SwissFormat1Runner implements FormatRunner {
         return INSTANCE;
     }
 
+    //TODO: Factor out the common elements between this and SingleEliminationFormatSimulator
     @NotThreadSafe
     private static class SwissFormatSimulator {
         private final String tournamentInternalName;
@@ -69,6 +72,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers = Maps.newHashMap();
 //        private final Map<Integer, Map<Player, Multiset<Integer>>> nonFixedSumRoleAssignmentsSoFarByNumPlayers = Maps.newHashMap();
         private final List<Ranking> standingsHistory = Lists.newArrayList();
+        private @Nullable ZonedDateTime latestStartTimeSeen = null;
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
                 ImmutableList<RoundSpec> rounds, ImmutableSet<MatchResult> resultsFromEarlierStages,
@@ -118,7 +122,8 @@ public class SwissFormat1Runner implements FormatRunner {
                     Swiss1EndOfRoundState state = Swiss1EndOfRoundState.create(roundNum,
                             mostRecentGame, totalPointsScored, pointsScoredByGame,
                             pointsFromByes, totalMatchupsSoFar, matchupsSoFarByGame,
-                            nonFixedSumMatchupsSoFarByNumPlayers, standingsHistory);
+                            nonFixedSumMatchupsSoFarByNumPlayers, standingsHistory,
+                            latestStartTimeSeen);
 
                     TournamentStateCache.cacheEndOfRoundState(tournamentInternalName, initialSeeding, resultsFromEarlierStages, stageNum, resultsInStage, state);
                 }
@@ -152,9 +157,11 @@ public class SwissFormat1Runner implements FormatRunner {
             for (Entry<ImmutableSet<Player>> entry : state.totalMatchupsSoFar.entrySet()) {
                 totalMatchupsSoFar.add(Sets.newHashSet(entry.getElement()), entry.getCount());
             }
+            latestStartTimeSeen = state.latestStartTimeSeen;
         }
 
         private void runRound(RoundSpec round, int roundNum, Set<MatchResult> roundResults) {
+            handleStartTimeForRound(round);
             //...there should be only one match per round, I think?
             //Or at least they must involve the same game?
             Game game = getOnlyGame(round);
@@ -211,6 +218,16 @@ public class SwissFormat1Runner implements FormatRunner {
                 }
                 //Also...
                 updateMatchupStats(game, playerGroups);
+            }
+        }
+
+        private void handleStartTimeForRound(RoundSpec round) {
+            if (round.getStartTime().isPresent()) {
+                ZonedDateTime roundStartTime = round.getStartTime().get();
+                if (latestStartTimeSeen == null
+                        || latestStartTimeSeen.isBefore(roundStartTime)) {
+                    latestStartTimeSeen = roundStartTime;
+                }
             }
         }
 
@@ -486,8 +503,9 @@ public class SwissFormat1Runner implements FormatRunner {
 
         }
 
-        public Set<MatchSetup> getMatchesToRun() {
-            return ImmutableSet.copyOf(matchesToRun);
+        public NextMatchesResult getMatchesToRun() {
+            return StandardNextMatchesResult.create(ImmutableSet.copyOf(matchesToRun),
+                    latestStartTimeSeen);
         }
 
         private Ranking getStandings() {
@@ -589,7 +607,7 @@ public class SwissFormat1Runner implements FormatRunner {
     }
 
     @Override
-    public Set<MatchSetup> getMatchesToRun(String tournamentInternalName, Seeding initialSeeding, int stageNum,
+    public NextMatchesResult getMatchesToRun(String tournamentInternalName, Seeding initialSeeding, int stageNum,
             List<RoundSpec> rounds, Set<MatchResult> allResultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
                 ImmutableList.copyOf(rounds), allResultsSoFar).getMatchesToRun();
@@ -646,13 +664,14 @@ public class SwissFormat1Runner implements FormatRunner {
         private final ImmutableMap<Game, ImmutableMultiset<ImmutableSet<Player>>> matchupsSoFarByGame;
         private final ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<Player>>> nonFixedSumMatchupsSoFarByNumPlayers;
         private final ImmutableList<Ranking> standingsHistory;
+        private final @Nullable ZonedDateTime latestStartTimeSeen;
 
         private Swiss1EndOfRoundState(int roundNum, Game mostRecentGame, ImmutableMap<Player, Double> totalPointsScored,
                 ImmutableMap<Game, ImmutableMap<Player, Double>> pointsScoredByGame,
                 ImmutableMap<Player, Double> pointsFromByes, ImmutableMultiset<ImmutableSet<Player>> totalMatchupsSoFar,
                 ImmutableMap<Game, ImmutableMultiset<ImmutableSet<Player>>> matchupsSoFarByGame,
                 ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<Player>>> nonFixedSumMatchupsSoFarByNumPlayers,
-                ImmutableList<Ranking> standingsHistory) {
+                ImmutableList<Ranking> standingsHistory, @Nullable ZonedDateTime latestStartTimeSeen) {
             this.roundNum = roundNum;
             this.mostRecentGame = mostRecentGame;
             this.totalPointsScored = totalPointsScored;
@@ -662,6 +681,7 @@ public class SwissFormat1Runner implements FormatRunner {
             this.matchupsSoFarByGame = matchupsSoFarByGame;
             this.nonFixedSumMatchupsSoFarByNumPlayers = nonFixedSumMatchupsSoFarByNumPlayers;
             this.standingsHistory = standingsHistory;
+            this.latestStartTimeSeen = latestStartTimeSeen;
         }
 
         public static Swiss1EndOfRoundState create(int roundNum,
@@ -672,7 +692,8 @@ public class SwissFormat1Runner implements FormatRunner {
                 Multiset<Set<Player>> totalMatchupsSoFar,
                 Map<Game, Multiset<Set<Player>>> matchupsSoFarByGame,
                 Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers,
-                List<Ranking> standingsHistory) {
+                List<Ranking> standingsHistory,
+                @Nullable ZonedDateTime latestStartTimeSeen) {
             return new Swiss1EndOfRoundState(roundNum,
                     mostRecentGame,
                     ImmutableMap.copyOf(totalPointsScored),
@@ -681,7 +702,8 @@ public class SwissFormat1Runner implements FormatRunner {
                     toImmutableSetEntriedMultiset(totalMatchupsSoFar),
                     toImmutableMultisetOfSetsValuedMap(matchupsSoFarByGame),
                     toImmutableMultisetOfSetsValuedMap(nonFixedSumMatchupsSoFarByNumPlayers),
-                    ImmutableList.copyOf(standingsHistory));
+                    ImmutableList.copyOf(standingsHistory),
+                    latestStartTimeSeen);
         }
 
         private static <K,T> ImmutableMap<K, ImmutableMultiset<ImmutableSet<T>>> toImmutableMultisetOfSetsValuedMap(
@@ -707,6 +729,7 @@ public class SwissFormat1Runner implements FormatRunner {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
+            result = prime * result + ((latestStartTimeSeen == null) ? 0 : latestStartTimeSeen.hashCode());
             result = prime * result + ((matchupsSoFarByGame == null) ? 0 : matchupsSoFarByGame.hashCode());
             result = prime * result + ((mostRecentGame == null) ? 0 : mostRecentGame.hashCode());
             result = prime * result + ((nonFixedSumMatchupsSoFarByNumPlayers == null) ? 0
@@ -732,6 +755,13 @@ public class SwissFormat1Runner implements FormatRunner {
                 return false;
             }
             Swiss1EndOfRoundState other = (Swiss1EndOfRoundState) obj;
+            if (latestStartTimeSeen == null) {
+                if (other.latestStartTimeSeen != null) {
+                    return false;
+                }
+            } else if (!latestStartTimeSeen.equals(other.latestStartTimeSeen)) {
+                return false;
+            }
             if (matchupsSoFarByGame == null) {
                 if (other.matchupsSoFarByGame != null) {
                     return false;
@@ -800,7 +830,8 @@ public class SwissFormat1Runner implements FormatRunner {
                     + ", totalPointsScored=" + totalPointsScored + ", pointsScoredByGame=" + pointsScoredByGame
                     + ", pointsFromByes=" + pointsFromByes + ", totalMatchupsSoFar=" + totalMatchupsSoFar
                     + ", matchupsSoFarByGame=" + matchupsSoFarByGame + ", nonFixedSumMatchupsSoFarByNumPlayers="
-                    + nonFixedSumMatchupsSoFarByNumPlayers + ", standingsHistory=" + standingsHistory + "]";
+                    + nonFixedSumMatchupsSoFarByNumPlayers + ", standingsHistory=" + standingsHistory
+                    + ", latestStartTimeSeen=" + latestStartTimeSeen + "]";
         }
     }
 }

@@ -2,7 +2,6 @@ package net.alloyggp.tournament;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -19,7 +18,6 @@ import net.alloyggp.tournament.api.MatchSetup;
 import net.alloyggp.tournament.api.Ranking;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.api.Tournament;
-import net.alloyggp.tournament.api.TournamentSpecParser;
 import net.alloyggp.tournament.api.TournamentStatus;
 import net.alloyggp.tournament.impl.StandardRanking;
 
@@ -39,16 +37,16 @@ public class StandingsConsistencyTest {
     }
 
     private final int numPlayers;
-    private final File yamlFile;
+    private final String testSpec;
 
-    public StandingsConsistencyTest(int numPlayers, File yamlFile) {
+    public StandingsConsistencyTest(int numPlayers, String testSpec) {
         this.numPlayers = numPlayers;
-        this.yamlFile = yamlFile;
+        this.testSpec = testSpec;
     }
 
     @Test
     public void testStandingsHistoryNotRewritten() {
-        Tournament spec = TournamentSpecParser.parseYamlFile(yamlFile);
+        Tournament spec = TestSpecs.load(testSpec);
         for (long seed = 0L; seed < 100L; seed++) {
             Random random = new Random(seed);
             Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
@@ -57,7 +55,7 @@ public class StandingsConsistencyTest {
             standingsSoFar.add(StandardRanking.createForSeeding(initialSeeding));
             verifyAndAddStandingsHistory(standingsSoFar, status.getStandingsHistory());
             while (true) {
-                Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+                Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
                 if (nextMatches.isEmpty()) {
                     break;
                 }

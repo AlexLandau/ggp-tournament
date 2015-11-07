@@ -1,6 +1,5 @@
 package net.alloyggp.tournament;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -17,7 +16,6 @@ import net.alloyggp.tournament.api.MatchResult;
 import net.alloyggp.tournament.api.MatchSetup;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.api.Tournament;
-import net.alloyggp.tournament.api.TournamentSpecParser;
 import net.alloyggp.tournament.api.TournamentStatus;
 
 /**
@@ -34,16 +32,16 @@ public class MatchIdUniquenessTest {
     }
 
     private final int numPlayers;
-    private final File yamlFile;
+    private final String testSpec;
 
-    public MatchIdUniquenessTest(int numPlayers, File yamlFile) {
+    public MatchIdUniquenessTest(int numPlayers, String testSpec) {
         this.numPlayers = numPlayers;
-        this.yamlFile = yamlFile;
+        this.testSpec = testSpec;
     }
 
     @Test
     public void testMatchSetupsHaveUniqueIds() {
-        Tournament spec = TournamentSpecParser.parseYamlFile(yamlFile);
+        Tournament spec = TestSpecs.load(testSpec);
         for (long seed = 0L; seed < 100L; seed++) {
             testWithSeed(spec, seed);
         }
@@ -55,7 +53,7 @@ public class MatchIdUniquenessTest {
         TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
         Map<String, MatchSetup> matchSetupsById = Maps.newHashMap();
         while (true) {
-            Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+            Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
             for (MatchSetup setup : nextMatches) {
                 String matchId = setup.getMatchId();
                 if (matchSetupsById.containsKey(matchId)) {

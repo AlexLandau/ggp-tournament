@@ -1,6 +1,5 @@
 package net.alloyggp.tournament;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -15,7 +14,6 @@ import net.alloyggp.tournament.api.Player;
 import net.alloyggp.tournament.api.Ranking;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.api.Tournament;
-import net.alloyggp.tournament.api.TournamentSpecParser;
 import net.alloyggp.tournament.api.TournamentStatus;
 
 /*
@@ -25,12 +23,12 @@ import net.alloyggp.tournament.api.TournamentStatus;
 public class SampleTournamentClient {
     @Test
     public void testSingleElimination() {
-        Tournament spec = TournamentSpecParser.parseYamlFile(new File("testSpecs/swiss1test7.yaml"));
+        Tournament spec = TestSpecs.load("swiss1test7");
         Seeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
         TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
         //Run matches until exhaustion...
         while (!status.isComplete()) {
-            Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+            Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
             List<MatchResult> results = getRandomOutcomes(nextMatches);
             System.out.println("Match results: " + results);
             status = status.withNewResults(results);

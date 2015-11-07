@@ -3,7 +3,6 @@ package net.alloyggp.tournament;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -23,7 +22,6 @@ import net.alloyggp.tournament.api.Player;
 import net.alloyggp.tournament.api.Ranking;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.api.Tournament;
-import net.alloyggp.tournament.api.TournamentSpecParser;
 import net.alloyggp.tournament.api.TournamentStatus;
 import net.alloyggp.tournament.impl.TournamentStateCache;
 
@@ -41,16 +39,16 @@ public class CacheConsistencyTest {
     }
 
     private final int numPlayers;
-    private final File yamlFile;
+    private final String testSpec;
 
-    public CacheConsistencyTest(int numPlayers, File yamlFile) {
+    public CacheConsistencyTest(int numPlayers, String testSpec) {
         this.numPlayers = numPlayers;
-        this.yamlFile = yamlFile;
+        this.testSpec = testSpec;
     }
 
     @Test
     public void testDisablingCacheDoesNotChangeResults() {
-        Tournament spec = TournamentSpecParser.parseYamlFile(yamlFile);
+        Tournament spec = TestSpecs.load(testSpec);
         for (long seed = 0L; seed < 100L; seed++) {
             try {
                 Random random = new Random(seed);
@@ -58,7 +56,7 @@ public class CacheConsistencyTest {
                 TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
                 Map<MatchSetup, MatchResult> resultsChosen = Maps.newHashMap();
                 while (true) {
-                    Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+                    Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
                     if (nextMatches.isEmpty()) {
                         break;
                     }
@@ -76,7 +74,7 @@ public class CacheConsistencyTest {
                 try {
                     status = TournamentStatus.getInitialStatus(spec, initialSeeding);
                     while (true) {
-                        Set<MatchSetup> nextMatches = status.getNextMatchesToRun();
+                        Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
                         if (!resultsChosen.keySet().containsAll(nextMatches)) {
                             fail("We have at least one match setup returned this time that wasn't returned last "
                                     + "time: " + Sets.difference(nextMatches, resultsChosen.keySet()));
