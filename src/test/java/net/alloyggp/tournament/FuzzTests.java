@@ -33,26 +33,26 @@ public class FuzzTests {
      */
     public static Iterable<Object[]> getParameters() {
         return ImmutableList.of(
-                new Object[] {6, ("singleElim")},
-                new Object[] {8, ("singleElim")},
-                new Object[] {7, ("singleElimTwoStages")},
-                new Object[] {8, ("singleElimTwoStages")},
-                new Object[] {10, ("swiss1test1")},
-                new Object[] {9, ("swiss1test1")},
-                new Object[] {10, ("swiss1test2")},
-                new Object[] {9, ("swiss1test2")},
-                new Object[] {10, ("swiss1test3")},
-                new Object[] {9, ("swiss1test3")},
-                new Object[] {10, ("swiss1test4")},
-                new Object[] {9, ("swiss1test4")},
-                new Object[] {3, ("swiss1test4")},
-                new Object[] {10, ("swiss1test5")},
-                new Object[] {9, ("swiss1test5")},
-                new Object[] {3, ("swiss1test5")},
-                new Object[] {6, ("swiss1test6")},
-                new Object[] {7, ("swiss1test6")},
-                new Object[] {7, ("swiss1test7")},
-                new Object[] {8, ("swiss1test7")}
+                new Object[] {6, "singleElim"},
+                new Object[] {8, "singleElim"},
+                new Object[] {7, "singleElimTwoStages"},
+                new Object[] {8, "singleElimTwoStages"},
+                new Object[] {10, "swiss1test1"},
+                new Object[] {9, "swiss1test1"},
+                new Object[] {10, "swiss1test2"},
+                new Object[] {9, "swiss1test2"},
+                new Object[] {10, "swiss1test3"},
+                new Object[] {9, "swiss1test3"},
+                new Object[] {10, "swiss1test4"},
+                new Object[] {9, "swiss1test4"},
+                new Object[] {3, "swiss1test4"},
+                new Object[] {10, "swiss1test5"},
+                new Object[] {9, "swiss1test5"},
+                new Object[] {3, "swiss1test5"},
+                new Object[] {6, "swiss1test6"},
+                new Object[] {7, "swiss1test6"},
+                new Object[] {7, "swiss1test7"},
+                new Object[] {8, "swiss1test7"}
                 );
     }
 
