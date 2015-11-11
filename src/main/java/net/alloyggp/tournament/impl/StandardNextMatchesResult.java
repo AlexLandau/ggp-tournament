@@ -1,8 +1,6 @@
 package net.alloyggp.tournament.impl;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -66,14 +64,6 @@ public class StandardNextMatchesResult implements NextMatchesResult {
      */
     @Override
     public long getSecondsToWaitUntilAllowedStartTime() {
-        if (!earliestAllowedStartTime.isPresent()) {
-            return 0L;
-        }
-        LocalDateTime now = LocalDateTime.now();
-        long seconds = now.until(earliestAllowedStartTime.get(), ChronoUnit.SECONDS);
-        if (seconds < 0L) {
-            return 0L;
-        }
-        return seconds;
+        return TimeUtils.getSecondsToWaitUntilStartTime(earliestAllowedStartTime);
     }
 }

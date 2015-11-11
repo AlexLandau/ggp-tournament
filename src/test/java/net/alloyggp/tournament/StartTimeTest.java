@@ -47,6 +47,7 @@ public class StartTimeTest {
 
     private void testSingleElimHasStartTime(int numPlayers) {
         Tournament tournament = TestSpecs.load("singleElim");
+        assertTrue(tournament.getInitialStartTime().isPresent());
 
         Random random = new Random(0L);
         Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);

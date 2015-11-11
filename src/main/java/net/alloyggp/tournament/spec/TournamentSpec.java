@@ -1,7 +1,9 @@
 package net.alloyggp.tournament.spec;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
@@ -14,8 +16,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import net.alloyggp.tournament.api.Game;
-import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.MatchResult;
+import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.Player;
 import net.alloyggp.tournament.api.PlayerScore;
 import net.alloyggp.tournament.api.Ranking;
@@ -26,6 +28,7 @@ import net.alloyggp.tournament.api.TournamentSpecParser;
 import net.alloyggp.tournament.impl.MatchResults;
 import net.alloyggp.tournament.impl.StandardNextMatchesResult;
 import net.alloyggp.tournament.impl.StandardRanking;
+import net.alloyggp.tournament.impl.TimeUtils;
 import net.alloyggp.tournament.impl.YamlUtils;
 
 @Immutable
@@ -39,6 +42,8 @@ public class TournamentSpec implements Tournament {
         Preconditions.checkNotNull(tournamentInternalName);
         Preconditions.checkNotNull(tournamentDisplayName);
         Preconditions.checkArgument(!stages.isEmpty());
+        Preconditions.checkArgument(tournamentInternalName.matches("[a-zA-Z0-9_]+"),
+                "Tournament internal name should consist of alphanumerics and underscores, but was %s", tournamentInternalName);
         this.tournamentInternalName = tournamentInternalName;
         this.tournamentDisplayName = tournamentDisplayName;
         this.stages = stages;
@@ -276,5 +281,15 @@ public class TournamentSpec implements Tournament {
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
         return result;
+    }
+
+    @Override
+    public Optional<ZonedDateTime> getInitialStartTime() {
+        return stages.get(0).getRounds().get(0).getStartTime();
+    }
+
+    @Override
+    public long getSecondsToWaitUntilInitialStartTime() {
+        return TimeUtils.getSecondsToWaitUntilStartTime(getInitialStartTime());
     }
 }

@@ -10,6 +10,7 @@ public class Player {
 
     private Player(String id) {
         Preconditions.checkArgument(!id.contains(","), "Player names should not contain commas");
+        Preconditions.checkArgument(!id.contains("\\"), "Player names should not contain backslashes");
         this.id = id;
     }
 
