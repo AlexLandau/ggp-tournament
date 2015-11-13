@@ -12,7 +12,7 @@ import net.alloyggp.tournament.impl.SingleEliminationFormatRunner;
 import net.alloyggp.tournament.impl.SwissFormat1Runner;
 
 public enum StageFormat {
-    SINGLE_ELIMINATION("singleElimination",
+    SINGLE_ELIMINATION("singleElimination1",
             () -> SingleEliminationFormatRunner.create()),
     SWISS1("swiss1",
             () -> SwissFormat1Runner.create()),

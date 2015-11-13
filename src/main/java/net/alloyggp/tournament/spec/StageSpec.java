@@ -12,8 +12,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import net.alloyggp.tournament.api.Game;
-import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.MatchResult;
+import net.alloyggp.tournament.api.NextMatchesResult;
 import net.alloyggp.tournament.api.Ranking;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.impl.FormatRunner;
@@ -94,6 +94,10 @@ public class StageSpec {
 
     public ImmutableList<RoundSpec> getRounds() {
         return rounds;
+    }
+
+    public int getPlayerCutoff() {
+        return playerCutoff;
     }
 
     public List<Ranking> getStandingsHistory(String tournamentInternalName,

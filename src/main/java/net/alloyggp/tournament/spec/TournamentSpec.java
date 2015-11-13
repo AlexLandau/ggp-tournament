@@ -25,7 +25,6 @@ import net.alloyggp.tournament.api.Score;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.api.Tournament;
 import net.alloyggp.tournament.api.TournamentSpecParser;
-import net.alloyggp.tournament.impl.MatchResults;
 import net.alloyggp.tournament.impl.StandardNextMatchesResult;
 import net.alloyggp.tournament.impl.StandardRanking;
 import net.alloyggp.tournament.impl.TimeUtils;
@@ -96,19 +95,13 @@ public class TournamentSpec implements Tournament {
         return results;
     }
 
-    /* (non-Javadoc)
-     * @see net.alloyggp.swiss.api.Tournament#getTournamentInternalName()
-     */
     @Override
-    public String getTournamentInternalName() {
+    public String getInternalName() {
         return tournamentInternalName;
     }
 
-    /* (non-Javadoc)
-     * @see net.alloyggp.swiss.api.Tournament#getTournamentDisplayName()
-     */
     @Override
-    public String getTournamentDisplayName() {
+    public String getDisplayName() {
         return tournamentDisplayName;
     }
 
@@ -116,31 +109,24 @@ public class TournamentSpec implements Tournament {
         return stages;
     }
 
-    /* (non-Javadoc)
-     * @see net.alloyggp.swiss.api.Tournament#getMatchesToRun(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
-     */
     @Override
     public NextMatchesResult getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            Set<MatchResult> resultsInStage = MatchResults.filterByStage(resultsSoFar, stageNum);
             NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    initialSeeding, resultsInStage);
+                    seeding, resultsSoFar);
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return matchesForStage;
             }
             Ranking standings = stage.getCurrentStandings(tournamentInternalName,
-                    seeding, resultsInStage);
+                    seeding, resultsSoFar);
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
         //No stages had matches left; the tournament is over
         return StandardNextMatchesResult.createEmpty();
     }
 
-    /* (non-Javadoc)
-     * @see net.alloyggp.swiss.api.Tournament#getCurrentStandings(net.alloyggp.swiss.api.Seeding, com.google.common.collect.ImmutableList)
-     */
     @Override
     public Ranking getCurrentStandings(Seeding initialSeeding,
             Set<MatchResult> resultsSoFar) {
@@ -149,7 +135,7 @@ public class TournamentSpec implements Tournament {
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
             NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    initialSeeding, resultsSoFar);
+                    seeding, resultsSoFar);
             standings = mixInStandings(standings,
                     stage.getCurrentStandings(tournamentInternalName, seeding, resultsSoFar));
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
@@ -271,8 +257,8 @@ public class TournamentSpec implements Tournament {
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
             NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    initialSeeding, resultsSoFar);
-            result.addAll(stage.getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar));
+                    seeding, resultsSoFar);
+            result.addAll(stage.getStandingsHistory(tournamentInternalName, seeding, resultsSoFar));
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return result;
             }

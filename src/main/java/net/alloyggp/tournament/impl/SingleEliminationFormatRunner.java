@@ -162,17 +162,18 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         public void runMatchesForPositions(List<Player> playersByPosition, int numRoundsLeft,
                 RoundSpec round, int pairingNum, int position1, int position2) {
+            Preconditions.checkArgument(position1 < position2);
             Player player1 = playersByPosition.get(position1);
             Player player2 = playersByPosition.get(position2);
-            if (wonInRound(player1, numRoundsLeft, round)) {
+            //TODO: Do we want to define roles according to seeding rather than bracket position?
+            //If so, pass in seeding here
+            if (wonInRound(player1, pairingNum, numRoundsLeft, round)) {
                 playerEliminationRounds.put(player2, numRoundsLeft);
-            } else if (wonInRound(player2, numRoundsLeft, round)) {
+            } else if (wonInRound(player2, pairingNum, numRoundsLeft, round)) {
                 playersByPosition.set(position1, player2);
                 playersByPosition.set(position2, player1);
                 playerEliminationRounds.put(player1, numRoundsLeft);
             } else {
-                //TODO: Do we want to define roles according to seeding rather than bracket position?
-                //If so, pass in seeding here
                 matchesToReturn.add(getNextMatchForPairing(player1, player2, pairingNum, numRoundsLeft, round));
             }
         }
@@ -234,13 +235,11 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             List<MatchResult> abortedSoFar = Lists.newArrayList();
             //First, gather all the non-abandoned results so far
             for (MatchResult result : resultsSoFarInStage) {
-                //TODO: Replace with MatchIds logic?
-                String matchId = result.getSetup().getMatchId();
-                int roundNumber = MatchIds.parseRoundNumber(matchId);
-                if (roundNumber != numRoundsLeft) {
+                String matchId = result.getMatchId();
+                if (numRoundsLeft != MatchIds.parseRoundNumber(matchId)) {
                     continue;
                 }
-                if (!result.getSetup().getPlayers().contains(player1)) {
+                if (pairingNum != MatchIds.parsePlayerMatchingNumber(matchId)) {
                     continue;
                 }
                 if (result.getOutcome() == Outcome.ABORTED) {
@@ -266,7 +265,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             }
             int priorMatchAttempts = 0;
             for (MatchResult result : abortedSoFar) {
-                if (MatchIds.parseMatchNumber(result.getSetup().getMatchId()) == matchNum) {
+                if (MatchIds.parseMatchNumber(result.getMatchId()) == matchNum) {
                     priorMatchAttempts++;
                 }
             }
@@ -283,7 +282,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private boolean haveCompleted(int matchNumber, List<MatchResult> completedSoFar) {
             for (MatchResult result : completedSoFar) {
                 Preconditions.checkArgument(result.getOutcome() == Outcome.COMPLETED);
-                String matchId = result.getSetup().getMatchId();
+                String matchId = result.getMatchId();
                 int resultMatchNumber = MatchIds.parseMatchNumber(matchId);
                 if (matchNumber == resultMatchNumber) {
                     return true;
@@ -292,24 +291,22 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             return false;
         }
 
-        private boolean wonInRound(Player player, int numRoundsLeft, RoundSpec round) {
+        private boolean wonInRound(Player player, int pairingNumber, int numRoundsLeft, RoundSpec round) {
             int gamesPlayed = 0;
             int pointsAboveOpponent = 0;
             for (MatchResult result : resultsSoFarInStage) {
-                //TODO: Replace with MatchIds logic?
-                String matchId = result.getSetup().getMatchId();
-                int roundNumber = MatchIds.parseRoundNumber(matchId);
-                if (roundNumber != numRoundsLeft) {
+                String matchId = result.getMatchId();
+                if (numRoundsLeft != MatchIds.parseRoundNumber(matchId)) {
                     continue;
                 }
-                if (!result.getSetup().getPlayers().contains(player)) {
+                if (pairingNumber != MatchIds.parsePlayerMatchingNumber(matchId)) {
                     continue;
                 }
                 if (result.getOutcome() == Outcome.ABORTED) {
                     continue;
                 }
                 gamesPlayed++;
-                int playerIndex = result.getSetup().getPlayers().indexOf(player);
+                int playerIndex = result.getPlayers().indexOf(player);
                 int playerPoints = result.getGoals().get(playerIndex);
                 Preconditions.checkState(playerIndex == 0 || playerIndex == 1);
                 int oppIndex = 1 - playerIndex;

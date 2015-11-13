@@ -18,7 +18,7 @@ nameDisplay: Sample two-stage tournament
 nameInternal: singleElimTwoStages
 
 stages:
-  - format: singleElimination
+  - format: singleElimination1
     rounds:
       - matches:
           - game: breakthrough
@@ -53,7 +53,7 @@ stages:
             seedRoles: [1, 0]
     playerCutoff: 4
 
-  - format: singleElimination
+  - format: singleElimination1
     rounds:
       - matches:
           - game: cephalopodMicro

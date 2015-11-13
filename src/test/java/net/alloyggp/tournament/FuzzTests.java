@@ -37,6 +37,10 @@ public class FuzzTests {
                 new Object[] {8, "singleElim"},
                 new Object[] {7, "singleElimTwoStages"},
                 new Object[] {8, "singleElimTwoStages"},
+                new Object[] {3, "swiss1SingleElimTest1"},
+                new Object[] {4, "swiss1SingleElimTest1"},
+                new Object[] {7, "swiss1SingleElimTest1"},
+                new Object[] {8, "swiss1SingleElimTest1"},
                 new Object[] {10, "swiss1test1"},
                 new Object[] {9, "swiss1test1"},
                 new Object[] {10, "swiss1test2"},
@@ -65,10 +69,10 @@ public class FuzzTests {
      */
     public static MatchResult getResult(Random random, MatchSetup match) {
         if (random.nextDouble() > 0.7) {
-            return MatchResult.getAbortedMatchResult(match);
+            return MatchResult.getAbortedMatchResult(match.getMatchId(), match.getPlayers());
         }
         List<Integer> goals = getGoals(random, match.getGame());
-        return MatchResult.getSuccessfulMatchResult(match, goals);
+        return MatchResult.getSuccessfulMatchResult(match.getMatchId(), match.getPlayers(), goals);
     }
 
     private static List<Integer> getGoals(Random random, Game game) {
@@ -121,8 +125,7 @@ public class FuzzTests {
     public static MatchSetup pickMatchAtRandom(Random random, Set<MatchSetup> nextMatches) {
         List<MatchSetup> sortedMatches = Lists.newArrayList(nextMatches);
         sortedMatches.sort(Comparator.comparing(MatchSetup::getMatchId));
-        int chosenIndex = random.nextInt(sortedMatches.size());
-        return sortedMatches.get(chosenIndex);
+        return pickAtRandom(random, sortedMatches);
     }
 
     /**
@@ -137,6 +140,11 @@ public class FuzzTests {
                 .map(Player::create)
                 .collect(Collectors.toList());
         return Seeding.createRandomSeeding(random, players);
+    }
+
+    public static <T> T pickAtRandom(Random random, List<T> list) {
+        int chosenIndex = random.nextInt(list.size());
+        return list.get(chosenIndex);
     }
 
 }

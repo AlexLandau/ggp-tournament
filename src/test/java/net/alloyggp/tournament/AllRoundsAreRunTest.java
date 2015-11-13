@@ -61,10 +61,11 @@ public class AllRoundsAreRunTest {
                 status = status.withNewResult(result);
             }
 
+            int numPlayersInStage = numPlayers;
             for (StageSpec stage : spec.getStages()) {
                 int numRounds;
                 if (stage.getFormat() == StageFormat.SINGLE_ELIMINATION) {
-                    numRounds = getNumRoundsSingleElim(numPlayers);
+                    numRounds = getNumRoundsSingleElim(numPlayersInStage);
                     for (int i = 1; i <= numRounds; i++) {
                         checkResultExists(status.getResultsSoFar(), stage.getStageNum(), i);
                     }
@@ -74,10 +75,13 @@ public class AllRoundsAreRunTest {
                         //There might not be enough players to run the round, in which case,
                         //make sure we still get to later rounds
                         int minNumPlayers = getMinNumPlayers(stage.getRounds().get(i));
-                        if (minNumPlayers <= numPlayers) {
+                        if (minNumPlayers <= numPlayersInStage) {
                             checkResultExists(status.getResultsSoFar(), stage.getStageNum(), i);
                         }
                     }
+                }
+                if (stage.getPlayerCutoff() < numPlayersInStage) {
+                    numPlayersInStage = stage.getPlayerCutoff();
                 }
             }
         }
@@ -91,7 +95,7 @@ public class AllRoundsAreRunTest {
 
     private void checkResultExists(ImmutableSet<MatchResult> resultsSoFar, int stageNum, int roundNum) {
         for (MatchResult result : resultsSoFar) {
-            String matchId = result.getSetup().getMatchId();
+            String matchId = result.getMatchId();
             if (MatchIds.parseStageNumber(matchId) == stageNum
                     && MatchIds.parseRoundNumber(matchId) == roundNum) {
                 return;

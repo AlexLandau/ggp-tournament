@@ -451,7 +451,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 Set<MatchResult> roundResults) {
             int attemptsSoFar = 0;
             for (MatchResult result : roundResults) {
-                String matchId = result.getSetup().getMatchId();
+                String matchId = result.getMatchId();
                 if (groupNum == MatchIds.parsePlayerMatchingNumber(matchId)
                         && matchNum == MatchIds.parseMatchNumber(matchId)) {
                     if (result.getOutcome() == Outcome.ABORTED) {
@@ -467,7 +467,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private MatchResult getSuccessfulAttempt(int groupNum, int matchNum, Set<MatchResult> roundResults) {
             for (MatchResult result : roundResults) {
                 if (result.getOutcome() == Outcome.COMPLETED) {
-                    String matchId = result.getSetup().getMatchId();
+                    String matchId = result.getMatchId();
                     if (groupNum == MatchIds.parsePlayerMatchingNumber(matchId)
                             && matchNum == MatchIds.parseMatchNumber(matchId)) {
                         return result;

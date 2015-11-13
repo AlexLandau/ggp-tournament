@@ -12,7 +12,7 @@ nameDisplay: Sample single-elimination tournament
 nameInternal: singleElim
 
 stages:
-  - format: singleElimination
+  - format: singleElimination1
     rounds:
       - startTime: Fri, 4 Dec 2015 10:00:00 -0800 #PST
         matches:

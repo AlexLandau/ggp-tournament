@@ -1,5 +1,6 @@
 package net.alloyggp.tournament.api;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -9,6 +10,7 @@ import javax.annotation.concurrent.Immutable;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 @Immutable
@@ -25,8 +27,9 @@ public class Seeding {
      * <p>To support fuzz testing (and paranoid clients who want to use
      * secure RNGs), the source of randomness is explicitly provided.
      */
-    public static Seeding createRandomSeeding(Random random, List<Player> players) {
-        List<Player> playersList = Lists.newArrayList(players);
+    public static Seeding createRandomSeeding(Random random, Collection<Player> players) {
+        //Uniquify the players, then put in a mutable list
+        List<Player> playersList = Lists.newArrayList(ImmutableSet.copyOf(players));
         Collections.shuffle(playersList, random);
         return create(playersList);
     }

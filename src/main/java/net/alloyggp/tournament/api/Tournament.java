@@ -19,12 +19,12 @@ public interface Tournament {
      * This name is specified by the tournament designer, so it may be necessary
      * to screen out duplicate names.
      */
-    String getTournamentInternalName();
+    String getInternalName();
 
     /**
      * Returns a tournament name that is suitable for human-readable displays.
      */
-    String getTournamentDisplayName();
+    String getDisplayName();
 
     /**
      * Returns the set of matches that should be run in the given tournament state.
