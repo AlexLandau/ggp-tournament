@@ -192,7 +192,7 @@ public class TournamentSpec implements Tournament {
         @Override
         public int compareTo(Score other) {
             if (!(other instanceof CutoffScore)) {
-                throw new IllegalArgumentException();
+                throw new ClassCastException("Expected a CutoffScore, was " + other.getClass());
             }
             CutoffScore otherCutoff = (CutoffScore) other;
             if (!madeCutoff && otherCutoff.madeCutoff) {
@@ -240,6 +240,11 @@ public class TournamentSpec implements Tournament {
 
         @Override
         public String toString() {
+            return getDescription();
+        }
+
+        @Override
+        public String getDescription() {
             if (!madeCutoff) {
                 return "eliminated";
             } else {
@@ -252,19 +257,22 @@ public class TournamentSpec implements Tournament {
     public List<Ranking> getStandingsHistory(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
         List<Ranking> result = Lists.newArrayList();
         result.add(StandardRanking.createForSeeding(initialSeeding));
+        Ranking lastStageFinalRanking = null;
 
         Seeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
             NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     seeding, resultsSoFar);
-            result.addAll(stage.getStandingsHistory(tournamentInternalName, seeding, resultsSoFar));
+            for (Ranking ranking : stage.getStandingsHistory(tournamentInternalName, seeding, resultsSoFar)) {
+                result.add(mixInStandings(lastStageFinalRanking, ranking));
+            }
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return result;
             }
-            Ranking standings = stage.getCurrentStandings(tournamentInternalName,
+            lastStageFinalRanking = stage.getCurrentStandings(tournamentInternalName,
                     seeding, resultsSoFar);
-            seeding = stage.getSeedingsFromFinalStandings(standings);
+            seeding = stage.getSeedingsFromFinalStandings(lastStageFinalRanking);
         }
         return result;
     }

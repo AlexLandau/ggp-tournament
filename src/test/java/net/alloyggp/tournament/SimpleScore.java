@@ -42,4 +42,14 @@ public class SimpleScore implements Score {
         }
         return Integer.compare(score, ((SimpleScore)other).score);
     }
+
+    @Override
+    public String toString() {
+        return getDescription();
+    }
+
+    @Override
+    public String getDescription() {
+        return Integer.toString(score);
+    }
 }

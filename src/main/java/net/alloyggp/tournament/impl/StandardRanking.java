@@ -138,6 +138,11 @@ public class StandardRanking implements Ranking {
 
         @Override
         public String toString() {
+            return getDescription();
+        }
+
+        @Override
+        public String getDescription() {
             return "initial seeding for stage";
         }
     }

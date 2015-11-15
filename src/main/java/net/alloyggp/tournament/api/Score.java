@@ -10,6 +10,9 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public interface Score extends Comparable<Score> {
-    //TODO: Add a method that gives a meaningful string summary of the score
-    //for human consumption? Or leave out of the API here?
+    /**
+     * Returns a human-readable description of the score that explains
+     * the player's current position in the ranking.
+     */
+    String getDescription();
 }

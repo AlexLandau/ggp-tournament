@@ -589,6 +589,11 @@ public class SwissFormat1Runner implements FormatRunner {
 
         @Override
         public String toString() {
+            return getDescription();
+        }
+
+        @Override
+        public String getDescription() {
             String string;
             if (mostRecentGameName == null) {
                 string = addDecimalPoint(pointsSoFarT1K) + " total";

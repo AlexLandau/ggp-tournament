@@ -504,7 +504,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         @Override
         public int compareTo(Score other) {
             if (!(other instanceof EliminationScore)) {
-                throw new RuntimeException("Incomparable scores being compared");
+                throw new IllegalArgumentException("Expected an EliminationScore, but was a " + other.getClass());
             }
             //Higher scores should be better; but lower is better here, so flip
             return Integer.compare(((EliminationScore)other).roundEliminated, roundEliminated);
@@ -538,6 +538,11 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         @Override
         public String toString() {
+            return getDescription();
+        }
+
+        @Override
+        public String getDescription() {
             if (roundEliminated == 0) {
                 return "in contention";
             }
