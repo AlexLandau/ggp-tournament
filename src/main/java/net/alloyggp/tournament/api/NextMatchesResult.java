@@ -1,15 +1,15 @@
 package net.alloyggp.tournament.api;
 
-import java.time.ZonedDateTime;
-import java.util.Optional;
+import org.joda.time.DateTime;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 
 public interface NextMatchesResult {
 
     ImmutableSet<MatchSetup> getMatchesToRun();
 
-    Optional<ZonedDateTime> getEarliestAllowedStartTime();
+    Optional<DateTime> getEarliestAllowedStartTime();
 
     /**
      * If a restriction on the start time for the matches is defined and

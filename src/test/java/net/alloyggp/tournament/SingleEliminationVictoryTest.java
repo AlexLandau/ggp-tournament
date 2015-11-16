@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -34,9 +35,12 @@ public class SingleEliminationVictoryTest {
     @Parameters(name = "{index}: {0} players, {1}")
     public static Iterable<Object[]> data() {
         return Iterables.filter(FuzzTests.getParameters(),
-                arguments -> {
-                    String testSpec = (String) arguments[1];
-                    return testSpec.startsWith("singleElim");
+                new Predicate<Object[]>() {
+                    @Override
+                    public boolean apply(Object[] arguments) {
+                        String testSpec = (String) arguments[1];
+                        return testSpec.startsWith("singleElim");
+                    }
                 });
     }
 

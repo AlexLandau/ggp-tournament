@@ -1,9 +1,11 @@
 package net.alloyggp.tournament.api;
 
-import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+
+import org.joda.time.DateTime;
+
+import com.google.common.base.Optional;
 
 /**
  * The main interface for a tournament specification.
@@ -46,7 +48,7 @@ public interface Tournament {
      * Gets the start time for the first round of the tournament if it has
      * been defined.
      */
-    Optional<ZonedDateTime> getInitialStartTime();
+    Optional<DateTime> getInitialStartTime();
 
     /**
      * If a restriction on the start time for the tournament is defined and

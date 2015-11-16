@@ -36,7 +36,7 @@ public class TournamentStatus {
      * other cases, a random seeding is sufficient.
      */
     public static TournamentStatus getInitialStatus(Tournament spec, Seeding initialSeeding) {
-        return new TournamentStatus(spec, initialSeeding, ImmutableSet.of());
+        return new TournamentStatus(spec, initialSeeding, ImmutableSet.<MatchResult>of());
     }
 
     /**

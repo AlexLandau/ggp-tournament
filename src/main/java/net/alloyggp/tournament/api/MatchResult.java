@@ -35,7 +35,7 @@ public class MatchResult {
 
     public static MatchResult getAbortedMatchResult(String matchId, List<Player> players) {
         return new MatchResult(matchId, ImmutableList.copyOf(players),
-                Outcome.ABORTED, Optional.absent());
+                Outcome.ABORTED, Optional.<ImmutableList<Integer>>absent());
     }
 
     public static MatchResult getSuccessfulMatchResult(String matchId, List<Player> players, List<Integer> goals) {

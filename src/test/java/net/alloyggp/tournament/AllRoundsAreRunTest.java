@@ -16,6 +16,7 @@ import net.alloyggp.tournament.api.MatchSetup;
 import net.alloyggp.tournament.api.Seeding;
 import net.alloyggp.tournament.api.TournamentStatus;
 import net.alloyggp.tournament.impl.MatchIds;
+import net.alloyggp.tournament.spec.MatchSpec;
 import net.alloyggp.tournament.spec.RoundSpec;
 import net.alloyggp.tournament.spec.StageFormat;
 import net.alloyggp.tournament.spec.StageSpec;
@@ -88,9 +89,14 @@ public class AllRoundsAreRunTest {
     }
 
     private int getMinNumPlayers(RoundSpec roundSpec) {
-        return roundSpec.getMatches().stream()
-            .mapToInt(match -> match.getGame().getNumRoles())
-            .min().getAsInt();
+        int min = Integer.MAX_VALUE;
+        for (MatchSpec match : roundSpec.getMatches()) {
+            int numRoles = match.getGame().getNumRoles();
+            if (numRoles < min) {
+                min = numRoles;
+            }
+        }
+        return min;
     }
 
     private void checkResultExists(ImmutableSet<MatchResult> resultsSoFar, int stageNum, int roundNum) {

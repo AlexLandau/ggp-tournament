@@ -1,6 +1,5 @@
 package net.alloyggp.tournament.impl;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -8,6 +7,8 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
+
+import org.joda.time.DateTime;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -68,7 +69,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private final ImmutableSet<MatchResult> resultsSoFarInStage;
         private final Set<MatchSetup> matchesToReturn = Sets.newHashSet();
         private final Map<Player, Integer> playerEliminationRounds = Maps.newHashMap();
-        private @Nullable ZonedDateTime latestStartTimeSeen = null;
+        private @Nullable DateTime latestStartTimeSeen = null;
 
         private final List<Ranking> standingsHistory = Lists.newArrayList();
 
@@ -180,7 +181,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         private void handleStartTimeForRound(RoundSpec round) {
             if (round.getStartTime().isPresent()) {
-                ZonedDateTime roundStartTime = round.getStartTime().get();
+                DateTime roundStartTime = round.getStartTime().get();
                 if (latestStartTimeSeen == null
                         || latestStartTimeSeen.isBefore(roundStartTime)) {
                     latestStartTimeSeen = roundStartTime;
@@ -359,7 +360,8 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             ImmutableList<Player> playersBestFirst = initialSeeding.getPlayersBestFirst();
             for (int i = 0; i < playersBestFirst.size(); i++) {
                 Player player = playersBestFirst.get(i);
-                Score score = new EliminationScore(playerEliminationRounds.getOrDefault(player, 0));
+                Integer mapValue = playerEliminationRounds.get(player);
+                Score score = new EliminationScore(mapValue != null ? mapValue : 0);
                 playerScores.add(PlayerScore.create(player, score, i));
             }
             return StandardRanking.create(playerScores.build());
@@ -376,12 +378,12 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         public final ImmutableSet<MatchSetup> matchesToReturn;
         public final ImmutableMap<Player, Integer> playerEliminationRounds;
         public final ImmutableList<Ranking> standingsHistory;
-        public final @Nullable ZonedDateTime latestStartTimeSeen;
+        public final @Nullable DateTime latestStartTimeSeen;
         public final int numRoundsLeft;
 
         private SingleEliminationRoundStatus(ImmutableList<Player> playersByPosition,
                 ImmutableSet<MatchSetup> matchesToReturn, ImmutableMap<Player, Integer> playerEliminationRounds,
-                ImmutableList<Ranking> standingsHistory, ZonedDateTime latestStartTimeSeen, int numRoundsLeft) {
+                ImmutableList<Ranking> standingsHistory, DateTime latestStartTimeSeen, int numRoundsLeft) {
             this.playersByPosition = playersByPosition;
             this.matchesToReturn = matchesToReturn;
             this.playerEliminationRounds = playerEliminationRounds;
@@ -392,7 +394,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         public static SingleEliminationRoundStatus create(List<Player> playersByPosition,
                 Set<MatchSetup> matchesToReturn, Map<Player, Integer> playerEliminationRounds,
-                List<Ranking> standingsHistory, ZonedDateTime latestStartTimeSeen, int numRoundsLeft) {
+                List<Ranking> standingsHistory, DateTime latestStartTimeSeen, int numRoundsLeft) {
             return new SingleEliminationRoundStatus(
                     ImmutableList.copyOf(playersByPosition),
                     ImmutableSet.copyOf(matchesToReturn),

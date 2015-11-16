@@ -4,10 +4,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -61,9 +62,12 @@ public class Seeding {
     // along with newlines and other problems (instead of requiring them
     // to not be in the player ID)
     public String toPersistedString() {
-        return playersBestFirst.stream()
-            .map(Player::getId)
-            .collect(Collectors.joining(","));
+        return Joiner.on(',').join(Lists.transform(playersBestFirst, new Function<Player, String>() {
+            @Override
+            public String apply(Player player) {
+                return player.getId();
+            }
+        }));
     }
 
     /**

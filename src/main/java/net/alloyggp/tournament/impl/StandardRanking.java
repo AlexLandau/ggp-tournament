@@ -2,7 +2,6 @@ package net.alloyggp.tournament.impl;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -80,14 +79,13 @@ public class StandardRanking implements Ranking {
         return sb.toString();
     }
 
-    /* (non-Javadoc)
-     * @see net.alloyggp.swiss.api.Ranking#getPlayersBestFirst()
-     */
     @Override
     public ImmutableList<Player> getPlayersBestFirst() {
-        return ImmutableList.copyOf(scores.stream()
-                .map(PlayerScore::getPlayer)
-                .collect(Collectors.toList()));
+        ImmutableList.Builder<Player> builder = ImmutableList.builder();
+        for (PlayerScore score : scores) {
+            builder.add(score.getPlayer());
+        }
+        return builder.build();
     }
 
     public static StandardRanking createForSeeding(Seeding initialSeeding) {

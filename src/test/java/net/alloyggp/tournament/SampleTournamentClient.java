@@ -1,12 +1,12 @@
 package net.alloyggp.tournament;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 import net.alloyggp.tournament.api.MatchResult;
 import net.alloyggp.tournament.api.MatchSetup;
@@ -39,17 +39,20 @@ public class SampleTournamentClient {
     }
 
     private Seeding toSeeding(String... playerNames) {
-        List<Player> playersBestFirst = Arrays.stream(playerNames)
-                .map(Player::create)
-                .collect(Collectors.toList());
+        List<Player> playersBestFirst = Lists.newArrayList();
+        for (String playerName : playerNames) {
+            playersBestFirst.add(Player.create(playerName));
+        }
         return Seeding.create(playersBestFirst);
     }
 
     private List<MatchResult> getRandomOutcomes(Set<MatchSetup> nextMatches) {
         Random random = new Random();
-        return nextMatches.stream()
-        .map(setup -> FuzzTests.getResult(random, setup))
-        .collect(Collectors.toList());
+        List<MatchResult> outcomes = Lists.newArrayList();
+        for (MatchSetup setup : nextMatches) {
+            outcomes.add(FuzzTests.getResult(random, setup));
+        }
+        return outcomes;
     }
 
 }

@@ -1,10 +1,10 @@
 package net.alloyggp.tournament.impl;
 
-import java.time.ZonedDateTime;
-import java.util.Optional;
-
 import javax.annotation.Nullable;
 
+import org.joda.time.DateTime;
+
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 
 import net.alloyggp.tournament.api.MatchSetup;
@@ -28,23 +28,24 @@ import net.alloyggp.tournament.api.NextMatchesResult;
 public class StandardNextMatchesResult implements NextMatchesResult {
     private final ImmutableSet<MatchSetup> matchesToRun;
     //Note: These may be moved into individual matches in the future.
-    private final Optional<ZonedDateTime> earliestAllowedStartTime;
+    private final Optional<DateTime> earliestAllowedStartTime;
 
-    private StandardNextMatchesResult(ImmutableSet<MatchSetup> matchesToRun, Optional<ZonedDateTime> earliestAllowedStartTime) {
+    private StandardNextMatchesResult(ImmutableSet<MatchSetup> matchesToRun,
+            Optional<DateTime> earliestAllowedStartTime) {
         this.matchesToRun = matchesToRun;
         this.earliestAllowedStartTime = earliestAllowedStartTime;
     }
 
     public static NextMatchesResult createEmpty() {
-        return new StandardNextMatchesResult(ImmutableSet.of(),
-                Optional.empty());
+        return new StandardNextMatchesResult(ImmutableSet.<MatchSetup>of(),
+                Optional.<DateTime>absent());
     }
 
     public static NextMatchesResult create(Iterable<MatchSetup> matchesToRun,
-            @Nullable ZonedDateTime earliestAllowedStartTime) {
+            @Nullable DateTime earliestAllowedStartTime) {
         return new StandardNextMatchesResult(
                 ImmutableSet.copyOf(matchesToRun),
-                Optional.ofNullable(earliestAllowedStartTime));
+                Optional.fromNullable(earliestAllowedStartTime));
     }
 
     @Override
@@ -53,7 +54,7 @@ public class StandardNextMatchesResult implements NextMatchesResult {
     }
 
     @Override
-    public Optional<ZonedDateTime> getEarliestAllowedStartTime() {
+    public Optional<DateTime> getEarliestAllowedStartTime() {
         return earliestAllowedStartTime;
     }
 

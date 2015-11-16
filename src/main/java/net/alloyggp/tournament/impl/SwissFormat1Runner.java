@@ -1,18 +1,20 @@
 package net.alloyggp.tournament.impl;
 
-import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 
+import org.joda.time.DateTime;
+
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
@@ -72,7 +74,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers = Maps.newHashMap();
 //        private final Map<Integer, Map<Player, Multiset<Integer>>> nonFixedSumRoleAssignmentsSoFarByNumPlayers = Maps.newHashMap();
         private final List<Ranking> standingsHistory = Lists.newArrayList();
-        private @Nullable ZonedDateTime latestStartTimeSeen = null;
+        private @Nullable DateTime latestStartTimeSeen = null;
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, Seeding initialSeeding,
                 ImmutableList<RoundSpec> rounds, ImmutableSet<MatchResult> resultsFromEarlierStages,
@@ -194,7 +196,7 @@ public class SwissFormat1Runner implements FormatRunner {
                             addToSumWithKey(player, goalValue, totalPointsScored);
                             addToSumWithKey(player, goalValue, pointsScoredByGame.get(game));
 
-                            maxScoreAchieved = Double.max(maxScoreAchieved, goalValue);
+                            maxScoreAchieved = maxScoreAchieved > goalValue ? maxScoreAchieved : goalValue;
                             scoreSum += goalValue;
                             scoreCount++;
                             this.mostRecentGame = game;
@@ -223,7 +225,7 @@ public class SwissFormat1Runner implements FormatRunner {
 
         private void handleStartTimeForRound(RoundSpec round) {
             if (round.getStartTime().isPresent()) {
-                ZonedDateTime roundStartTime = round.getStartTime().get();
+                DateTime roundStartTime = round.getStartTime().get();
                 if (latestStartTimeSeen == null
                         || latestStartTimeSeen.isBefore(roundStartTime)) {
                     latestStartTimeSeen = roundStartTime;
@@ -280,9 +282,11 @@ public class SwissFormat1Runner implements FormatRunner {
             int numRoles = game.getNumRoles();
 
             if (numRoles == 1) {
-                return initialSeeding.getPlayersBestFirst().stream()
-                            .map(ImmutableList::of)
-                            .collect(Collectors.toList());
+                ImmutableList.Builder<List<Player>> builder = ImmutableList.builder();
+                for (Player player : initialSeeding.getPlayersBestFirst()) {
+                    builder.add(ImmutableList.of(player));
+                }
+                return builder.build();
             }
             if (game.isFixedSum()) {
                 if (numRoles == 2) {
@@ -304,7 +308,7 @@ public class SwissFormat1Runner implements FormatRunner {
             //could use here, "rotate" all but one player in two rows
 
             //Do something naive for now
-            Multiset<Set<Player>> matchupsSoFar = nonFixedSumMatchupsSoFarByNumPlayers.get(numRoles);
+            final Multiset<Set<Player>> matchupsSoFar = nonFixedSumMatchupsSoFarByNumPlayers.get(numRoles);
             Preconditions.checkNotNull(matchupsSoFar);
 //            Map<Player, Multiset<Integer>> roleAssignmentsSoFar = nonFixedSumRoleAssignmentsSoFarByNumPlayers.get(numRoles);
             List<Player> playersToAssign = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
@@ -313,19 +317,34 @@ public class SwissFormat1Runner implements FormatRunner {
                 Player player = playersToAssign.get(0);
 
                 //Grab the first available players with the fewest previous matchups against us and each other
-                List<Player> playersInGroup = Lists.newArrayList(player);
+                final List<Player> playersInGroup = Lists.newArrayList(player);
                 playersToAssign.remove(player);
                 while (playersInGroup.size() < numRoles) {
-                    Ordering<Player> playerOrder = Ordering.from(
-                            Comparator.<Player, Integer>comparing(p -> {
+                    Ordering<Player> playerOrder = Ordering.from(new Comparator<Player>() {
+                                @Override
+                                public int compare(Player p1, Player p2) {
+                                    int sum1 = getSum(p1);
+                                    int sum2 = getSum(p2);
+                                    return Integer.compare(sum1, sum2);
+                                }
+
                                 //Sum of matchups against players already in group
-                                    return playersInGroup.stream()
-                                        .map(playerInGroup -> ImmutableSet.of(p, playerInGroup))
-                                        .mapToInt(matchupsSoFar::count)
-                                        .sum();
-                                })
-                            .thenComparing(Comparator.comparing(
-                                    initialSeeding.getPlayersBestFirst()::indexOf)));
+                                private int getSum(Player p) {
+                                    int sum = 0;
+                                    for (Player playerInGroup : playersInGroup) {
+                                        sum += matchupsSoFar.count(ImmutableSet.of(p, playerInGroup));
+                                    }
+                                    return sum;
+                                }
+                            })
+                            .compound(new Comparator<Player>() {
+                                @Override
+                                public int compare(Player o1, Player o2) {
+                                    int seed1 = initialSeeding.getPlayersBestFirst().indexOf(o1);
+                                    int seed2 = initialSeeding.getPlayersBestFirst().indexOf(o2);
+                                    return Integer.compare(seed1, seed2);
+                                }
+                            });
                     Player playerToAdd = playerOrder.min(playersToAssign);
                     playersInGroup.add(playerToAdd);
                     playersToAssign.remove(playerToAdd);
@@ -392,13 +411,21 @@ public class SwissFormat1Runner implements FormatRunner {
         }
 
         private List<Player> getOpponentRankingsForPlayers(
-                List<Player> curGroup, Game game) {
+                final List<Player> curGroup, final Game game) {
             List<Player> allOpponents = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
             allOpponents.removeAll(curGroup);
 
-            allOpponents.sort(Comparator.comparing(opponent -> {
-                    //Higher points scored by game better
-                    //but discount 100/n points per matchup already played in this game
+            Collections.sort(allOpponents, Ordering.from(
+            new Comparator<Player>() {
+                @Override
+                public int compare(Player o1, Player o2) {
+                    double score1 = compute(o1);
+                    double score2 = compute(o2);
+                    return Double.compare(score1, score2);
+                }
+                //Higher points scored by game better
+                //but discount 100/n points per matchup already played in this game
+                private double compute(Player opponent) {
                     double pointsScored = pointsScoredByGame.get(game).get(opponent);
                     for (Player player : curGroup) {
                         pointsScored -= (100.0 / curGroup.size())
@@ -406,31 +433,69 @@ public class SwissFormat1Runner implements FormatRunner {
                     }
                     return pointsScored;
                 }
-            ).thenComparing(Comparator.comparing(opponent -> {
-                    //Higher total points scored better
-                    //but discount 100/n points per matchup already played in any Swiss rounds
-                    double pointsScored = totalPointsScored.get(opponent);
-                    for (Player player : curGroup) {
-                        pointsScored -= (100.0 / curGroup.size())
-                                * totalMatchupsSoFar.count(ImmutableSet.of(player, opponent));
+            }
+            ).compound(
+                    new Comparator<Player>() {
+                        @Override
+                        public int compare(Player o1, Player o2) {
+                            double score1 = compute(o1);
+                            double score2 = compute(o2);
+                            return Double.compare(score1, score2);
+                        }
+
+                        private double compute(Player opponent) {
+                            //Higher total points scored better
+                            //but discount 100/n points per matchup already played in any Swiss rounds
+                            double pointsScored = totalPointsScored.get(opponent);
+                            for (Player player : curGroup) {
+                                pointsScored -= (100.0 / curGroup.size())
+                                        * totalMatchupsSoFar.count(ImmutableSet.of(player, opponent));
+                            }
+                            return pointsScored;
+                        }
                     }
-                    return pointsScored;
-                }
-            )).reversed()
-                    .thenComparing(initialSeeding.getPlayersBestFirst()::indexOf));
+            ).reverse()
+                    .compound(new Comparator<Player>() {
+                                @Override
+                                public int compare(Player p1, Player p2) {
+                                    int seed1 = initialSeeding.getPlayersBestFirst().indexOf(p1);
+                                    int seed2 = initialSeeding.getPlayersBestFirst().indexOf(p2);
+                                    return Integer.compare(seed1, seed2);
+                                }
+                    }));
             return allOpponents;
         }
 
-        private List<Player> getPlayerRankingsForGame(Game game) {
+        private List<Player> getPlayerRankingsForGame(final Game game) {
             List<Player> players = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
             //Sort according to an appropriate comparator
             //We do want the best players at the beginning of the list...
             //We may accomplish that through an appropriate reversal
             //First
-            players.sort(Comparator.comparing(pointsScoredByGame.get(game)::get)
-                    .thenComparing(totalPointsScored::get)
-                    .reversed()
-                    .thenComparing(initialSeeding.getPlayersBestFirst()::indexOf));
+            Collections.sort(players,
+                    Ordering.from(new Comparator<Player>() {
+                        @Override
+                        public int compare(Player o1, Player o2) {
+                            Double score1 = pointsScoredByGame.get(game).get(o1);
+                            Double score2 = pointsScoredByGame.get(game).get(o2);
+                            return Double.compare(score1, score2);
+                        }
+                    }).compound(new Comparator<Player>() {
+                        @Override
+                        public int compare(Player o1, Player o2) {
+                            Double score1 = totalPointsScored.get(o1);
+                            Double score2 = totalPointsScored.get(o2);
+                            return Double.compare(score1, score2);
+                        }
+                    }).reverse()
+                    .compound(new Comparator<Player>() {
+                        @Override
+                        public int compare(Player o1, Player o2) {
+                            int score1 = initialSeeding.getPlayersBestFirst().indexOf(o1);
+                            int score2 = initialSeeding.getPlayersBestFirst().indexOf(o2);
+                            return Integer.compare(score1, score2);
+                        }
+                    }));
             return players;
         }
 
@@ -489,11 +554,11 @@ public class SwissFormat1Runner implements FormatRunner {
                 for (Player player : initialSeeding.getPlayersBestFirst()) {
                     pointsScoredForGame.put(player, 0.0);
                 }
-                matchupsSoFarByGame.put(game, HashMultiset.create());
+                matchupsSoFarByGame.put(game, HashMultiset.<Set<Player>>create());
                 possiblePlayerCounts.add(game.getNumRoles());
             }
             for (int playerCount : possiblePlayerCounts) {
-                nonFixedSumMatchupsSoFarByNumPlayers.put(playerCount, HashMultiset.create());
+                nonFixedSumMatchupsSoFarByNumPlayers.put(playerCount, HashMultiset.<Set<Player>>create());
 //                Map<Player, Multiset<Integer>> nonFixedSumRoleAssignmentsSoFar = Maps.newHashMap();
 //                for (Player player : initialSeeding.getPlayersBestFirst()) {
 //                    nonFixedSumRoleAssignmentsSoFar.put(player, HashMultiset.create());
@@ -669,14 +734,14 @@ public class SwissFormat1Runner implements FormatRunner {
         private final ImmutableMap<Game, ImmutableMultiset<ImmutableSet<Player>>> matchupsSoFarByGame;
         private final ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<Player>>> nonFixedSumMatchupsSoFarByNumPlayers;
         private final ImmutableList<Ranking> standingsHistory;
-        private final @Nullable ZonedDateTime latestStartTimeSeen;
+        private final @Nullable DateTime latestStartTimeSeen;
 
         private Swiss1EndOfRoundState(int roundNum, Game mostRecentGame, ImmutableMap<Player, Double> totalPointsScored,
                 ImmutableMap<Game, ImmutableMap<Player, Double>> pointsScoredByGame,
                 ImmutableMap<Player, Double> pointsFromByes, ImmutableMultiset<ImmutableSet<Player>> totalMatchupsSoFar,
                 ImmutableMap<Game, ImmutableMultiset<ImmutableSet<Player>>> matchupsSoFarByGame,
                 ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<Player>>> nonFixedSumMatchupsSoFarByNumPlayers,
-                ImmutableList<Ranking> standingsHistory, @Nullable ZonedDateTime latestStartTimeSeen) {
+                ImmutableList<Ranking> standingsHistory, @Nullable DateTime latestStartTimeSeen) {
             this.roundNum = roundNum;
             this.mostRecentGame = mostRecentGame;
             this.totalPointsScored = totalPointsScored;
@@ -698,7 +763,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 Map<Game, Multiset<Set<Player>>> matchupsSoFarByGame,
                 Map<Integer, Multiset<Set<Player>>> nonFixedSumMatchupsSoFarByNumPlayers,
                 List<Ranking> standingsHistory,
-                @Nullable ZonedDateTime latestStartTimeSeen) {
+                @Nullable DateTime latestStartTimeSeen) {
             return new Swiss1EndOfRoundState(roundNum,
                     mostRecentGame,
                     ImmutableMap.copyOf(totalPointsScored),
@@ -713,7 +778,12 @@ public class SwissFormat1Runner implements FormatRunner {
 
         private static <K,T> ImmutableMap<K, ImmutableMultiset<ImmutableSet<T>>> toImmutableMultisetOfSetsValuedMap(
                 Map<K, Multiset<Set<T>>> map) {
-            return ImmutableMap.copyOf(Maps.transformValues(map, Swiss1EndOfRoundState::toImmutableSetEntriedMultiset));
+            return ImmutableMap.copyOf(Maps.transformValues(map, new Function<Multiset<Set<T>>, ImmutableMultiset<ImmutableSet<T>>>() {
+                @Override
+                public ImmutableMultiset<ImmutableSet<T>> apply(Multiset<Set<T>> input) {
+                    return toImmutableSetEntriedMultiset(input);
+                }
+            }));
         }
 
         private static <T> ImmutableMultiset<ImmutableSet<T>> toImmutableSetEntriedMultiset(
@@ -727,7 +797,12 @@ public class SwissFormat1Runner implements FormatRunner {
 
         private static <K1,K2,V2> ImmutableMap<K1, ImmutableMap<K2, V2>> toImmutableMapValuedMap(
                 Map<K1, Map<K2, V2>> map) {
-            return ImmutableMap.copyOf(Maps.transformValues(map, ImmutableMap::copyOf));
+            return ImmutableMap.copyOf(Maps.transformValues(map, new Function<Map<K2, V2>, ImmutableMap<K2, V2>>() {
+                @Override
+                public ImmutableMap<K2, V2> apply(Map<K2, V2> input) {
+                    return ImmutableMap.copyOf(input);
+                }
+            }));
         }
 
         @Override

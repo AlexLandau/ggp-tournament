@@ -1,7 +1,7 @@
 package net.alloyggp.tournament.api;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedSet;
+import java.util.List;
+import java.util.SortedSet;
 
 public interface Ranking {
     /**
@@ -11,11 +11,11 @@ public interface Ranking {
      * same (though this may be due solely to differences in the
      * initial seeding).
      */
-    ImmutableSortedSet<PlayerScore> getScores();
+    SortedSet<PlayerScore> getScores();
 
     /**
      * Returns the players in the order of the current ranking,
      * with the best-performing player in the 0 index.
      */
-    ImmutableList<Player> getPlayersBestFirst();
+    List<Player> getPlayersBestFirst();
 }

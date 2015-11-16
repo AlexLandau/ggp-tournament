@@ -5,8 +5,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -124,7 +122,12 @@ public class FuzzTests {
      */
     public static MatchSetup pickMatchAtRandom(Random random, Set<MatchSetup> nextMatches) {
         List<MatchSetup> sortedMatches = Lists.newArrayList(nextMatches);
-        sortedMatches.sort(Comparator.comparing(MatchSetup::getMatchId));
+        Collections.sort(sortedMatches, new Comparator<MatchSetup>() {
+            @Override
+            public int compare(MatchSetup o1, MatchSetup o2) {
+                return o1.getMatchId().compareTo(o2.getMatchId());
+            }
+        });
         return pickAtRandom(random, sortedMatches);
     }
 
@@ -135,10 +138,10 @@ public class FuzzTests {
      * <p>Players are named "1", "2", "3", etc.
      */
     public static Seeding createRandomSeeding(Random random, int numPlayers) {
-        List<Player> players = IntStream.range(1, numPlayers + 1)
-                .mapToObj(Integer::toString)
-                .map(Player::create)
-                .collect(Collectors.toList());
+        List<Player> players = Lists.newArrayList();
+        for (int i = 1; i <= numPlayers; i++) {
+            players.add(Player.create(Integer.toString(i)));
+        }
         return Seeding.createRandomSeeding(random, players);
     }
 

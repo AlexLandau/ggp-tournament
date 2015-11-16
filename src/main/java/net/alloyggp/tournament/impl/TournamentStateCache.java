@@ -1,7 +1,6 @@
 package net.alloyggp.tournament.impl;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -17,6 +16,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 
 import net.alloyggp.tournament.api.MatchResult;
 import net.alloyggp.tournament.api.Seeding;
@@ -36,8 +36,8 @@ public class TournamentStateCache {
             .build(new CacheLoader<CacheKey, SortedMap<Integer, List<CacheEntry>>>() {
                 @Override
                 public SortedMap<Integer, List<CacheEntry>> load(CacheKey key) throws Exception {
-                    return java.util.Collections.synchronizedSortedMap(Maps.newTreeMap(
-                            Comparator.<Integer>reverseOrder()));
+                    return Collections.synchronizedSortedMap(Maps.<Integer, Integer, List<CacheEntry>>newTreeMap(
+                            Ordering.<Integer>natural().reverse()));
                 }
             });
 
@@ -189,7 +189,7 @@ public class TournamentStateCache {
         int size = resultsInStage.size();
         synchronized (stageCache) {
             if (!stageCache.containsKey(size)) {
-                stageCache.put(size, Collections.synchronizedList(Lists.newArrayList()));
+                stageCache.put(size, Collections.synchronizedList(Lists.<CacheEntry>newArrayList()));
             }
             stageCache.get(size).add(new CacheEntry(ImmutableSet.copyOf(resultsInStage), state));
         }

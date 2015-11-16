@@ -2,10 +2,12 @@ package net.alloyggp.tournament.impl;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 
 import net.alloyggp.tournament.api.MatchResult;
 
@@ -20,28 +22,32 @@ public class MatchResults {
     /**
      * Returns only those {@link MatchResult}s that are from the given stage.
      */
-    public static Set<MatchResult> filterByStage(Collection<MatchResult> inputs, int stageNum) {
-        return inputs.stream()
-            .filter(result -> {
-                    String matchId = result.getMatchId();
-                    int matchStage = MatchIds.parseStageNumber(matchId);
-                    return matchStage == stageNum;
-                })
-            .collect(Collectors.toSet());
+    public static Set<MatchResult> filterByStage(Collection<MatchResult> inputs, final int stageNum) {
+        return Sets.newHashSet(Collections2.filter(inputs,
+                new Predicate<MatchResult>() {
+            @Override
+            public boolean apply(MatchResult input) {
+                String matchId = input.getMatchId();
+                int matchStage = MatchIds.parseStageNumber(matchId);
+                return matchStage == stageNum;
+            }
+        }));
     }
 
     /**
      * Returns only those {@link MatchResult}s that are from a stage before the
      * one specified.
      */
-    public static Set<MatchResult> getResultsPriorToStage(Collection<MatchResult> inputs, int stageNum) {
-        return inputs.stream()
-                .filter(result -> {
-                        String matchId = result.getMatchId();
-                        int matchStage = MatchIds.parseStageNumber(matchId);
-                        return matchStage < stageNum;
-                    })
-                .collect(Collectors.toSet());
+    public static Set<MatchResult> getResultsPriorToStage(Collection<MatchResult> inputs, final int stageNum) {
+        return Sets.newHashSet(Collections2.filter(inputs,
+                new Predicate<MatchResult>() {
+            @Override
+            public boolean apply(MatchResult input) {
+                String matchId = input.getMatchId();
+                int matchStage = MatchIds.parseStageNumber(matchId);
+                return matchStage < stageNum;
+            }
+        }));
     }
 
     /**

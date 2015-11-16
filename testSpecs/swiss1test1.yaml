@@ -19,7 +19,7 @@ stages:
             startClock: 60
             playClock: 15
             seedRoles: [0, 1]
-      - startTime: Fri, 4 Dec 2015 10:00:00 -0800 #PST
+      - startTime: Fri, 4 Dec 2015 10:00:00 -0800 PST
         matches:
           - game: breakthrough
             startClock: 60

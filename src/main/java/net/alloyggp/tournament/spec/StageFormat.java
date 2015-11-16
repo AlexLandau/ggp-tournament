@@ -12,10 +12,18 @@ import net.alloyggp.tournament.impl.SingleEliminationFormatRunner;
 import net.alloyggp.tournament.impl.SwissFormat1Runner;
 
 public enum StageFormat {
-    SINGLE_ELIMINATION("singleElimination1",
-            () -> SingleEliminationFormatRunner.create()),
-    SWISS1("swiss1",
-            () -> SwissFormat1Runner.create()),
+    SINGLE_ELIMINATION("singleElimination1", new Supplier<FormatRunner>() {
+        @Override
+        public FormatRunner get() {
+            return SingleEliminationFormatRunner.create();
+        }
+    }),
+    SWISS1("swiss1", new Supplier<FormatRunner>() {
+        @Override
+        public FormatRunner get() {
+            return SwissFormat1Runner.create();
+        }
+    }),
     ;
     private final String yamlName;
     private final Supplier<FormatRunner> runnerSupplier;
@@ -29,12 +37,16 @@ public enum StageFormat {
         return runnerSupplier.get();
     }
 
-    private static final Supplier<Map<String, StageFormat>> NAME_LOOKUP = Suppliers.memoize(() -> {
-            ImmutableMap.Builder<String, StageFormat> formats = ImmutableMap.builder();
-            for (StageFormat format : values()) {
-                formats.put(format.yamlName, format);
-            }
-            return formats.build();
+    private static final Supplier<Map<String, StageFormat>> NAME_LOOKUP = Suppliers.memoize(
+            new Supplier<Map<String, StageFormat>>() {
+                @Override
+                public Map<String, StageFormat> get() {
+                    ImmutableMap.Builder<String, StageFormat> formats = ImmutableMap.builder();
+                    for (StageFormat format : values()) {
+                        formats.put(format.yamlName, format);
+                    }
+                    return formats.build();
+                }
         });
 
     public static StageFormat parse(String formatName) {

@@ -1,13 +1,14 @@
 package net.alloyggp.tournament.spec;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
+import org.joda.time.DateTime;
+
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -278,7 +279,7 @@ public class TournamentSpec implements Tournament {
     }
 
     @Override
-    public Optional<ZonedDateTime> getInitialStartTime() {
+    public Optional<DateTime> getInitialStartTime() {
         return stages.get(0).getRounds().get(0).getStartTime();
     }
 

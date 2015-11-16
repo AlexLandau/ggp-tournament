@@ -1,7 +1,5 @@
 package net.alloyggp.tournament.api;
 
-import java.util.Comparator;
-
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -40,11 +38,12 @@ public class PlayerScore implements Comparable<PlayerScore> {
 
     @Override
     public int compareTo(PlayerScore other) {
-        return Comparator
-                .comparing(PlayerScore::getScore)
-                .reversed() //lower PlayerScore is better; higher Score is better
-                .thenComparing(PlayerScore::getSeedFromRoundStart)
-                .compare(this, other);
+        int scoreComparison = score.compareTo(other.score);
+        if (scoreComparison != 0) {
+            //lower PlayerScore is better; higher Score is better
+            return -scoreComparison;
+        }
+        return Integer.compare(seedFromRoundStart, other.seedFromRoundStart);
     }
 
     @Override

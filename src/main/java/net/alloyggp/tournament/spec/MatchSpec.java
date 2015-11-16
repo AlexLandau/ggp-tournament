@@ -2,14 +2,13 @@ package net.alloyggp.tournament.spec;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 import net.alloyggp.tournament.api.Game;
 import net.alloyggp.tournament.api.MatchSetup;
@@ -59,9 +58,7 @@ public class MatchSpec {
             playerSeedOrder = ImmutableList.copyOf(
                     (List<Integer>) matchMap.get("seedRoles"));
         } else {
-            playerSeedOrder = ImmutableList.copyOf(
-                    IntStream.range(0, game.getNumRoles())
-                    .boxed().collect(Collectors.toList()));
+            playerSeedOrder = getDefaultPlayerSeedOrder(game.getNumRoles());
         }
         double weight = 1.0;
         if (matchMap.containsKey("weight")) {
@@ -69,6 +66,14 @@ public class MatchSpec {
         }
 
         return new MatchSpec(game, startClock, playClock, playerSeedOrder, weight);
+    }
+
+    private static ImmutableList<Integer> getDefaultPlayerSeedOrder(int numRoles) {
+        List<Integer> seeds = Lists.newArrayList();
+        for (int i = 0; i < numRoles; i++) {
+            seeds.add(i);
+        }
+        return ImmutableList.copyOf(seeds);
     }
 
     public Game getGame() {

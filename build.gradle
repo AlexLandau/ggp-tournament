@@ -4,12 +4,16 @@ apply plugin: 'pmd'
 apply plugin: 'findbugs'
 apply plugin: 'checkstyle'
 
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
     compile 'org.yaml:snakeyaml:1.16'
+    compile 'joda-time:joda-time:2.9.1'
     compile 'com.google.guava:guava:14.0.1'
     compile 'com.google.code.findbugs:jsr305:3.0.0'
     testCompile 'junit:junit:4.11'

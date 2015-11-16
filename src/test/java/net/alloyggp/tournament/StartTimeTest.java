@@ -51,7 +51,7 @@ public class StartTimeTest {
 
         Random random = new Random(0L);
         Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
-        NextMatchesResult matchesToRun = tournament.getMatchesToRun(initialSeeding, ImmutableSet.of());
+        NextMatchesResult matchesToRun = tournament.getMatchesToRun(initialSeeding, ImmutableSet.<MatchResult>of());
         assertTrue(matchesToRun.getEarliestAllowedStartTime().isPresent());
     }
 
