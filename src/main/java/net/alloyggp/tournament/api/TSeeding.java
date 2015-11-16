@@ -15,10 +15,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 @Immutable
-public class Seeding {
-    private final ImmutableList<Player> playersBestFirst;
+public class TSeeding {
+    private final ImmutableList<TPlayer> playersBestFirst;
 
-    private Seeding(ImmutableList<Player> playersBestFirst) {
+    private TSeeding(ImmutableList<TPlayer> playersBestFirst) {
         this.playersBestFirst = playersBestFirst;
     }
 
@@ -28,9 +28,9 @@ public class Seeding {
      * <p>To support fuzz testing (and paranoid clients who want to use
      * secure RNGs), the source of randomness is explicitly provided.
      */
-    public static Seeding createRandomSeeding(Random random, Collection<Player> players) {
+    public static TSeeding createRandomSeeding(Random random, Collection<TPlayer> players) {
         //Uniquify the players, then put in a mutable list
-        List<Player> playersList = Lists.newArrayList(ImmutableSet.copyOf(players));
+        List<TPlayer> playersList = Lists.newArrayList(ImmutableSet.copyOf(players));
         Collections.shuffle(playersList, random);
         return create(playersList);
     }
@@ -39,11 +39,11 @@ public class Seeding {
      * Creates a non-random seeding of the given players. The players that come earlier
      * in the list are considered better and are given an advantage in tie-breakers.
      */
-    public static Seeding create(List<Player> playersBestFirst) {
-        return new Seeding(ImmutableList.copyOf(playersBestFirst));
+    public static TSeeding create(List<TPlayer> playersBestFirst) {
+        return new TSeeding(ImmutableList.copyOf(playersBestFirst));
     }
 
-    public ImmutableList<Player> getPlayersBestFirst() {
+    public ImmutableList<TPlayer> getPlayersBestFirst() {
         return playersBestFirst;
     }
 
@@ -62,9 +62,9 @@ public class Seeding {
     // along with newlines and other problems (instead of requiring them
     // to not be in the player ID)
     public String toPersistedString() {
-        return Joiner.on(',').join(Lists.transform(playersBestFirst, new Function<Player, String>() {
+        return Joiner.on(',').join(Lists.transform(playersBestFirst, new Function<TPlayer, String>() {
             @Override
-            public String apply(Player player) {
+            public String apply(TPlayer player) {
                 return player.getId();
             }
         }));
@@ -74,10 +74,10 @@ public class Seeding {
      * Creates the seeding from a string previously created by
      * {@link #toPersistedString()}.
      */
-    public static Seeding fromPersistedString(String persistedString) {
-        List<Player> players = Lists.newArrayList();
+    public static TSeeding fromPersistedString(String persistedString) {
+        List<TPlayer> players = Lists.newArrayList();
         for (String playerId : Splitter.on(",").split(persistedString)) {
-            players.add(Player.create(playerId));
+            players.add(TPlayer.create(playerId));
         }
         return create(players);
     }
@@ -101,7 +101,7 @@ public class Seeding {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        Seeding other = (Seeding) obj;
+        TSeeding other = (TSeeding) obj;
         if (playersBestFirst == null) {
             if (other.playersBestFirst != null) {
                 return false;

@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.spec;
+package net.alloyggp.tournament.internal.spec;
 
 import java.util.List;
 import java.util.Map;
@@ -16,23 +16,23 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import net.alloyggp.tournament.api.Game;
-import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.NextMatchesResult;
-import net.alloyggp.tournament.api.Player;
-import net.alloyggp.tournament.api.PlayerScore;
-import net.alloyggp.tournament.api.Ranking;
-import net.alloyggp.tournament.api.Score;
-import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.api.Tournament;
-import net.alloyggp.tournament.api.TournamentSpecParser;
-import net.alloyggp.tournament.impl.StandardNextMatchesResult;
-import net.alloyggp.tournament.impl.StandardRanking;
-import net.alloyggp.tournament.impl.TimeUtils;
-import net.alloyggp.tournament.impl.YamlUtils;
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TPlayerScore;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TScore;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournament;
+import net.alloyggp.tournament.api.TTournamentSpecParser;
+import net.alloyggp.tournament.internal.Game;
+import net.alloyggp.tournament.internal.StandardNextMatchesResult;
+import net.alloyggp.tournament.internal.StandardRanking;
+import net.alloyggp.tournament.internal.TimeUtils;
+import net.alloyggp.tournament.internal.YamlUtils;
 
 @Immutable
-public class TournamentSpec implements Tournament {
+public class TournamentSpec implements TTournament {
     private final String tournamentInternalName;
     private final String tournamentDisplayName;
     private final ImmutableList<StageSpec> stages;
@@ -58,7 +58,7 @@ public class TournamentSpec implements Tournament {
     /**
      * Parses an already-loaded YAML object containing a tournament specification.
      *
-     * <p>For general use, see {@link TournamentSpecParser} instead.
+     * <p>For general use, see {@link TTournamentSpecParser} instead.
      */
     @SuppressWarnings("unchecked")
     public static TournamentSpec parseYamlRootObject(Object yamlRoot) {
@@ -84,10 +84,10 @@ public class TournamentSpec implements Tournament {
         for (Object gameYaml : (List<Object>) gamesYaml) {
             Map<String, Object> gameMap = (Map<String, Object>) gameYaml;
             String name = (String) gameMap.get("name");
-            String repository = (String) gameMap.get("repository");
+            String url = (String) gameMap.get("url");
             int numRoles = (int) gameMap.get("numRoles");
             boolean fixedSum = (boolean) gameMap.get("fixedSum");
-            Game game = Game.create(repository, name, numRoles, fixedSum);
+            Game game = Game.create(name, url, numRoles, fixedSum);
             if (results.containsKey(name)) {
                 throw new IllegalArgumentException("Can't have two games with the same name defined");
             }
@@ -111,16 +111,16 @@ public class TournamentSpec implements Tournament {
     }
 
     @Override
-    public NextMatchesResult getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
-        Seeding seeding = initialSeeding;
+    public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+        TSeeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
+            TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     seeding, resultsSoFar);
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return matchesForStage;
             }
-            Ranking standings = stage.getCurrentStandings(tournamentInternalName,
+            TRanking standings = stage.getCurrentStandings(tournamentInternalName,
                     seeding, resultsSoFar);
             seeding = stage.getSeedingsFromFinalStandings(standings);
         }
@@ -129,13 +129,13 @@ public class TournamentSpec implements Tournament {
     }
 
     @Override
-    public Ranking getCurrentStandings(Seeding initialSeeding,
-            Set<MatchResult> resultsSoFar) {
-        Seeding seeding = initialSeeding;
-        Ranking standings = null;
+    public TRanking getCurrentStandings(TSeeding initialSeeding,
+            Set<TMatchResult> resultsSoFar) {
+        TSeeding seeding = initialSeeding;
+        TRanking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
+            TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     seeding, resultsSoFar);
             standings = mixInStandings(standings,
                     stage.getCurrentStandings(tournamentInternalName, seeding, resultsSoFar));
@@ -149,23 +149,23 @@ public class TournamentSpec implements Tournament {
         return standings;
     }
 
-    private Ranking mixInStandings(Ranking oldStandings,
-            Ranking newStandings) {
+    private TRanking mixInStandings(TRanking oldStandings,
+            TRanking newStandings) {
         if (oldStandings == null) {
             return newStandings;
         }
         //preserve old standings for players that didn't make the cut
-        Set<PlayerScore> allPlayerScores = Sets.newHashSet();
-        Set<Player> playersInNewerStandings = Sets.newHashSet();
-        for (PlayerScore score : newStandings.getScores()) {
-            allPlayerScores.add(PlayerScore.create(score.getPlayer(),
+        Set<TPlayerScore> allPlayerScores = Sets.newHashSet();
+        Set<TPlayer> playersInNewerStandings = Sets.newHashSet();
+        for (TPlayerScore score : newStandings.getScores()) {
+            allPlayerScores.add(TPlayerScore.create(score.getPlayer(),
                     CutoffScore.madeCutoff(score),
                     score.getSeedFromRoundStart()));
             playersInNewerStandings.add(score.getPlayer());
         }
-        for (PlayerScore score : oldStandings.getScores()) {
+        for (TPlayerScore score : oldStandings.getScores()) {
             if (!playersInNewerStandings.contains(score.getPlayer())) {
-                allPlayerScores.add(PlayerScore.create(score.getPlayer(),
+                allPlayerScores.add(TPlayerScore.create(score.getPlayer(),
                         CutoffScore.failedCutoff(score),
                         score.getSeedFromRoundStart()));
             }
@@ -173,25 +173,25 @@ public class TournamentSpec implements Tournament {
         return StandardRanking.create(allPlayerScores);
     }
 
-    private static class CutoffScore implements Score {
+    private static class CutoffScore implements TScore {
         private final boolean madeCutoff;
-        private final Score score;
+        private final TScore score;
 
-        private CutoffScore(boolean madeCutoff, Score score) {
+        private CutoffScore(boolean madeCutoff, TScore score) {
             this.madeCutoff = madeCutoff;
             this.score = score;
         }
 
-        public static CutoffScore failedCutoff(PlayerScore score) {
+        public static CutoffScore failedCutoff(TPlayerScore score) {
             return new CutoffScore(false, score.getScore());
         }
 
-        public static CutoffScore madeCutoff(PlayerScore score) {
+        public static CutoffScore madeCutoff(TPlayerScore score) {
             return new CutoffScore(true, score.getScore());
         }
 
         @Override
-        public int compareTo(Score other) {
+        public int compareTo(TScore other) {
             if (!(other instanceof CutoffScore)) {
                 throw new ClassCastException("Expected a CutoffScore, was " + other.getClass());
             }
@@ -255,17 +255,17 @@ public class TournamentSpec implements Tournament {
     }
 
     @Override
-    public List<Ranking> getStandingsHistory(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
-        List<Ranking> result = Lists.newArrayList();
+    public List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+        List<TRanking> result = Lists.newArrayList();
         result.add(StandardRanking.createForSeeding(initialSeeding));
-        Ranking lastStageFinalRanking = null;
+        TRanking lastStageFinalRanking = null;
 
-        Seeding seeding = initialSeeding;
+        TSeeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
-            NextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
+            TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     seeding, resultsSoFar);
-            for (Ranking ranking : stage.getStandingsHistory(tournamentInternalName, seeding, resultsSoFar)) {
+            for (TRanking ranking : stage.getStandingsHistory(tournamentInternalName, seeding, resultsSoFar)) {
                 result.add(mixInStandings(lastStageFinalRanking, ranking));
             }
             if (!matchesForStage.getMatchesToRun().isEmpty()) {

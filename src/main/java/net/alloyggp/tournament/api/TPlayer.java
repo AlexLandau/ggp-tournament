@@ -5,17 +5,17 @@ import javax.annotation.concurrent.Immutable;
 import com.google.common.base.Preconditions;
 
 @Immutable
-public class Player {
+public class TPlayer {
     private final String id;
 
-    private Player(String id) {
+    private TPlayer(String id) {
         Preconditions.checkArgument(!id.contains(","), "Player names should not contain commas");
         Preconditions.checkArgument(!id.contains("\\"), "Player names should not contain backslashes");
         this.id = id;
     }
 
-    public static Player create(String id) {
-        return new Player(id);
+    public static TPlayer create(String id) {
+        return new TPlayer(id);
     }
 
     public String getId() {
@@ -41,7 +41,7 @@ public class Player {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        Player other = (Player) obj;
+        TPlayer other = (TPlayer) obj;
         if (id == null) {
             if (other.id != null) {
                 return false;

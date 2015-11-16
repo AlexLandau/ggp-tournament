@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.impl;
+package net.alloyggp.tournament.internal;
 
 import javax.annotation.concurrent.Immutable;
 

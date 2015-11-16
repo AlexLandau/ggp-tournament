@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.spec;
+package net.alloyggp.tournament.internal.spec;
 
 import java.util.Map;
 
@@ -7,9 +7,9 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import net.alloyggp.tournament.impl.FormatRunner;
-import net.alloyggp.tournament.impl.SingleEliminationFormatRunner;
-import net.alloyggp.tournament.impl.SwissFormat1Runner;
+import net.alloyggp.tournament.internal.FormatRunner;
+import net.alloyggp.tournament.internal.SingleEliminationFormatRunner;
+import net.alloyggp.tournament.internal.SwissFormat1Runner;
 
 public enum StageFormat {
     SINGLE_ELIMINATION("singleElimination1", new Supplier<FormatRunner>() {

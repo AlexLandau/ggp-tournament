@@ -11,9 +11,9 @@ import com.google.common.base.Optional;
  * The main interface for a tournament specification.
  *
  * <p>A Tournament object can be obtained from a YAML specification on
- * the file system via the {@link TournamentSpecParser}.
+ * the file system via the {@link TTournamentSpecParser}.
  */
-public interface Tournament {
+public interface TTournament {
 
     /**
      * Returns a tournament name consisting of alphanumerics and underscores
@@ -31,18 +31,18 @@ public interface Tournament {
     /**
      * Returns the set of matches that should be run in the given tournament state.
      */
-    NextMatchesResult getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
+    TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar);
 
     /**
      * Returns the most recent standings in the given tournament state.
      */
-    Ranking getCurrentStandings(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
+    TRanking getCurrentStandings(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar);
 
     /**
      * Returns a history of the standings throughout the tournament, starting with the initial
      * seeding and progressing through each round.
      */
-    List<Ranking> getStandingsHistory(Seeding initialSeeding, Set<MatchResult> resultsSoFar);
+    List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar);
 
     /**
      * Gets the start time for the first round of the tournament if it has

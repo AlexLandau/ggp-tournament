@@ -15,13 +15,13 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.MatchResult.Outcome;
-import net.alloyggp.tournament.api.MatchSetup;
-import net.alloyggp.tournament.api.Player;
-import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.api.Tournament;
-import net.alloyggp.tournament.api.TournamentStatus;
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchResult.Outcome;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournament;
+import net.alloyggp.tournament.api.TTournamentStatus;
 
 /**
  * This is a fuzz test for the following property of single-elimination
@@ -54,23 +54,23 @@ public class SingleEliminationVictoryTest {
 
     @Test
     public void testNonLosingPlayerAlwaysWins() {
-        Tournament spec = TestSpecs.load(testSpec);
+        TTournament spec = TestSpecs.load(testSpec);
         for (long seed = 0L; seed < 100L; seed++) {
-            List<MatchResult> allResults = Lists.newArrayList();
+            List<TMatchResult> allResults = Lists.newArrayList();
             try {
                 Random random = new Random(seed);
-                Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
-                Player chosenPlayer = FuzzTests.pickAtRandom(random, initialSeeding.getPlayersBestFirst());
+                TSeeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
+                TPlayer chosenPlayer = FuzzTests.pickAtRandom(random, initialSeeding.getPlayersBestFirst());
                 System.out.println("Chosen player: " + chosenPlayer);
-                TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
+                TTournamentStatus status = TTournamentStatus.getInitialStatus(spec, initialSeeding);
                 while (true) {
-                    Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
+                    Set<TMatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
                     if (nextMatches.isEmpty()) {
                         break;
                     }
                     //Pick one and choose a result for it
-                    MatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
-                    MatchResult result = FuzzTests.getResult(random, matchToResolve);
+                    TMatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
+                    TMatchResult result = FuzzTests.getResult(random, matchToResolve);
                     while (playerLosingInResult(chosenPlayer, matchToResolve, result)) {
                         result = FuzzTests.getResult(random, matchToResolve);
                     }
@@ -89,7 +89,7 @@ public class SingleEliminationVictoryTest {
         }
     }
 
-    private boolean playerLosingInResult(Player chosenPlayer, MatchSetup matchToResolve, MatchResult result) {
+    private boolean playerLosingInResult(TPlayer chosenPlayer, TMatchSetup matchToResolve, TMatchResult result) {
         if (result.getOutcome() == Outcome.ABORTED) {
             return false;
         }

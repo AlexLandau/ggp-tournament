@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.impl;
+package net.alloyggp.tournament.internal;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

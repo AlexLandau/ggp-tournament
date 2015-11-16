@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.impl;
+package net.alloyggp.tournament.internal;
 
 import java.util.Collection;
 import java.util.List;
@@ -9,23 +9,23 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 
-import net.alloyggp.tournament.api.Player;
-import net.alloyggp.tournament.api.PlayerScore;
-import net.alloyggp.tournament.api.Ranking;
-import net.alloyggp.tournament.api.Score;
-import net.alloyggp.tournament.api.Seeding;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TPlayerScore;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TScore;
+import net.alloyggp.tournament.api.TSeeding;
 
 @Immutable
-public class StandardRanking implements Ranking {
+public class StandardRanking implements TRanking {
     //We may have multiple groups, which should be treated separately...
     //Let's ignore this case for now; we may not have to support group play
-    private final ImmutableSortedSet<PlayerScore> scores;
+    private final ImmutableSortedSet<TPlayerScore> scores;
 
-    private StandardRanking(ImmutableSortedSet<PlayerScore> scores) {
+    private StandardRanking(ImmutableSortedSet<TPlayerScore> scores) {
         this.scores = scores;
     }
 
-    public static StandardRanking create(Collection<PlayerScore> scores) {
+    public static StandardRanking create(Collection<TPlayerScore> scores) {
         return new StandardRanking(ImmutableSortedSet.copyOf(scores));
     }
 
@@ -33,7 +33,7 @@ public class StandardRanking implements Ranking {
      * @see net.alloyggp.swiss.api.Ranking#getScores()
      */
     @Override
-    public ImmutableSortedSet<PlayerScore> getScores() {
+    public ImmutableSortedSet<TPlayerScore> getScores() {
         return scores;
     }
 
@@ -71,7 +71,7 @@ public class StandardRanking implements Ranking {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         int position = 1;
-        for (PlayerScore score : scores) {
+        for (TPlayerScore score : scores) {
             sb.append(position).append(") ").append(score.getPlayer().getId())
               .append(" (").append(score.getScore()).append(")").append("\n");
             position++;
@@ -80,38 +80,38 @@ public class StandardRanking implements Ranking {
     }
 
     @Override
-    public ImmutableList<Player> getPlayersBestFirst() {
-        ImmutableList.Builder<Player> builder = ImmutableList.builder();
-        for (PlayerScore score : scores) {
+    public ImmutableList<TPlayer> getPlayersBestFirst() {
+        ImmutableList.Builder<TPlayer> builder = ImmutableList.builder();
+        for (TPlayerScore score : scores) {
             builder.add(score.getPlayer());
         }
         return builder.build();
     }
 
-    public static StandardRanking createForSeeding(Seeding initialSeeding) {
-        List<PlayerScore> scores = Lists.newArrayList();
-        ImmutableList<Player> players = initialSeeding.getPlayersBestFirst();
+    public static StandardRanking createForSeeding(TSeeding initialSeeding) {
+        List<TPlayerScore> scores = Lists.newArrayList();
+        ImmutableList<TPlayer> players = initialSeeding.getPlayersBestFirst();
         for (int i = 0; i < players.size(); i++) {
-            Player player = players.get(i);
-            scores.add(PlayerScore.create(player, EmptyScore.create(), i));
+            TPlayer player = players.get(i);
+            scores.add(TPlayerScore.create(player, EmptyScore.create(), i));
         }
         return StandardRanking.create(scores);
     }
 
-    public static class EmptyScore implements Score {
+    public static class EmptyScore implements TScore {
         private EmptyScore() {
             // Use create()
         }
 
         @Override
-        public int compareTo(Score other) {
+        public int compareTo(TScore other) {
             if (!(other instanceof EmptyScore)) {
                 throw new IllegalArgumentException("Incomparable scores being compared");
             }
             return 0;
         }
 
-        public static Score create() {
+        public static TScore create() {
             return new EmptyScore();
         }
 

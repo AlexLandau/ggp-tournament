@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.impl;
+package net.alloyggp.tournament.internal;
 
 import javax.annotation.Nullable;
 
@@ -7,8 +7,8 @@ import org.joda.time.DateTime;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 
-import net.alloyggp.tournament.api.MatchSetup;
-import net.alloyggp.tournament.api.NextMatchesResult;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TNextMatchesResult;
 
 /**
  * Contains a set of matches that should be scheduled for the
@@ -25,23 +25,23 @@ import net.alloyggp.tournament.api.NextMatchesResult;
  * additional matches.
  */
 //TODO: Make the public-facing part an interface
-public class StandardNextMatchesResult implements NextMatchesResult {
-    private final ImmutableSet<MatchSetup> matchesToRun;
+public class StandardNextMatchesResult implements TNextMatchesResult {
+    private final ImmutableSet<TMatchSetup> matchesToRun;
     //Note: These may be moved into individual matches in the future.
     private final Optional<DateTime> earliestAllowedStartTime;
 
-    private StandardNextMatchesResult(ImmutableSet<MatchSetup> matchesToRun,
+    private StandardNextMatchesResult(ImmutableSet<TMatchSetup> matchesToRun,
             Optional<DateTime> earliestAllowedStartTime) {
         this.matchesToRun = matchesToRun;
         this.earliestAllowedStartTime = earliestAllowedStartTime;
     }
 
-    public static NextMatchesResult createEmpty() {
-        return new StandardNextMatchesResult(ImmutableSet.<MatchSetup>of(),
+    public static TNextMatchesResult createEmpty() {
+        return new StandardNextMatchesResult(ImmutableSet.<TMatchSetup>of(),
                 Optional.<DateTime>absent());
     }
 
-    public static NextMatchesResult create(Iterable<MatchSetup> matchesToRun,
+    public static TNextMatchesResult create(Iterable<TMatchSetup> matchesToRun,
             @Nullable DateTime earliestAllowedStartTime) {
         return new StandardNextMatchesResult(
                 ImmutableSet.copyOf(matchesToRun),
@@ -49,7 +49,7 @@ public class StandardNextMatchesResult implements NextMatchesResult {
     }
 
     @Override
-    public ImmutableSet<MatchSetup> getMatchesToRun() {
+    public ImmutableSet<TMatchSetup> getMatchesToRun() {
         return matchesToRun;
     }
 

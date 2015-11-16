@@ -11,16 +11,16 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.google.common.collect.ImmutableSet;
 
-import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.MatchSetup;
-import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.api.TournamentStatus;
-import net.alloyggp.tournament.impl.MatchIds;
-import net.alloyggp.tournament.spec.MatchSpec;
-import net.alloyggp.tournament.spec.RoundSpec;
-import net.alloyggp.tournament.spec.StageFormat;
-import net.alloyggp.tournament.spec.StageSpec;
-import net.alloyggp.tournament.spec.TournamentSpec;
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournamentStatus;
+import net.alloyggp.tournament.internal.MatchIds;
+import net.alloyggp.tournament.internal.spec.MatchSpec;
+import net.alloyggp.tournament.internal.spec.RoundSpec;
+import net.alloyggp.tournament.internal.spec.StageFormat;
+import net.alloyggp.tournament.internal.spec.StageSpec;
+import net.alloyggp.tournament.internal.spec.TournamentSpec;
 
 /**
  * This is a fuzz test for the following invariant:
@@ -49,16 +49,16 @@ public class AllRoundsAreRunTest {
         TournamentSpec spec = TestSpecs.load(testSpec);
         for (long seed = 0L; seed < 100L; seed++) {
             Random random = new Random(seed);
-            Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
-            TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
+            TSeeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
+            TTournamentStatus status = TTournamentStatus.getInitialStatus(spec, initialSeeding);
             while (true) {
-                Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
+                Set<TMatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
                 if (nextMatches.isEmpty()) {
                     break;
                 }
                 //Pick one and choose a result for it
-                MatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
-                MatchResult result = FuzzTests.getResult(random, matchToResolve);
+                TMatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
+                TMatchResult result = FuzzTests.getResult(random, matchToResolve);
                 status = status.withNewResult(result);
             }
 
@@ -99,8 +99,8 @@ public class AllRoundsAreRunTest {
         return min;
     }
 
-    private void checkResultExists(ImmutableSet<MatchResult> resultsSoFar, int stageNum, int roundNum) {
-        for (MatchResult result : resultsSoFar) {
+    private void checkResultExists(ImmutableSet<TMatchResult> resultsSoFar, int stageNum, int roundNum) {
+        for (TMatchResult result : resultsSoFar) {
             String matchId = result.getMatchId();
             if (MatchIds.parseStageNumber(matchId) == stageNum
                     && MatchIds.parseRoundNumber(matchId) == roundNum) {

@@ -9,31 +9,31 @@ import org.junit.Test;
 
 import com.google.common.collect.Lists;
 
-import net.alloyggp.tournament.api.Player;
-import net.alloyggp.tournament.api.PlayerScore;
-import net.alloyggp.tournament.api.Ranking;
-import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.impl.Seedings;
-import net.alloyggp.tournament.impl.StandardRanking;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TPlayerScore;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.internal.Seedings;
+import net.alloyggp.tournament.internal.StandardRanking;
 
 public class SeedingsTest {
     @Test
     public void testGetSeedingsFromStandings() {
-        List<PlayerScore> scores = Lists.newArrayList();
-        List<Player> players = Lists.newArrayList();
+        List<TPlayerScore> scores = Lists.newArrayList();
+        List<TPlayer> players = Lists.newArrayList();
         for (int i = 0; i < 5; i++) {
-            Player player = Player.create("p" + i);
-            scores.add(PlayerScore.create(player, new SimpleScore(i), i));
+            TPlayer player = TPlayer.create("p" + i);
+            scores.add(TPlayerScore.create(player, new SimpleScore(i), i));
             players.add(player);
         }
-        Ranking standings = StandardRanking.create(scores);
-        ArrayList<PlayerScore> scoresSorted = Lists.newArrayList(standings.getScores());
+        TRanking standings = StandardRanking.create(scores);
+        ArrayList<TPlayerScore> scoresSorted = Lists.newArrayList(standings.getScores());
         assertEquals(Lists.reverse(scores), scoresSorted);
 
-        Seeding seedingsCutTo6 = Seedings.getSeedingsFromFinalStandings(standings, 6);
-        Seeding seedingsCutTo5 = Seedings.getSeedingsFromFinalStandings(standings, 5);
-        Seeding seedingsCutTo4 = Seedings.getSeedingsFromFinalStandings(standings, 4);
-        Seeding seedingsCutTo3 = Seedings.getSeedingsFromFinalStandings(standings, 3);
+        TSeeding seedingsCutTo6 = Seedings.getSeedingsFromFinalStandings(standings, 6);
+        TSeeding seedingsCutTo5 = Seedings.getSeedingsFromFinalStandings(standings, 5);
+        TSeeding seedingsCutTo4 = Seedings.getSeedingsFromFinalStandings(standings, 4);
+        TSeeding seedingsCutTo3 = Seedings.getSeedingsFromFinalStandings(standings, 3);
         assertEquals(5, seedingsCutTo6.getPlayersBestFirst().size());
         assertEquals(5, seedingsCutTo5.getPlayersBestFirst().size());
         assertEquals(4, seedingsCutTo4.getPlayersBestFirst().size());

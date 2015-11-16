@@ -14,13 +14,13 @@ import com.google.common.collect.ImmutableSet;
  * results obtained so far.
  */
 @Immutable
-public class TournamentStatus {
-    private final Tournament spec;
-    private final Seeding initialSeeding;
-    private final ImmutableSet<MatchResult> resultsSoFar;
+public class TTournamentStatus {
+    private final TTournament spec;
+    private final TSeeding initialSeeding;
+    private final ImmutableSet<TMatchResult> resultsSoFar;
 
-    private TournamentStatus(Tournament spec, Seeding initialSeeding,
-            ImmutableSet<MatchResult> resultsSoFar) {
+    private TTournamentStatus(TTournament spec, TSeeding initialSeeding,
+            ImmutableSet<TMatchResult> resultsSoFar) {
         this.spec = spec;
         this.initialSeeding = initialSeeding;
         this.resultsSoFar = resultsSoFar;
@@ -35,15 +35,15 @@ public class TournamentStatus {
      * tournaments, the client may want to use a pre-existing set of player rankings; in
      * other cases, a random seeding is sufficient.
      */
-    public static TournamentStatus getInitialStatus(Tournament spec, Seeding initialSeeding) {
-        return new TournamentStatus(spec, initialSeeding, ImmutableSet.<MatchResult>of());
+    public static TTournamentStatus getInitialStatus(TTournament spec, TSeeding initialSeeding) {
+        return new TTournamentStatus(spec, initialSeeding, ImmutableSet.<TMatchResult>of());
     }
 
     /**
      * Returns a new TournamentStatus object that includes the given result in addition
      * to the results already known.
      */
-    public TournamentStatus withNewResult(MatchResult newResult) {
+    public TTournamentStatus withNewResult(TMatchResult newResult) {
         return withNewResults(ImmutableList.of(newResult));
     }
 
@@ -51,19 +51,19 @@ public class TournamentStatus {
      * Returns a new TournamentStatus object that includes the given results in addition
      * to the results already known.
      */
-    public TournamentStatus withNewResults(Collection<MatchResult> newResults) {
-        ImmutableSet<MatchResult> allMatchResults = ImmutableSet.<MatchResult>builder()
+    public TTournamentStatus withNewResults(Collection<TMatchResult> newResults) {
+        ImmutableSet<TMatchResult> allMatchResults = ImmutableSet.<TMatchResult>builder()
                 .addAll(resultsSoFar)
                 .addAll(newResults)
                 .build();
-        return new TournamentStatus(spec, initialSeeding, allMatchResults);
+        return new TTournamentStatus(spec, initialSeeding, allMatchResults);
     }
 
-    public Tournament getSpec() {
+    public TTournament getSpec() {
         return spec;
     }
 
-    public ImmutableSet<MatchResult> getResultsSoFar() {
+    public ImmutableSet<TMatchResult> getResultsSoFar() {
         return resultsSoFar;
     }
 
@@ -78,15 +78,15 @@ public class TournamentStatus {
     /**
      * Returns the next set of matches to run.
      */
-    public NextMatchesResult getNextMatchesToRun() {
+    public TNextMatchesResult getNextMatchesToRun() {
         return spec.getMatchesToRun(initialSeeding, resultsSoFar);
     }
 
-    public Ranking getCurrentStandings() {
+    public TRanking getCurrentStandings() {
         return spec.getCurrentStandings(initialSeeding, resultsSoFar);
     }
 
-    public List<Ranking> getStandingsHistory() {
+    public List<TRanking> getStandingsHistory() {
         return spec.getStandingsHistory(initialSeeding, resultsSoFar);
     }
 }

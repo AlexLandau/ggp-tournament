@@ -9,15 +9,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 @Immutable
-public class MatchResult {
+public class TMatchResult {
     private final String matchId;
     //TODO: Eliminate this. This may require significant refactoring of the
     //SingleEliminationFormatRunner.
-    private final ImmutableList<Player> players;
+    private final ImmutableList<TPlayer> players;
     private final Outcome outcome;
     private final Optional<ImmutableList<Integer>> goals;
 
-    private MatchResult(String matchId, ImmutableList<Player> players,
+    private TMatchResult(String matchId, ImmutableList<TPlayer> players,
             Outcome outcome, Optional<ImmutableList<Integer>> goals) {
         if (outcome == Outcome.COMPLETED) {
             Preconditions.checkArgument(goals.isPresent());
@@ -33,13 +33,13 @@ public class MatchResult {
         this.goals = goals;
     }
 
-    public static MatchResult getAbortedMatchResult(String matchId, List<Player> players) {
-        return new MatchResult(matchId, ImmutableList.copyOf(players),
+    public static TMatchResult getAbortedMatchResult(String matchId, List<TPlayer> players) {
+        return new TMatchResult(matchId, ImmutableList.copyOf(players),
                 Outcome.ABORTED, Optional.<ImmutableList<Integer>>absent());
     }
 
-    public static MatchResult getSuccessfulMatchResult(String matchId, List<Player> players, List<Integer> goals) {
-        return new MatchResult(matchId, ImmutableList.copyOf(players),
+    public static TMatchResult getSuccessfulMatchResult(String matchId, List<TPlayer> players, List<Integer> goals) {
+        return new TMatchResult(matchId, ImmutableList.copyOf(players),
                 Outcome.COMPLETED, Optional.of(ImmutableList.copyOf(goals)));
     }
 
@@ -55,7 +55,7 @@ public class MatchResult {
         return goals.get();
     }
 
-    public ImmutableList<Player> getPlayers() {
+    public ImmutableList<TPlayer> getPlayers() {
         return players;
     }
 
@@ -85,7 +85,7 @@ public class MatchResult {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        MatchResult other = (MatchResult) obj;
+        TMatchResult other = (TMatchResult) obj;
         if (goals == null) {
             if (other.goals != null) {
                 return false;

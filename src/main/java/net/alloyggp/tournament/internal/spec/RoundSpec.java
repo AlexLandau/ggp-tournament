@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.spec;
+package net.alloyggp.tournament.internal.spec;
 
 import java.util.List;
 import java.util.Map;
@@ -14,9 +14,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import net.alloyggp.tournament.api.Game;
-import net.alloyggp.tournament.impl.TimeUtils;
-import net.alloyggp.tournament.impl.YamlUtils;
+import net.alloyggp.tournament.internal.Game;
+import net.alloyggp.tournament.internal.TimeUtils;
+import net.alloyggp.tournament.internal.YamlUtils;
 
 @Immutable
 public class RoundSpec {

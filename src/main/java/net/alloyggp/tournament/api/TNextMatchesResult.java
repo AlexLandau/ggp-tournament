@@ -5,9 +5,9 @@ import org.joda.time.DateTime;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 
-public interface NextMatchesResult {
+public interface TNextMatchesResult {
 
-    ImmutableSet<MatchSetup> getMatchesToRun();
+    ImmutableSet<TMatchSetup> getMatchesToRun();
 
     Optional<DateTime> getEarliestAllowedStartTime();
 

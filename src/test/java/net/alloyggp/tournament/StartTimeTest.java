@@ -13,11 +13,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
-import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.MatchSetup;
-import net.alloyggp.tournament.api.NextMatchesResult;
-import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.api.Tournament;
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournament;
 
 public class StartTimeTest {
     @Test
@@ -46,25 +46,25 @@ public class StartTimeTest {
     }
 
     private void testSingleElimHasStartTime(int numPlayers) {
-        Tournament tournament = TestSpecs.load("singleElim");
+        TTournament tournament = TestSpecs.load("singleElim");
         assertTrue(tournament.getInitialStartTime().isPresent());
 
         Random random = new Random(0L);
-        Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
-        NextMatchesResult matchesToRun = tournament.getMatchesToRun(initialSeeding, ImmutableSet.<MatchResult>of());
+        TSeeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
+        TNextMatchesResult matchesToRun = tournament.getMatchesToRun(initialSeeding, ImmutableSet.<TMatchResult>of());
         assertTrue(matchesToRun.getEarliestAllowedStartTime().isPresent());
     }
 
     @Test
     public void testSwiss1Test1StartTime() {
-        Tournament tournament = TestSpecs.load("swiss1test1");
+        TTournament tournament = TestSpecs.load("swiss1test1");
 
         Random random = new Random(0L);
-        Seeding initialSeeding = FuzzTests.createRandomSeeding(random, 2);
-        Set<MatchResult> matchResults = Sets.newHashSet();
+        TSeeding initialSeeding = FuzzTests.createRandomSeeding(random, 2);
+        Set<TMatchResult> matchResults = Sets.newHashSet();
 
         //Round 1: no start time yet
-        NextMatchesResult matchesToRun = tournament.getMatchesToRun(initialSeeding, matchResults);
+        TNextMatchesResult matchesToRun = tournament.getMatchesToRun(initialSeeding, matchResults);
         assertFalse(matchesToRun.getEarliestAllowedStartTime().isPresent());
         matchResults.add(finishOnlyMatch(matchesToRun.getMatchesToRun()));
 
@@ -78,9 +78,9 @@ public class StartTimeTest {
         assertTrue(matchesToRun.getEarliestAllowedStartTime().isPresent());
     }
 
-    private MatchResult finishOnlyMatch(ImmutableSet<MatchSetup> matchesToRun) {
-        MatchSetup matchSetup = Iterables.getOnlyElement(matchesToRun);
-        return MatchResult.getSuccessfulMatchResult(
+    private TMatchResult finishOnlyMatch(ImmutableSet<TMatchSetup> matchesToRun) {
+        TMatchSetup matchSetup = Iterables.getOnlyElement(matchesToRun);
+        return TMatchResult.getSuccessfulMatchResult(
                 matchSetup.getMatchId(), matchSetup.getPlayers(),
                 ImmutableList.of(100, 0));
     }

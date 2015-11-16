@@ -11,11 +11,11 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.google.common.collect.Sets;
 
-import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.MatchSetup;
-import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.api.Tournament;
-import net.alloyggp.tournament.api.TournamentStatus;
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournament;
+import net.alloyggp.tournament.api.TTournamentStatus;
 
 /**
  * This is a fuzz test for the following invariant:
@@ -41,14 +41,14 @@ public class AssignedMatchesConsistencyTest {
 
     @Test
     public void testMatchSetupsDoNotDisappear() {
-        Tournament spec = TestSpecs.load(testSpec);
+        TTournament spec = TestSpecs.load(testSpec);
         for (long seed = 0L; seed < 100L; seed++) {
             Random random = new Random(seed);
-            Seeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
-            TournamentStatus status = TournamentStatus.getInitialStatus(spec, initialSeeding);
-            Set<MatchSetup> matchesAlreadyProposed = Sets.newHashSet();
+            TSeeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
+            TTournamentStatus status = TTournamentStatus.getInitialStatus(spec, initialSeeding);
+            Set<TMatchSetup> matchesAlreadyProposed = Sets.newHashSet();
             while (true) {
-                Set<MatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
+                Set<TMatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
                 if (!nextMatches.containsAll(matchesAlreadyProposed)) {
                     Assert.fail("With seed " + seed + ", some match setups appeared and"
                             + " then disappeared without receiving results: "
@@ -59,9 +59,9 @@ public class AssignedMatchesConsistencyTest {
                 }
                 matchesAlreadyProposed.addAll(nextMatches);
                 //Pick one and choose a result for it
-                MatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
+                TMatchSetup matchToResolve = FuzzTests.pickMatchAtRandom(random, nextMatches);
                 matchesAlreadyProposed.remove(matchToResolve);
-                MatchResult result = FuzzTests.getResult(random, matchToResolve);
+                TMatchResult result = FuzzTests.getResult(random, matchToResolve);
                 status = status.withNewResult(result);
             }
         }

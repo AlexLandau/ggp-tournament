@@ -8,10 +8,10 @@ import java.io.InputStream;
 
 import org.yaml.snakeyaml.Yaml;
 
-import net.alloyggp.tournament.spec.TournamentSpec;
+import net.alloyggp.tournament.internal.spec.TournamentSpec;
 
-public class TournamentSpecParser {
-    private TournamentSpecParser() {
+public class TTournamentSpecParser {
+    private TTournamentSpecParser() {
         //not instantiable
     }
 
@@ -19,7 +19,7 @@ public class TournamentSpecParser {
      * Loads and parses a tournament specification in YAML format and returns the
      * specification.
      */
-    public static Tournament parseYamlFile(File file) {
+    public static TTournament parseYamlFile(File file) {
         try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
             return TournamentSpec.parseYamlRootObject(new Yaml().load(in));
         } catch (IOException e) {
@@ -31,7 +31,7 @@ public class TournamentSpecParser {
      * Loads and parses a tournament specification in YAML format and returns the
      * specification.
      */
-    public static Tournament parseYamlString(String yamlString) {
+    public static TTournament parseYamlString(String yamlString) {
         return TournamentSpec.parseYamlRootObject(new Yaml().load(yamlString));
     }
 }

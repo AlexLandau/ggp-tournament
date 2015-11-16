@@ -1,10 +1,10 @@
 games:
   - name: breakthrough
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/breakthrough/
     numRoles: 2
     fixedSum: true
   - name: cephalopodMicro
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/cephalopodMicro/
     numRoles: 2
     fixedSum: true
 

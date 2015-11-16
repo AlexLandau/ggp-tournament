@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import net.alloyggp.tournament.impl.MatchIds;
+import net.alloyggp.tournament.internal.MatchIds;
 
 public class MatchIdsTest {
     @Test

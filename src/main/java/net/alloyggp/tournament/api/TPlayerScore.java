@@ -9,26 +9,26 @@ import javax.annotation.concurrent.Immutable;
  * so it should never return compareTo() == 0 for two different players.
  */
 @Immutable
-public class PlayerScore implements Comparable<PlayerScore> {
-    private final Player player;
-    private final Score score;
+public class TPlayerScore implements Comparable<TPlayerScore> {
+    private final TPlayer player;
+    private final TScore score;
     private final int seedFromRoundStart;
 
-    private PlayerScore(Player player, Score score, int seedFromRoundStart) {
+    private TPlayerScore(TPlayer player, TScore score, int seedFromRoundStart) {
         this.player = player;
         this.score = score;
         this.seedFromRoundStart = seedFromRoundStart;
     }
 
-    public static PlayerScore create(Player player, Score score, int seedFromRoundStart) {
-        return new PlayerScore(player, score, seedFromRoundStart);
+    public static TPlayerScore create(TPlayer player, TScore score, int seedFromRoundStart) {
+        return new TPlayerScore(player, score, seedFromRoundStart);
     }
 
-    public Player getPlayer() {
+    public TPlayer getPlayer() {
         return player;
     }
 
-    public Score getScore() {
+    public TScore getScore() {
         return score;
     }
 
@@ -37,7 +37,7 @@ public class PlayerScore implements Comparable<PlayerScore> {
     }
 
     @Override
-    public int compareTo(PlayerScore other) {
+    public int compareTo(TPlayerScore other) {
         int scoreComparison = score.compareTo(other.score);
         if (scoreComparison != 0) {
             //lower PlayerScore is better; higher Score is better
@@ -67,7 +67,7 @@ public class PlayerScore implements Comparable<PlayerScore> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        PlayerScore other = (PlayerScore) obj;
+        TPlayerScore other = (TPlayerScore) obj;
         if (player == null) {
             if (other.player != null) {
                 return false;

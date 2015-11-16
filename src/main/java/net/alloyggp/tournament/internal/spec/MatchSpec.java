@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.spec;
+package net.alloyggp.tournament.internal.spec;
 
 import java.util.List;
 import java.util.Map;
@@ -10,10 +10,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-import net.alloyggp.tournament.api.Game;
-import net.alloyggp.tournament.api.MatchSetup;
-import net.alloyggp.tournament.api.Player;
-import net.alloyggp.tournament.impl.YamlUtils;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.internal.Game;
+import net.alloyggp.tournament.internal.YamlUtils;
 
 @Immutable
 public class MatchSpec {
@@ -89,16 +89,16 @@ public class MatchSpec {
     }
 
     //From seed order (best first), to the order of their roles
-    public ImmutableList<Player> putInOrder(List<Player> playersBestSeedFirst) {
-        ImmutableList.Builder<Player> players = ImmutableList.builder();
+    public ImmutableList<TPlayer> putInOrder(List<TPlayer> playersBestSeedFirst) {
+        ImmutableList.Builder<TPlayer> players = ImmutableList.builder();
         for (int seed : playerSeedOrder) {
             players.add(playersBestSeedFirst.get(seed));
         }
         return players.build();
     }
 
-    public MatchSetup createMatchSetup(String matchId, List<Player> playersHighestSeedFirst) {
-        return MatchSetup.create(matchId, game, putInOrder(playersHighestSeedFirst),
+    public TMatchSetup createMatchSetup(String matchId, List<TPlayer> playersHighestSeedFirst) {
+        return TMatchSetup.create(matchId, game, putInOrder(playersHighestSeedFirst),
                 startClock, playClock);
     }
 

@@ -7,14 +7,14 @@ import javax.annotation.concurrent.Immutable;
 import com.google.common.collect.ImmutableList;
 
 @Immutable
-public class MatchSetup {
+public class TMatchSetup {
     private final String matchId;
-    private final Game game;
-    private final ImmutableList<Player> players;
+    private final TGame game;
+    private final ImmutableList<TPlayer> players;
     private final int startClock;
     private final int playClock;
 
-    private MatchSetup(String matchId, Game game, ImmutableList<Player> players, int startClock,
+    private TMatchSetup(String matchId, TGame game, ImmutableList<TPlayer> players, int startClock,
             int playClock) {
         this.matchId = matchId;
         this.game = game;
@@ -23,9 +23,9 @@ public class MatchSetup {
         this.playClock = playClock;
     }
 
-    public static MatchSetup create(String matchId, Game game, List<Player> players, int startClock,
+    public static TMatchSetup create(String matchId, TGame game, List<TPlayer> players, int startClock,
             int playClock) {
-        return new MatchSetup(matchId, game, ImmutableList.copyOf(players),
+        return new TMatchSetup(matchId, game, ImmutableList.copyOf(players),
                 startClock, playClock);
     }
 
@@ -33,11 +33,11 @@ public class MatchSetup {
         return matchId;
     }
 
-    public Game getGame() {
+    public TGame getGame() {
         return game;
     }
 
-    public List<Player> getPlayers() {
+    public List<TPlayer> getPlayers() {
         return players;
     }
 
@@ -72,7 +72,7 @@ public class MatchSetup {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        MatchSetup other = (MatchSetup) obj;
+        TMatchSetup other = (TMatchSetup) obj;
         if (game == null) {
             if (other.game != null) {
                 return false;

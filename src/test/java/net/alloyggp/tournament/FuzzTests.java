@@ -9,11 +9,11 @@ import java.util.Set;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import net.alloyggp.tournament.api.Game;
-import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.MatchSetup;
-import net.alloyggp.tournament.api.Player;
-import net.alloyggp.tournament.api.Seeding;
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TGame;
 
 /**
  * Contains utilities for writing fuzz tests that use a single random seed for all
@@ -65,15 +65,15 @@ public class FuzzTests {
      * <p>The match result may be either aborted or successful. If the game is
      * zero-sum, the goal values will reflect that.
      */
-    public static MatchResult getResult(Random random, MatchSetup match) {
+    public static TMatchResult getResult(Random random, TMatchSetup match) {
         if (random.nextDouble() > 0.7) {
-            return MatchResult.getAbortedMatchResult(match.getMatchId(), match.getPlayers());
+            return TMatchResult.getAbortedMatchResult(match.getMatchId(), match.getPlayers());
         }
         List<Integer> goals = getGoals(random, match.getGame());
-        return MatchResult.getSuccessfulMatchResult(match.getMatchId(), match.getPlayers(), goals);
+        return TMatchResult.getSuccessfulMatchResult(match.getMatchId(), match.getPlayers(), goals);
     }
 
-    private static List<Integer> getGoals(Random random, Game game) {
+    private static List<Integer> getGoals(Random random, TGame game) {
         if (game.getNumRoles() == 1) {
             return ImmutableList.of(getOneGoalValue(random));
         } else if (game.getNumRoles() == 2) {
@@ -120,11 +120,11 @@ public class FuzzTests {
      * match chosen will be the same. By contrast, selecting the first match from
      * the set iterator may give different results on different runs.
      */
-    public static MatchSetup pickMatchAtRandom(Random random, Set<MatchSetup> nextMatches) {
-        List<MatchSetup> sortedMatches = Lists.newArrayList(nextMatches);
-        Collections.sort(sortedMatches, new Comparator<MatchSetup>() {
+    public static TMatchSetup pickMatchAtRandom(Random random, Set<TMatchSetup> nextMatches) {
+        List<TMatchSetup> sortedMatches = Lists.newArrayList(nextMatches);
+        Collections.sort(sortedMatches, new Comparator<TMatchSetup>() {
             @Override
-            public int compare(MatchSetup o1, MatchSetup o2) {
+            public int compare(TMatchSetup o1, TMatchSetup o2) {
                 return o1.getMatchId().compareTo(o2.getMatchId());
             }
         });
@@ -137,12 +137,12 @@ public class FuzzTests {
      *
      * <p>Players are named "1", "2", "3", etc.
      */
-    public static Seeding createRandomSeeding(Random random, int numPlayers) {
-        List<Player> players = Lists.newArrayList();
+    public static TSeeding createRandomSeeding(Random random, int numPlayers) {
+        List<TPlayer> players = Lists.newArrayList();
         for (int i = 1; i <= numPlayers; i++) {
-            players.add(Player.create(Integer.toString(i)));
+            players.add(TPlayer.create(Integer.toString(i)));
         }
-        return Seeding.createRandomSeeding(random, players);
+        return TSeeding.createRandomSeeding(random, players);
     }
 
     public static <T> T pickAtRandom(Random random, List<T> list) {

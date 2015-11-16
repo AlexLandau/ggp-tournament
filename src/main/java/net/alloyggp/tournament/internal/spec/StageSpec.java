@@ -1,4 +1,4 @@
-package net.alloyggp.tournament.spec;
+package net.alloyggp.tournament.internal.spec;
 
 import java.util.List;
 import java.util.Map;
@@ -11,15 +11,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-import net.alloyggp.tournament.api.Game;
-import net.alloyggp.tournament.api.MatchResult;
-import net.alloyggp.tournament.api.NextMatchesResult;
-import net.alloyggp.tournament.api.Ranking;
-import net.alloyggp.tournament.api.Seeding;
-import net.alloyggp.tournament.impl.FormatRunner;
-import net.alloyggp.tournament.impl.Seedings;
-import net.alloyggp.tournament.impl.StandardRanking;
-import net.alloyggp.tournament.impl.YamlUtils;
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.internal.FormatRunner;
+import net.alloyggp.tournament.internal.Game;
+import net.alloyggp.tournament.internal.Seedings;
+import net.alloyggp.tournament.internal.StandardRanking;
+import net.alloyggp.tournament.internal.YamlUtils;
 
 @Immutable
 public class StageSpec {
@@ -64,16 +64,16 @@ public class StageSpec {
                 ImmutableList.copyOf(rounds), playerCutoff);
     }
 
-    public NextMatchesResult getMatchesToRun(String tournamentInternalName,
-            Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
+    public TNextMatchesResult getMatchesToRun(String tournamentInternalName,
+            TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
         FormatRunner runner = format.getRunner();
         return runner.getMatchesToRun(tournamentInternalName, initialSeeding, stageNum,
                 rounds, resultsSoFar);
     }
 
-    public Ranking getCurrentStandings(String tournamentInternalName,
-            Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
-        List<Ranking> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar);
+    public TRanking getCurrentStandings(String tournamentInternalName,
+            TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+        List<TRanking> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar);
         if (standingsHistory.isEmpty()) {
             return StandardRanking.createForSeeding(initialSeeding);
         }
@@ -88,7 +88,7 @@ public class StageSpec {
         return format;
     }
 
-    public Seeding getSeedingsFromFinalStandings(Ranking standings) {
+    public TSeeding getSeedingsFromFinalStandings(TRanking standings) {
         return Seedings.getSeedingsFromFinalStandings(standings, playerCutoff);
     }
 
@@ -100,8 +100,8 @@ public class StageSpec {
         return playerCutoff;
     }
 
-    public List<Ranking> getStandingsHistory(String tournamentInternalName,
-            Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
+    public List<TRanking> getStandingsHistory(String tournamentInternalName,
+            TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
         return format.getRunner().getStandingsHistory(tournamentInternalName, initialSeeding,
                 stageNum, rounds, resultsSoFar);
     }

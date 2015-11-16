@@ -3,19 +3,19 @@ nameInternal: swiss1Sample2
 
 games:
   - name: breakthrough
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/breakthrough/
     numRoles: 2
     fixedSum: true
   - name: cephalopodMicro
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/cephalopodMicro/
     numRoles: 2
     fixedSum: true
   - name: puzzle1
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/puzzle1/
     numRoles: 1
     fixedSum: false
   - name: puzzle2
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/puzzle2/
     numRoles: 1
     fixedSum: false
 

@@ -4,9 +4,9 @@ import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.alloyggp.tournament.impl.TimeUtils;
-import net.alloyggp.tournament.spec.RoundSpec;
-import net.alloyggp.tournament.spec.TournamentSpec;
+import net.alloyggp.tournament.internal.TimeUtils;
+import net.alloyggp.tournament.internal.spec.RoundSpec;
+import net.alloyggp.tournament.internal.spec.TournamentSpec;
 
 public class TimeZoneTest {
     @Test

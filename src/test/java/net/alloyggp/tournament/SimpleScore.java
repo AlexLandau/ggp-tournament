@@ -1,8 +1,8 @@
 package net.alloyggp.tournament;
 
-import net.alloyggp.tournament.api.Score;
+import net.alloyggp.tournament.api.TScore;
 
-public class SimpleScore implements Score {
+public class SimpleScore implements TScore {
     private final int score;
 
     public SimpleScore(int score) {
@@ -36,7 +36,7 @@ public class SimpleScore implements Score {
     }
 
     @Override
-    public int compareTo(Score other) {
+    public int compareTo(TScore other) {
         if (!(other instanceof SimpleScore)) {
             throw new IllegalArgumentException();
         }

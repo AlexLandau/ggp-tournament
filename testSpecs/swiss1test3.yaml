@@ -3,11 +3,11 @@ nameInternal: swiss1Sample3
 
 games:
   - name: gt1
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/gt1/
     numRoles: 2
     fixedSum: false
   - name: gt2
-    repository: games.ggp.org/base
+    url: http://games.ggp.org/base/games/gt2/
     numRoles: 2
     fixedSum: false
 
