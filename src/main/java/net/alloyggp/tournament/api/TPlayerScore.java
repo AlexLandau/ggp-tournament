@@ -38,10 +38,10 @@ public class TPlayerScore implements Comparable<TPlayerScore> {
 
     @Override
     public int compareTo(TPlayerScore other) {
-        int scoreComparison = score.compareTo(other.score);
+        //lower PlayerScore is better; higher Score is better
+        int scoreComparison = other.score.compareTo(score);
         if (scoreComparison != 0) {
-            //lower PlayerScore is better; higher Score is better
-            return -scoreComparison;
+            return scoreComparison;
         }
         return Integer.compare(seedFromRoundStart, other.seedFromRoundStart);
     }

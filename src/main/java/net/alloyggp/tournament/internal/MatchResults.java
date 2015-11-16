@@ -3,6 +3,8 @@ package net.alloyggp.tournament.internal;
 import java.util.Collection;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
@@ -26,7 +28,7 @@ public class MatchResults {
         return Sets.newHashSet(Collections2.filter(inputs,
                 new Predicate<TMatchResult>() {
             @Override
-            public boolean apply(TMatchResult input) {
+            public boolean apply(@Nonnull TMatchResult input) {
                 String matchId = input.getMatchId();
                 int matchStage = MatchIds.parseStageNumber(matchId);
                 return matchStage == stageNum;
@@ -42,7 +44,7 @@ public class MatchResults {
         return Sets.newHashSet(Collections2.filter(inputs,
                 new Predicate<TMatchResult>() {
             @Override
-            public boolean apply(TMatchResult input) {
+            public boolean apply(@Nonnull TMatchResult input) {
                 String matchId = input.getMatchId();
                 int matchStage = MatchIds.parseStageNumber(matchId);
                 return matchStage < stageNum;

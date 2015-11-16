@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -30,10 +31,9 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
+import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TMatchResult.Outcome;
-import net.alloyggp.tournament.internal.spec.MatchSpec;
-import net.alloyggp.tournament.internal.spec.RoundSpec;
 import net.alloyggp.tournament.api.TMatchSetup;
 import net.alloyggp.tournament.api.TNextMatchesResult;
 import net.alloyggp.tournament.api.TPlayer;
@@ -41,7 +41,8 @@ import net.alloyggp.tournament.api.TPlayerScore;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TScore;
 import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.api.TGame;
+import net.alloyggp.tournament.internal.spec.MatchSpec;
+import net.alloyggp.tournament.internal.spec.RoundSpec;
 
 public class SwissFormat1Runner implements FormatRunner {
     private static final SwissFormat1Runner INSTANCE = new SwissFormat1Runner();
@@ -780,7 +781,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 Map<K, Multiset<Set<T>>> map) {
             return ImmutableMap.copyOf(Maps.transformValues(map, new Function<Multiset<Set<T>>, ImmutableMultiset<ImmutableSet<T>>>() {
                 @Override
-                public ImmutableMultiset<ImmutableSet<T>> apply(Multiset<Set<T>> input) {
+                public ImmutableMultiset<ImmutableSet<T>> apply(@Nonnull Multiset<Set<T>> input) {
                     return toImmutableSetEntriedMultiset(input);
                 }
             }));
@@ -799,7 +800,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 Map<K1, Map<K2, V2>> map) {
             return ImmutableMap.copyOf(Maps.transformValues(map, new Function<Map<K2, V2>, ImmutableMap<K2, V2>>() {
                 @Override
-                public ImmutableMap<K2, V2> apply(Map<K2, V2> input) {
+                public ImmutableMap<K2, V2> apply(@Nonnull Map<K2, V2> input) {
                     return ImmutableMap.copyOf(input);
                 }
             }));

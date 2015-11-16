@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,7 +39,7 @@ public class SingleEliminationVictoryTest {
         return Iterables.filter(FuzzTests.getParameters(),
                 new Predicate<Object[]>() {
                     @Override
-                    public boolean apply(Object[] arguments) {
+                    public boolean apply(@Nonnull Object[] arguments) {
                         String testSpec = (String) arguments[1];
                         return testSpec.startsWith("singleElim");
                     }
