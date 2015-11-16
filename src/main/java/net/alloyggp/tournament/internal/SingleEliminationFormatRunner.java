@@ -273,7 +273,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
             Preconditions.checkNotNull(specToUse);
             //If we make it here, repeat the last match type
-            String matchId = MatchIds.create(tournamentInternalName, stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts);
+            String matchId = MatchIds.create(stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts);
             //TODO: Correctly define roles?
             //TODO: Accurate seeding
             //TODO: Alternate roles each time if we do have to repeat the last match type

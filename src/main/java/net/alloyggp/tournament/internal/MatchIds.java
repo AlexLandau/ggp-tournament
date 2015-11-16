@@ -9,11 +9,10 @@ public class MatchIds {
 
     /**
      * Creates a match ID string that encodes the given information. This should be used
-     * to generate all match IDs for matches used in tournaments; many format runners rely
+     * to generate a substring of all match IDs for matches used in tournaments; many format runners rely
      * on the information encoded this way.
      */
-    public static String create(String tournamentInternalName,
-            int stage,
+    public static String create(int stage,
             int round,
             int playerMatching,
             int match,
@@ -23,33 +22,29 @@ public class MatchIds {
         Preconditions.checkArgument(playerMatching >= 0);
         Preconditions.checkArgument(match >= 0);
         Preconditions.checkArgument(attempt >= 0);
-        return tournamentInternalName + "-" + stage + "-" + round + "-" + playerMatching + "-" + match + "-" + attempt;
+        return "ggpt-" + stage + "-" + round + "-" + playerMatching + "-" + match + "-" + attempt;
     }
 
-    private static final Pattern MATCH_ID_PATTERN = Pattern.compile("^(.*)-(\\d+)-(\\d+)-(\\d+)-(\\d+)-(\\d+)$");
-
-    public static String getTournamentInternalName(String matchId) {
-        return getNthGroup(matchId, 1);
-    }
+    private static final Pattern MATCH_ID_PATTERN = Pattern.compile("^ggpt-(\\d+)-(\\d+)-(\\d+)-(\\d+)-(\\d+)$");
 
     public static int parseStageNumber(String matchId) {
-        return parseNthGroupAsNumber(matchId, 2);
+        return parseNthGroupAsNumber(matchId, 1);
     }
 
     public static int parseRoundNumber(String matchId) {
-        return parseNthGroupAsNumber(matchId, 3);
+        return parseNthGroupAsNumber(matchId, 2);
     }
 
     public static int parsePlayerMatchingNumber(String matchId) {
-        return parseNthGroupAsNumber(matchId, 4);
+        return parseNthGroupAsNumber(matchId, 3);
     }
 
     public static int parseMatchNumber(String matchId) {
-        return parseNthGroupAsNumber(matchId, 5);
+        return parseNthGroupAsNumber(matchId, 4);
     }
 
     public static int parseAttemptNumber(String matchId) {
-        return parseNthGroupAsNumber(matchId, 6);
+        return parseNthGroupAsNumber(matchId, 5);
     }
 
     private static int parseNthGroupAsNumber(String matchId, int groupNumber) {
@@ -65,5 +60,4 @@ public class MatchIds {
         }
         return matcher.group(groupNumber);
     }
-
 }

@@ -179,7 +179,7 @@ public class SwissFormat1Runner implements FormatRunner {
                     MatchSpec match = round.getMatches().get(matchNum);
                     Optional<Integer> attemptNum = getAttemptNumberIfUnfinished(groupNum, matchNum, roundResults);
                     if (attemptNum.isPresent()) {
-                        String matchId = MatchIds.create(tournamentInternalName, stageNum,
+                        String matchId = MatchIds.create(stageNum,
                                 roundNum, groupNum, matchNum, attemptNum.get());
 
                         matchesToRun.add(match.createMatchSetup(matchId, players));
