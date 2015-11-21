@@ -22,4 +22,10 @@ Rounds and matches: Stages then have some number of rounds, each of which has so
 
 Games: Games are defined once in the specification and then specified elsewhere by their name. These are specified with a ggp.org-style repository location and game key.
 
-Some properties of games, such as the number of players involved and whether they are zero-sum, must be specified. This helps ensure that tournament formats handle these games appropriately, or flags where they are being used inappropriately (such as a non-zero-sum game being used in a single-elimination round).
+Some properties of games, such as the number of players involved and whether they are fixed-sum, must be specified. This helps ensure that tournament formats handle these games appropriately, or flags where they are being used inappropriately (such as a non-fixed-sum game being used in a single-elimination round).
+
+A note on the fixed-sum property (which should be better integrated into documentation elsewhere): The meaning of this is pretty obvious when used with two-player games. However, the Swiss format treats it differently; the goal here is to ensure that the way players are matched is sensible, so it is used differently from its literal definition.
+
+Effectively, games with the possibility of a king-making element can have very random outcomes and correspond only weakly with player skill. We prefer to treat these more like game-theoretical games, where playing against a variety of opponents in a large number of matches gives a better sense of performance.
+
+Instead, the fixed-sum label is reserved for games where if an opponent wants to reduce your score, the only way to do so is to increase their own quality of play in such a way that it also increases their own score. This is a definition that also applies to two-player fixed-sum games. It rules out king-making, in which a player could decide to play in such a way to grant an advantage to one opponent over another without an improved understanding of the game. It also preserves the fact that a better opponent (as measured by score in previous games) is an opponent that will provide more information about a player's own abilities. By contrast, in two king-making-defined matches, the stronger opponent may well make decisions that favor you more than a weaker opponent.
