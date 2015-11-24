@@ -11,10 +11,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
-import net.alloyggp.tournament.api.TMatchResult;
-
 /**
- * Contains utility methods for dealing with {@link TMatchResult}s.
+ * Contains utility methods for dealing with {@link InternalMatchResult}s.
  */
 public class MatchResults {
     private MatchResults() {
@@ -22,46 +20,43 @@ public class MatchResults {
     }
 
     /**
-     * Returns only those {@link TMatchResult}s that are from the given stage.
+     * Returns only those {@link InternalMatchResult}s that are from the given stage.
      */
-    public static Set<TMatchResult> filterByStage(Collection<TMatchResult> inputs, final int stageNum) {
+    public static Set<InternalMatchResult> filterByStage(Collection<InternalMatchResult> inputs, final int stageNum) {
         return Sets.newHashSet(Collections2.filter(inputs,
-                new Predicate<TMatchResult>() {
+                new Predicate<InternalMatchResult>() {
             @Override
-            public boolean apply(@Nonnull TMatchResult input) {
-                String matchId = input.getMatchId();
-                int matchStage = MatchIds.parseStageNumber(matchId);
+            public boolean apply(@Nonnull InternalMatchResult input) {
+                int matchStage = input.getMatchId().getStageNumber();
                 return matchStage == stageNum;
             }
         }));
     }
 
     /**
-     * Returns only those {@link TMatchResult}s that are from a stage before the
+     * Returns only those {@link InternalMatchResult}s that are from a stage before the
      * one specified.
      */
-    public static Set<TMatchResult> getResultsPriorToStage(Collection<TMatchResult> inputs, final int stageNum) {
+    public static Set<InternalMatchResult> getResultsPriorToStage(Collection<InternalMatchResult> inputs, final int stageNum) {
         return Sets.newHashSet(Collections2.filter(inputs,
-                new Predicate<TMatchResult>() {
+                new Predicate<InternalMatchResult>() {
             @Override
-            public boolean apply(@Nonnull TMatchResult input) {
-                String matchId = input.getMatchId();
-                int matchStage = MatchIds.parseStageNumber(matchId);
+            public boolean apply(@Nonnull InternalMatchResult input) {
+                int matchStage = input.getMatchId().getStageNumber();
                 return matchStage < stageNum;
             }
         }));
     }
 
     /**
-     * Returns a {@link SetMultimap} including all the {@link TMatchResult}s from the given
+     * Returns a {@link SetMultimap} including all the {@link InternalMatchResult}s from the given
      * stage. The results are grouped by their round number.
      */
-    public static SetMultimap<Integer, TMatchResult> mapByRound(Collection<TMatchResult> resultsSoFar,
+    public static SetMultimap<Integer, InternalMatchResult> mapByRound(Collection<InternalMatchResult> resultsSoFar,
             int stageNum) {
-        SetMultimap<Integer, TMatchResult> mapped = HashMultimap.create();
-        for (TMatchResult result : filterByStage(resultsSoFar, stageNum)) {
-            String matchId = result.getMatchId();
-            int matchRound = MatchIds.parseRoundNumber(matchId);
+        SetMultimap<Integer, InternalMatchResult> mapped = HashMultimap.create();
+        for (InternalMatchResult result : filterByStage(resultsSoFar, stageNum)) {
+            int matchRound = result.getMatchId().getRoundNumber();
             mapped.put(matchRound, result);
         }
         return mapped;

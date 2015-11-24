@@ -13,6 +13,18 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 
+import net.alloyggp.tournament.api.TGame;
+import net.alloyggp.tournament.api.TMatchResult.Outcome;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TPlayerScore;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TScore;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.internal.spec.MatchSpec;
+import net.alloyggp.tournament.internal.spec.RoundSpec;
+
 import org.joda.time.DateTime;
 
 import com.google.common.base.Function;
@@ -30,19 +42,6 @@ import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-
-import net.alloyggp.tournament.api.TGame;
-import net.alloyggp.tournament.api.TMatchResult;
-import net.alloyggp.tournament.api.TMatchResult.Outcome;
-import net.alloyggp.tournament.api.TMatchSetup;
-import net.alloyggp.tournament.api.TNextMatchesResult;
-import net.alloyggp.tournament.api.TPlayer;
-import net.alloyggp.tournament.api.TPlayerScore;
-import net.alloyggp.tournament.api.TRanking;
-import net.alloyggp.tournament.api.TScore;
-import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.internal.spec.MatchSpec;
-import net.alloyggp.tournament.internal.spec.RoundSpec;
 
 public class SwissFormat1Runner implements FormatRunner {
     private static final SwissFormat1Runner INSTANCE = new SwissFormat1Runner();
@@ -62,8 +61,8 @@ public class SwissFormat1Runner implements FormatRunner {
         private final int stageNum;
         private final TSeeding initialSeeding;
         private final ImmutableList<RoundSpec> rounds;
-        private final ImmutableSet<TMatchResult> resultsFromEarlierStages;
-        private final ImmutableSet<TMatchResult> resultsInStage;
+        private final ImmutableSet<InternalMatchResult> resultsFromEarlierStages;
+        private final ImmutableSet<InternalMatchResult> resultsInStage;
         private final Set<TMatchSetup> matchesToRun = Sets.newHashSet();
         //TODO: Double-check that all these stats are updated appropriately
         private TGame mostRecentGame = null; //of a fully completed round
@@ -78,8 +77,8 @@ public class SwissFormat1Runner implements FormatRunner {
         private @Nullable DateTime latestStartTimeSeen = null;
 
         private SwissFormatSimulator(String tournamentInternalName, int stageNum, TSeeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, ImmutableSet<TMatchResult> resultsFromEarlierStages,
-                ImmutableSet<TMatchResult> resultsInStage) {
+                ImmutableList<RoundSpec> rounds, ImmutableSet<InternalMatchResult> resultsFromEarlierStages,
+                ImmutableSet<InternalMatchResult> resultsInStage) {
             this.tournamentInternalName = tournamentInternalName;
             this.stageNum = stageNum;
             this.initialSeeding = initialSeeding;
@@ -89,9 +88,9 @@ public class SwissFormat1Runner implements FormatRunner {
         }
 
         public static SwissFormatSimulator createAndRun(String tournamentInternalName, int stageNum, TSeeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, Set<TMatchResult> allResultsSoFar) {
-            Set<TMatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
-            Set<TMatchResult> resultsInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
+                ImmutableList<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
+            Set<InternalMatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
+            Set<InternalMatchResult> resultsInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
             SwissFormatSimulator simulator = new SwissFormatSimulator(tournamentInternalName, stageNum, initialSeeding,
                     rounds, ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsInStage));
             simulator.run();
@@ -101,7 +100,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private void run() {
             setInitialTotalsToZero();
             int roundNum = 0;
-            SetMultimap<Integer, TMatchResult> matchesByRound = MatchResults.mapByRound(resultsInStage, stageNum);
+            SetMultimap<Integer, InternalMatchResult> matchesByRound = MatchResults.mapByRound(resultsInStage, stageNum);
 
             @Nullable EndOfRoundState endOfRoundState = TournamentStateCache.getLatestCachedEndOfRoundState(tournamentInternalName, initialSeeding, resultsFromEarlierStages, stageNum, resultsInStage);
             if (endOfRoundState != null) {
@@ -112,7 +111,7 @@ public class SwissFormat1Runner implements FormatRunner {
 
             for (/* roundNum already set */; roundNum < rounds.size(); roundNum++) {
                 RoundSpec round = rounds.get(roundNum);
-                Set<TMatchResult> roundResults = matchesByRound.get(roundNum);
+                Set<InternalMatchResult> roundResults = matchesByRound.get(roundNum);
                 runRound(round, roundNum, roundResults);
                 if (!matchesToRun.isEmpty()) {
                     //We're still finishing up this round, not ready to assign matches in the next one
@@ -163,7 +162,7 @@ public class SwissFormat1Runner implements FormatRunner {
             latestStartTimeSeen = state.latestStartTimeSeen;
         }
 
-        private void runRound(RoundSpec round, int roundNum, Set<TMatchResult> roundResults) {
+        private void runRound(RoundSpec round, int roundNum, Set<InternalMatchResult> roundResults) {
             handleStartTimeForRound(round);
             //...there should be only one match per round, I think?
             //Or at least they must involve the same game?
@@ -185,7 +184,7 @@ public class SwissFormat1Runner implements FormatRunner {
                         matchesToRun.add(match.createMatchSetup(matchId, players));
                         break;
                     } else {
-                        TMatchResult result = getSuccessfulAttempt(groupNum, matchNum, roundResults);
+                        InternalMatchResult result = getSuccessfulAttempt(groupNum, matchNum, roundResults);
                         //Add the results of the match to our point totals
                         List<TPlayer> playersInRoleOrder = match.putInOrder(players);
                         for (int role = 0; role < players.size(); role++) {
@@ -514,12 +513,12 @@ public class SwissFormat1Runner implements FormatRunner {
         }
 
         private Optional<Integer> getAttemptNumberIfUnfinished(int groupNum, int matchNum,
-                Set<TMatchResult> roundResults) {
+                Set<InternalMatchResult> roundResults) {
             int attemptsSoFar = 0;
-            for (TMatchResult result : roundResults) {
-                String matchId = result.getMatchId();
-                if (groupNum == MatchIds.parsePlayerMatchingNumber(matchId)
-                        && matchNum == MatchIds.parseMatchNumber(matchId)) {
+            for (InternalMatchResult result : roundResults) {
+                MatchId matchId = result.getMatchId();
+                if (groupNum == matchId.getPlayerMatchingNumber()
+                        && matchNum == matchId.getMatchNumber()) {
                     if (result.getOutcome() == Outcome.ABORTED) {
                         attemptsSoFar++;
                     } else {
@@ -530,12 +529,12 @@ public class SwissFormat1Runner implements FormatRunner {
             return Optional.of(attemptsSoFar);
         }
 
-        private TMatchResult getSuccessfulAttempt(int groupNum, int matchNum, Set<TMatchResult> roundResults) {
-            for (TMatchResult result : roundResults) {
+        private InternalMatchResult getSuccessfulAttempt(int groupNum, int matchNum, Set<InternalMatchResult> roundResults) {
+            for (InternalMatchResult result : roundResults) {
                 if (result.getOutcome() == Outcome.COMPLETED) {
-                    String matchId = result.getMatchId();
-                    if (groupNum == MatchIds.parsePlayerMatchingNumber(matchId)
-                            && matchNum == MatchIds.parseMatchNumber(matchId)) {
+                    MatchId matchId = result.getMatchId();
+                    if (groupNum == matchId.getPlayerMatchingNumber()
+                            && matchNum == matchId.getMatchNumber()) {
                         return result;
                     }
                 }
@@ -679,7 +678,7 @@ public class SwissFormat1Runner implements FormatRunner {
 
     @Override
     public TNextMatchesResult getMatchesToRun(String tournamentInternalName, TSeeding initialSeeding, int stageNum,
-            List<RoundSpec> rounds, Set<TMatchResult> allResultsSoFar) {
+            List<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
                 ImmutableList.copyOf(rounds), allResultsSoFar).getMatchesToRun();
     }
@@ -696,7 +695,7 @@ public class SwissFormat1Runner implements FormatRunner {
 
     @Override
     public List<TRanking> getStandingsHistory(String tournamentInternalName, TSeeding initialSeeding, int stageNum,
-            List<RoundSpec> rounds, Set<TMatchResult> allResultsSoFar) {
+            List<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
                 ImmutableList.copyOf(rounds), allResultsSoFar).getStandingsHistory();
     }

@@ -3,6 +3,17 @@ package net.alloyggp.tournament;
 import java.util.Random;
 import java.util.Set;
 
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournamentStatus;
+import net.alloyggp.tournament.internal.MatchId;
+import net.alloyggp.tournament.internal.spec.MatchSpec;
+import net.alloyggp.tournament.internal.spec.RoundSpec;
+import net.alloyggp.tournament.internal.spec.StageFormat;
+import net.alloyggp.tournament.internal.spec.StageSpec;
+import net.alloyggp.tournament.internal.spec.TournamentSpec;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,17 +21,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.google.common.collect.ImmutableSet;
-
-import net.alloyggp.tournament.api.TMatchResult;
-import net.alloyggp.tournament.api.TMatchSetup;
-import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.api.TTournamentStatus;
-import net.alloyggp.tournament.internal.MatchIds;
-import net.alloyggp.tournament.internal.spec.MatchSpec;
-import net.alloyggp.tournament.internal.spec.RoundSpec;
-import net.alloyggp.tournament.internal.spec.StageFormat;
-import net.alloyggp.tournament.internal.spec.StageSpec;
-import net.alloyggp.tournament.internal.spec.TournamentSpec;
 
 /**
  * This is a fuzz test for the following invariant:
@@ -101,9 +101,9 @@ public class AllRoundsAreRunTest {
 
     private void checkResultExists(ImmutableSet<TMatchResult> resultsSoFar, int stageNum, int roundNum) {
         for (TMatchResult result : resultsSoFar) {
-            String matchId = result.getMatchId();
-            if (MatchIds.parseStageNumber(matchId) == stageNum
-                    && MatchIds.parseRoundNumber(matchId) == roundNum) {
+            MatchId matchId = MatchId.create(result.getMatchId());
+            if (matchId.getStageNumber() == stageNum
+                    && matchId.getRoundNumber() == roundNum) {
                 return;
             }
         }

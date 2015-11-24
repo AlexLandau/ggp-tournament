@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
+import net.alloyggp.tournament.api.TSeeding;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -17,9 +19,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
-
-import net.alloyggp.tournament.api.TMatchResult;
-import net.alloyggp.tournament.api.TSeeding;
 
 /**
  * This is a process-wide cache meant to short-circuit some of
@@ -56,10 +55,10 @@ public class TournamentStateCache {
         private final String tournamentInternalName;
         private final TSeeding initialSeeding;
         private final int stageNum;
-        private final ImmutableSet<TMatchResult> resultsFromEarlierStages;
+        private final ImmutableSet<InternalMatchResult> resultsFromEarlierStages;
 
         public CacheKey(String tournamentInternalName, TSeeding initialSeeding, int stageNum,
-                ImmutableSet<TMatchResult> resultsFromEarlierStages) {
+                ImmutableSet<InternalMatchResult> resultsFromEarlierStages) {
             this.tournamentInternalName = tournamentInternalName;
             this.initialSeeding = initialSeeding;
             this.stageNum = stageNum;
@@ -124,10 +123,10 @@ public class TournamentStateCache {
     }
 
     private static class CacheEntry {
-        public final ImmutableSet<TMatchResult> resultsSoFarInStage;
+        public final ImmutableSet<InternalMatchResult> resultsSoFarInStage;
         public final EndOfRoundState state;
 
-        private CacheEntry(ImmutableSet<TMatchResult> resultsSoFarInStage, EndOfRoundState state) {
+        private CacheEntry(ImmutableSet<InternalMatchResult> resultsSoFarInStage, EndOfRoundState state) {
             this.resultsSoFarInStage = resultsSoFarInStage;
             this.state = state;
         }
@@ -179,7 +178,7 @@ public class TournamentStateCache {
     }
 
     public static void cacheEndOfRoundState(String tournamentInternalName, TSeeding initialSeeding,
-            ImmutableSet<TMatchResult> resultsFromEarlierStages, int stageNum, Set<TMatchResult> resultsInStage, EndOfRoundState state) {
+            ImmutableSet<InternalMatchResult> resultsFromEarlierStages, int stageNum, Set<InternalMatchResult> resultsInStage, EndOfRoundState state) {
         if (!CACHE_ENABLED.get()) {
             return;
         }
@@ -196,7 +195,7 @@ public class TournamentStateCache {
     }
 
     public static @Nullable EndOfRoundState getLatestCachedEndOfRoundState(String tournamentInternalName,
-            TSeeding initialSeeding, ImmutableSet<TMatchResult> resultsFromEarlierStages,  int stageNum, ImmutableSet<TMatchResult> resultsInStage) {
+            TSeeding initialSeeding, ImmutableSet<InternalMatchResult> resultsFromEarlierStages,  int stageNum, ImmutableSet<InternalMatchResult> resultsInStage) {
         if (!CACHE_ENABLED.get()) {
             return null;
         }

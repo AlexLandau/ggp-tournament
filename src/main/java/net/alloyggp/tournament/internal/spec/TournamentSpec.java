@@ -6,16 +6,6 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
-import org.joda.time.DateTime;
-
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TNextMatchesResult;
 import net.alloyggp.tournament.api.TPlayer;
@@ -26,10 +16,21 @@ import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.api.TTournament;
 import net.alloyggp.tournament.api.TTournamentSpecParser;
 import net.alloyggp.tournament.internal.Game;
+import net.alloyggp.tournament.internal.InternalMatchResult;
 import net.alloyggp.tournament.internal.StandardNextMatchesResult;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.TimeUtils;
 import net.alloyggp.tournament.internal.YamlUtils;
+
+import org.joda.time.DateTime;
+
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 @Immutable
 public class TournamentSpec implements TTournament {
@@ -111,7 +112,9 @@ public class TournamentSpec implements TTournament {
     }
 
     @Override
-    public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+    public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
+        Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
+
         TSeeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
@@ -130,7 +133,9 @@ public class TournamentSpec implements TTournament {
 
     @Override
     public TRanking getCurrentStandings(TSeeding initialSeeding,
-            Set<TMatchResult> resultsSoFar) {
+            Set<TMatchResult> clientResults) {
+        Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
+
         TSeeding seeding = initialSeeding;
         TRanking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
@@ -255,10 +260,12 @@ public class TournamentSpec implements TTournament {
     }
 
     @Override
-    public List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+    public List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
         List<TRanking> result = Lists.newArrayList();
         result.add(StandardRanking.createForSeeding(initialSeeding));
         TRanking lastStageFinalRanking = null;
+
+        Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
 
         TSeeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {

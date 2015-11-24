@@ -6,20 +6,20 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-
-import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TNextMatchesResult;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.internal.FormatRunner;
 import net.alloyggp.tournament.internal.Game;
+import net.alloyggp.tournament.internal.InternalMatchResult;
 import net.alloyggp.tournament.internal.Seedings;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.YamlUtils;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 @Immutable
 public class StageSpec {
@@ -65,14 +65,14 @@ public class StageSpec {
     }
 
     public TNextMatchesResult getMatchesToRun(String tournamentInternalName,
-            TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+            TSeeding initialSeeding, Set<InternalMatchResult> resultsSoFar) {
         FormatRunner runner = format.getRunner();
         return runner.getMatchesToRun(tournamentInternalName, initialSeeding, stageNum,
                 rounds, resultsSoFar);
     }
 
     public TRanking getCurrentStandings(String tournamentInternalName,
-            TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+            TSeeding initialSeeding, Set<InternalMatchResult> resultsSoFar) {
         List<TRanking> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar);
         if (standingsHistory.isEmpty()) {
             return StandardRanking.createForSeeding(initialSeeding);
@@ -101,7 +101,7 @@ public class StageSpec {
     }
 
     public List<TRanking> getStandingsHistory(String tournamentInternalName,
-            TSeeding initialSeeding, Set<TMatchResult> resultsSoFar) {
+            TSeeding initialSeeding, Set<InternalMatchResult> resultsSoFar) {
         return format.getRunner().getStandingsHistory(tournamentInternalName, initialSeeding,
                 stageNum, rounds, resultsSoFar);
     }

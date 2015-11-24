@@ -8,6 +8,18 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 
+import net.alloyggp.tournament.api.TGame;
+import net.alloyggp.tournament.api.TMatchResult.Outcome;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TPlayerScore;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TScore;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.internal.spec.MatchSpec;
+import net.alloyggp.tournament.internal.spec.RoundSpec;
+
 import org.joda.time.DateTime;
 
 import com.google.common.base.Preconditions;
@@ -18,19 +30,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-
-import net.alloyggp.tournament.api.TMatchResult;
-import net.alloyggp.tournament.api.TMatchResult.Outcome;
-import net.alloyggp.tournament.internal.spec.MatchSpec;
-import net.alloyggp.tournament.internal.spec.RoundSpec;
-import net.alloyggp.tournament.api.TMatchSetup;
-import net.alloyggp.tournament.api.TNextMatchesResult;
-import net.alloyggp.tournament.api.TPlayer;
-import net.alloyggp.tournament.api.TPlayerScore;
-import net.alloyggp.tournament.api.TRanking;
-import net.alloyggp.tournament.api.TScore;
-import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.api.TGame;
 
 /*
  * Non-obvious aspects of this format implementation:
@@ -65,8 +64,8 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private final int stageNum;
         private final TSeeding initialSeeding;
         private final ImmutableList<RoundSpec> rounds;
-        private final ImmutableSet<TMatchResult> resultsFromEarlierStages;
-        private final ImmutableSet<TMatchResult> resultsSoFarInStage;
+        private final ImmutableSet<InternalMatchResult> resultsFromEarlierStages;
+        private final ImmutableSet<InternalMatchResult> resultsSoFarInStage;
         private final Set<TMatchSetup> matchesToReturn = Sets.newHashSet();
         private final Map<TPlayer, Integer> playerEliminationRounds = Maps.newHashMap();
         private @Nullable DateTime latestStartTimeSeen = null;
@@ -75,8 +74,8 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         //Use createAndRun instead
         private SingleEliminationFormatSimulator(String tournamentInternalName, int stageNum, TSeeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, ImmutableSet<TMatchResult> resultsFromEarlierStages,
-                ImmutableSet<TMatchResult> resultsSoFarInStage) {
+                ImmutableList<RoundSpec> rounds, ImmutableSet<InternalMatchResult> resultsFromEarlierStages,
+                ImmutableSet<InternalMatchResult> resultsSoFarInStage) {
             this.tournamentInternalName = tournamentInternalName;
             this.stageNum = stageNum;
             this.initialSeeding = initialSeeding;
@@ -87,9 +86,9 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         public static SingleEliminationFormatSimulator createAndRun(String tournamentInternalName,
                 int stageNum, TSeeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, Set<TMatchResult> allResultsSoFar) {
-            Set<TMatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
-            Set<TMatchResult> resultsSoFarInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
+                ImmutableList<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
+            Set<InternalMatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
+            Set<InternalMatchResult> resultsSoFarInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
             SingleEliminationFormatSimulator simulator = new SingleEliminationFormatSimulator(
                     tournamentInternalName, stageNum, initialSeeding, rounds,
                     ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsSoFarInStage));
@@ -232,15 +231,15 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         private TMatchSetup getNextMatchForPairing(TPlayer player1, TPlayer player2,
                 int pairingNum, int numRoundsLeft, RoundSpec round) {
-            List<TMatchResult> completedSoFar = Lists.newArrayList();
-            List<TMatchResult> abortedSoFar = Lists.newArrayList();
+            List<InternalMatchResult> completedSoFar = Lists.newArrayList();
+            List<InternalMatchResult> abortedSoFar = Lists.newArrayList();
             //First, gather all the non-abandoned results so far
-            for (TMatchResult result : resultsSoFarInStage) {
-                String matchId = result.getMatchId();
-                if (numRoundsLeft != MatchIds.parseRoundNumber(matchId)) {
+            for (InternalMatchResult result : resultsSoFarInStage) {
+                MatchId matchId = result.getMatchId();
+                if (numRoundsLeft != matchId.getRoundNumber()) {
                     continue;
                 }
-                if (pairingNum != MatchIds.parsePlayerMatchingNumber(matchId)) {
+                if (pairingNum != matchId.getPlayerMatchingNumber()) {
                     continue;
                 }
                 if (result.getOutcome() == Outcome.ABORTED) {
@@ -265,26 +264,25 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                 matchNum++;
             }
             int priorMatchAttempts = 0;
-            for (TMatchResult result : abortedSoFar) {
-                if (MatchIds.parseMatchNumber(result.getMatchId()) == matchNum) {
+            for (InternalMatchResult result : abortedSoFar) {
+                if (result.getMatchId().getMatchNumber() == matchNum) {
                     priorMatchAttempts++;
                 }
             }
 
             Preconditions.checkNotNull(specToUse);
             //If we make it here, repeat the last match type
-            String matchId = MatchIds.create(stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts);
+            String matchId = MatchId.create(stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts).toString();
             //TODO: Correctly define roles?
             //TODO: Accurate seeding
             //TODO: Alternate roles each time if we do have to repeat the last match type
             return specToUse.createMatchSetup(matchId, ImmutableList.of(player1, player2));
         }
 
-        private boolean haveCompleted(int matchNumber, List<TMatchResult> completedSoFar) {
-            for (TMatchResult result : completedSoFar) {
+        private boolean haveCompleted(int matchNumber, List<InternalMatchResult> completedSoFar) {
+            for (InternalMatchResult result : completedSoFar) {
                 Preconditions.checkArgument(result.getOutcome() == Outcome.COMPLETED);
-                String matchId = result.getMatchId();
-                int resultMatchNumber = MatchIds.parseMatchNumber(matchId);
+                int resultMatchNumber = result.getMatchId().getMatchNumber();
                 if (matchNumber == resultMatchNumber) {
                     return true;
                 }
@@ -295,12 +293,12 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private boolean wonInRound(TPlayer player, int pairingNumber, int numRoundsLeft, RoundSpec round) {
             int gamesPlayed = 0;
             int pointsAboveOpponent = 0;
-            for (TMatchResult result : resultsSoFarInStage) {
-                String matchId = result.getMatchId();
-                if (numRoundsLeft != MatchIds.parseRoundNumber(matchId)) {
+            for (InternalMatchResult result : resultsSoFarInStage) {
+                MatchId matchId = result.getMatchId();
+                if (numRoundsLeft != matchId.getRoundNumber()) {
                     continue;
                 }
-                if (pairingNumber != MatchIds.parsePlayerMatchingNumber(matchId)) {
+                if (pairingNumber != matchId.getPlayerMatchingNumber()) {
                     continue;
                 }
                 if (result.getOutcome() == Outcome.ABORTED) {
@@ -481,7 +479,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
     @Override
     public TNextMatchesResult getMatchesToRun(String tournamentInternalName, TSeeding initialSeeding,
-            int stageNum, List<RoundSpec> rounds, Set<TMatchResult> allResultsSoFar) {
+            int stageNum, List<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
                 stageNum, initialSeeding, ImmutableList.copyOf(rounds), allResultsSoFar)
                 .getMatchesToRun();
@@ -490,7 +488,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
     @Override
     public List<TRanking> getStandingsHistory(String tournamentInternalName,
             TSeeding initialSeeding, int stageNum, List<RoundSpec> rounds,
-            Set<TMatchResult> allResultsSoFar) {
+            Set<InternalMatchResult> allResultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
                 stageNum, initialSeeding, ImmutableList.copyOf(rounds), allResultsSoFar)
                 .getStandingsHistory();
