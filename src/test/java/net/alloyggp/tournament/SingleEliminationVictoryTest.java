@@ -8,6 +8,14 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchResult.Outcome;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournament;
+import net.alloyggp.tournament.api.TTournamentStatus;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -16,14 +24,6 @@ import org.junit.runners.Parameterized.Parameters;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-
-import net.alloyggp.tournament.api.TMatchResult;
-import net.alloyggp.tournament.api.TMatchResult.Outcome;
-import net.alloyggp.tournament.api.TMatchSetup;
-import net.alloyggp.tournament.api.TPlayer;
-import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.api.TTournament;
-import net.alloyggp.tournament.api.TTournamentStatus;
 
 /**
  * This is a fuzz test for the following property of single-elimination
@@ -63,7 +63,6 @@ public class SingleEliminationVictoryTest {
                 Random random = new Random(seed);
                 TSeeding initialSeeding = FuzzTests.createRandomSeeding(random, numPlayers);
                 TPlayer chosenPlayer = FuzzTests.pickAtRandom(random, initialSeeding.getPlayersBestFirst());
-                System.out.println("Chosen player: " + chosenPlayer);
                 TTournamentStatus status = TTournamentStatus.getInitialStatus(spec, initialSeeding);
                 while (true) {
                     Set<TMatchSetup> nextMatches = status.getNextMatchesToRun().getMatchesToRun();
@@ -77,15 +76,11 @@ public class SingleEliminationVictoryTest {
                         result = FuzzTests.getResult(random, matchToResolve);
                     }
                     allResults.add(result);
-                    System.out.println(matchToResolve);
-                    System.out.println("Result: " + result);
                     status = status.withNewResult(result);
                 }
 
-                System.out.println(status.getCurrentStandings().getScores());
                 assertEquals(chosenPlayer, status.getCurrentStandings().getPlayersBestFirst().get(0));
             } catch (Exception | AssertionError e) {
-                System.out.println(allResults.toString().replaceAll(", ", "\n"));
                 throw new RuntimeException("Seed was " + seed, e);
             }
         }
