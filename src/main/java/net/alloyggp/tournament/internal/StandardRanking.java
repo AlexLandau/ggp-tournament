@@ -5,15 +5,15 @@ import java.util.List;
 
 import javax.annotation.concurrent.Immutable;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Lists;
-
 import net.alloyggp.tournament.api.TPlayer;
 import net.alloyggp.tournament.api.TPlayerScore;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TScore;
 import net.alloyggp.tournament.api.TSeeding;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Lists;
 
 @Immutable
 public class StandardRanking implements TRanking {

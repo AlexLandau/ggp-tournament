@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
+import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TMatchSetup;
 import net.alloyggp.tournament.api.TPlayer;
 import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.api.TGame;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 /**
  * Contains utilities for writing fuzz tests that use a single random seed for all
@@ -138,11 +138,15 @@ public class FuzzTests {
      * <p>Players are named "1", "2", "3", etc.
      */
     public static TSeeding createRandomSeeding(Random random, int numPlayers) {
+        return TSeeding.createRandomSeeding(random, createPlayers(numPlayers));
+    }
+
+    public static List<TPlayer> createPlayers(int numPlayers) {
         List<TPlayer> players = Lists.newArrayList();
         for (int i = 1; i <= numPlayers; i++) {
             players.add(TPlayer.create(Integer.toString(i)));
         }
-        return TSeeding.createRandomSeeding(random, players);
+        return players;
     }
 
     public static <T> T pickAtRandom(Random random, List<T> list) {
