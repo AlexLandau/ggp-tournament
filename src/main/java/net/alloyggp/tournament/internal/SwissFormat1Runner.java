@@ -3,6 +3,7 @@ package net.alloyggp.tournament.internal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,8 @@ import net.alloyggp.tournament.api.TPlayerScore;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TScore;
 import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.internal.quasirandom.QuasiRandomMatchGenerator;
+import net.alloyggp.tournament.internal.quasirandom.RolesFirstImpl3p2;
 import net.alloyggp.tournament.internal.spec.MatchSpec;
 import net.alloyggp.tournament.internal.spec.RoundSpec;
 
@@ -40,11 +43,14 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 public class SwissFormat1Runner implements FormatRunner {
     private static final SwissFormat1Runner INSTANCE = new SwissFormat1Runner();
+
+    private static final QuasiRandomMatchGenerator RANDOM_MATCH_GENERATOR = new RolesFirstImpl3p2();
 
     private SwissFormat1Runner() {
         //Not instantiable
@@ -71,20 +77,26 @@ public class SwissFormat1Runner implements FormatRunner {
         private final Map<TPlayer, Double> pointsFromByes = Maps.newHashMap();
         private final Multiset<Set<TPlayer>> totalMatchupsSoFar = HashMultiset.create();
         private final Map<Game, Multiset<Set<TPlayer>>> matchupsSoFarByGame = Maps.newHashMap();
-        private final Map<Integer, Multiset<Set<TPlayer>>> nonFixedSumMatchupsSoFarByNumPlayers = Maps.newHashMap();
-//        private final Map<Integer, Map<Player, Multiset<Integer>>> nonFixedSumRoleAssignmentsSoFarByNumPlayers = Maps.newHashMap();
+
+        private final ImmutableMap<Integer, List<List<TPlayer>>> randomMatchGroupsByRound;
         private final List<TRanking> standingsHistory = Lists.newArrayList();
         private @Nullable DateTime latestStartTimeSeen = null;
 
-        private SwissFormatSimulator(String tournamentInternalName, int stageNum, TSeeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, ImmutableSet<InternalMatchResult> resultsFromEarlierStages,
-                ImmutableSet<InternalMatchResult> resultsInStage) {
+        private SwissFormatSimulator(
+                String tournamentInternalName,
+                int stageNum,
+                TSeeding initialSeeding,
+                ImmutableList<RoundSpec> rounds,
+                ImmutableSet<InternalMatchResult> resultsFromEarlierStages,
+                ImmutableSet<InternalMatchResult> resultsInStage,
+                ImmutableMap<Integer, List<List<TPlayer>>> randomMatchGroupsByRound) {
             this.tournamentInternalName = tournamentInternalName;
             this.stageNum = stageNum;
             this.initialSeeding = initialSeeding;
             this.rounds = rounds;
             this.resultsFromEarlierStages = resultsFromEarlierStages;
             this.resultsInStage = resultsInStage;
+            this.randomMatchGroupsByRound = randomMatchGroupsByRound;
         }
 
         public static SwissFormatSimulator createAndRun(String tournamentInternalName, int stageNum, TSeeding initialSeeding,
@@ -92,9 +104,40 @@ public class SwissFormat1Runner implements FormatRunner {
             Set<InternalMatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
             Set<InternalMatchResult> resultsInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
             SwissFormatSimulator simulator = new SwissFormatSimulator(tournamentInternalName, stageNum, initialSeeding,
-                    rounds, ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsInStage));
+                    rounds, ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsInStage),
+                    ImmutableMap.copyOf(getRandomMatchGroupsByRound(rounds, initialSeeding.getPlayersBestFirst())));
             simulator.run();
             return simulator;
+        }
+
+        private static Map<Integer, List<List<TPlayer>>> getRandomMatchGroupsByRound(ImmutableList<RoundSpec> rounds, ImmutableList<TPlayer> players) {
+            Multiset<Integer> roundsNeedingRandomGroupCounts = HashMultiset.create();
+            for (int roundNum = 0; roundNum < rounds.size(); roundNum++) {
+                RoundSpec round = rounds.get(roundNum);
+                TGame game = getOnlyGame(round);
+                if (game.getNumRoles() > 1 && !game.isFixedSum()) {
+                    roundsNeedingRandomGroupCounts.add(game.getNumRoles());
+                }
+            }
+
+            Map<Integer, List<List<TPlayer>>> matchupsByRound = Maps.newHashMap();
+            for (Multiset.Entry<Integer> entry : roundsNeedingRandomGroupCounts.entrySet()) {
+                int playersPerMatch = entry.getElement();
+                int numMatches = entry.getCount();
+                if (playersPerMatch > players.size()) {
+                    //We won't be playing these rounds
+                    continue;
+                }
+                Deque<List<List<TPlayer>>> matchups = Queues.newArrayDeque(RANDOM_MATCH_GENERATOR.generateMatchups(players, playersPerMatch, numMatches));
+                for (int roundNum = 0; roundNum < rounds.size(); roundNum++) {
+                    RoundSpec round = rounds.get(roundNum);
+                    TGame game = getOnlyGame(round);
+                    if (game.getNumRoles() == playersPerMatch && !game.isFixedSum()) {
+                        matchupsByRound.put(roundNum, matchups.removeFirst());
+                    }
+                }
+            }
+            return matchupsByRound;
         }
 
         private void run() {
@@ -124,7 +167,7 @@ public class SwissFormat1Runner implements FormatRunner {
                     Swiss1EndOfRoundState state = Swiss1EndOfRoundState.create(roundNum,
                             mostRecentGame, totalPointsScored, pointsScoredByGame,
                             pointsFromByes, totalMatchupsSoFar, matchupsSoFarByGame,
-                            nonFixedSumMatchupsSoFarByNumPlayers, standingsHistory,
+                            standingsHistory,
                             latestStartTimeSeen);
 
                     TournamentStateCache.cacheEndOfRoundState(tournamentInternalName, initialSeeding, resultsFromEarlierStages, stageNum, resultsInStage, state);
@@ -147,11 +190,6 @@ public class SwissFormat1Runner implements FormatRunner {
                 }
                 possiblePlayerCounts.add(game.getNumRoles());
             }
-            for (int playerCount : possiblePlayerCounts) {
-                for (Entry<ImmutableSet<TPlayer>> entry : state.nonFixedSumMatchupsSoFarByNumPlayers.get(playerCount).entrySet()) {
-                    nonFixedSumMatchupsSoFarByNumPlayers.get(playerCount).add(Sets.newHashSet(entry.getElement()), entry.getCount());
-                }
-            }
 
             mostRecentGame = state.mostRecentGame;
             standingsHistory.addAll(state.standingsHistory);
@@ -168,7 +206,7 @@ public class SwissFormat1Runner implements FormatRunner {
             //Or at least they must involve the same game?
             TGame game = getOnlyGame(round);
             //Figure out how to assign players
-            List<List<TPlayer>> playerGroups = getPlayerGroups(game);
+            List<List<TPlayer>> playerGroups = getPlayerGroups(game, roundNum);
             double maxScoreAchieved = 0;
             double scoreSum = 0;
             int scoreCount = 0;
@@ -248,15 +286,6 @@ public class SwissFormat1Runner implements FormatRunner {
                             }
                         }
                     }
-                } else {
-                    //TODO: Fix this
-                    for (int p1 = 0; p1 < players.size(); p1++) {
-                        for (int p2 = p1 + 1; p2 < players.size(); p2++) {
-                            nonFixedSumMatchupsSoFarByNumPlayers.get(game.getNumRoles())
-                                .add(ImmutableSet.of(players.get(p1), players.get(p2)));
-                        }
-                    }
-//                    nonFixedSumRoleAssignmentsSoFarByNumPlayers
                 }
             }
         }
@@ -278,7 +307,7 @@ public class SwissFormat1Runner implements FormatRunner {
             }
         }
 
-        private List<List<TPlayer>> getPlayerGroups(TGame game) {
+        private List<List<TPlayer>> getPlayerGroups(TGame game, int roundNum) {
             int numRoles = game.getNumRoles();
 
             if (numRoles == 1) {
@@ -296,65 +325,18 @@ public class SwissFormat1Runner implements FormatRunner {
                 }
             } else {
                 //Use quasi-random pairings
-                return getNonFixedSumPlayerGroups(game.getNumRoles());
+                return getNonFixedSumPlayerGroups(roundNum);
             }
         }
 
         //TODO: Consider prioritizing certain players for byes? e.g. players
         //doing worse in the tournament, those with fewer byes already?
-        private List<List<TPlayer>> getNonFixedSumPlayerGroups(int numRoles) {
-
-            //Two-player: there's an elegant round-robin algorithm we
-            //could use here, "rotate" all but one player in two rows
-
-            //Do something naive for now
-            final Multiset<Set<TPlayer>> matchupsSoFar = nonFixedSumMatchupsSoFarByNumPlayers.get(numRoles);
-            Preconditions.checkNotNull(matchupsSoFar);
-//            Map<Player, Multiset<Integer>> roleAssignmentsSoFar = nonFixedSumRoleAssignmentsSoFarByNumPlayers.get(numRoles);
-            List<TPlayer> playersToAssign = Lists.newArrayList(initialSeeding.getPlayersBestFirst());
-            List<List<TPlayer>> results = Lists.newArrayList();
-            while (playersToAssign.size() >= numRoles) {
-                TPlayer player = playersToAssign.get(0);
-
-                //Grab the first available players with the fewest previous matchups against us and each other
-                final List<TPlayer> playersInGroup = Lists.newArrayList(player);
-                playersToAssign.remove(player);
-                while (playersInGroup.size() < numRoles) {
-                    Ordering<TPlayer> playerOrder = Ordering.from(new Comparator<TPlayer>() {
-                                @Override
-                                public int compare(TPlayer p1, TPlayer p2) {
-                                    int sum1 = getSum(p1);
-                                    int sum2 = getSum(p2);
-                                    return Integer.compare(sum1, sum2);
-                                }
-
-                                //Sum of matchups against players already in group
-                                private int getSum(TPlayer p) {
-                                    int sum = 0;
-                                    for (TPlayer playerInGroup : playersInGroup) {
-                                        sum += matchupsSoFar.count(ImmutableSet.of(p, playerInGroup));
-                                    }
-                                    return sum;
-                                }
-                            })
-                            .compound(new Comparator<TPlayer>() {
-                                @Override
-                                public int compare(TPlayer o1, TPlayer o2) {
-                                    int seed1 = initialSeeding.getPlayersBestFirst().indexOf(o1);
-                                    int seed2 = initialSeeding.getPlayersBestFirst().indexOf(o2);
-                                    return Integer.compare(seed1, seed2);
-                                }
-                            });
-                    TPlayer playerToAdd = playerOrder.min(playersToAssign);
-                    playersInGroup.add(playerToAdd);
-                    playersToAssign.remove(playerToAdd);
-                }
-                //TODO: Shuffle the roles intelligently, somehow
-                //Should role shuffling be per-game? Across the tournament?
-
-                results.add(playersInGroup);
+        private List<List<TPlayer>> getNonFixedSumPlayerGroups(int roundNum) {
+            List<List<TPlayer>> groups = randomMatchGroupsByRound.get(roundNum);
+            if (groups == null) {
+                return ImmutableList.of();
             }
-            return results;
+            return groups;
         }
 
         private List<List<TPlayer>> getManyPlayerFixedSumPlayerGroups(TGame game) {
@@ -557,14 +539,6 @@ public class SwissFormat1Runner implements FormatRunner {
                 matchupsSoFarByGame.put(game, HashMultiset.<Set<TPlayer>>create());
                 possiblePlayerCounts.add(game.getNumRoles());
             }
-            for (int playerCount : possiblePlayerCounts) {
-                nonFixedSumMatchupsSoFarByNumPlayers.put(playerCount, HashMultiset.<Set<TPlayer>>create());
-//                Map<Player, Multiset<Integer>> nonFixedSumRoleAssignmentsSoFar = Maps.newHashMap();
-//                for (Player player : initialSeeding.getPlayersBestFirst()) {
-//                    nonFixedSumRoleAssignmentsSoFar.put(player, HashMultiset.create());
-//                }
-//                nonFixedSumRoleAssignmentsSoFarByNumPlayers.put(playerCount, nonFixedSumRoleAssignmentsSoFar);
-            }
 
         }
 
@@ -732,7 +706,6 @@ public class SwissFormat1Runner implements FormatRunner {
         private final ImmutableMap<TPlayer, Double> pointsFromByes;
         private final ImmutableMultiset<ImmutableSet<TPlayer>> totalMatchupsSoFar;
         private final ImmutableMap<Game, ImmutableMultiset<ImmutableSet<TPlayer>>> matchupsSoFarByGame;
-        private final ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<TPlayer>>> nonFixedSumMatchupsSoFarByNumPlayers;
         private final ImmutableList<TRanking> standingsHistory;
         private final @Nullable DateTime latestStartTimeSeen;
 
@@ -740,7 +713,6 @@ public class SwissFormat1Runner implements FormatRunner {
                 ImmutableMap<Game, ImmutableMap<TPlayer, Double>> pointsScoredByGame,
                 ImmutableMap<TPlayer, Double> pointsFromByes, ImmutableMultiset<ImmutableSet<TPlayer>> totalMatchupsSoFar,
                 ImmutableMap<Game, ImmutableMultiset<ImmutableSet<TPlayer>>> matchupsSoFarByGame,
-                ImmutableMap<Integer, ImmutableMultiset<ImmutableSet<TPlayer>>> nonFixedSumMatchupsSoFarByNumPlayers,
                 ImmutableList<TRanking> standingsHistory, @Nullable DateTime latestStartTimeSeen) {
             this.roundNum = roundNum;
             this.mostRecentGame = mostRecentGame;
@@ -749,7 +721,6 @@ public class SwissFormat1Runner implements FormatRunner {
             this.pointsFromByes = pointsFromByes;
             this.totalMatchupsSoFar = totalMatchupsSoFar;
             this.matchupsSoFarByGame = matchupsSoFarByGame;
-            this.nonFixedSumMatchupsSoFarByNumPlayers = nonFixedSumMatchupsSoFarByNumPlayers;
             this.standingsHistory = standingsHistory;
             this.latestStartTimeSeen = latestStartTimeSeen;
         }
@@ -761,7 +732,6 @@ public class SwissFormat1Runner implements FormatRunner {
                 Map<TPlayer, Double> pointsFromByes,
                 Multiset<Set<TPlayer>> totalMatchupsSoFar,
                 Map<Game, Multiset<Set<TPlayer>>> matchupsSoFarByGame,
-                Map<Integer, Multiset<Set<TPlayer>>> nonFixedSumMatchupsSoFarByNumPlayers,
                 List<TRanking> standingsHistory,
                 @Nullable DateTime latestStartTimeSeen) {
             return new Swiss1EndOfRoundState(roundNum,
@@ -771,7 +741,6 @@ public class SwissFormat1Runner implements FormatRunner {
                     ImmutableMap.copyOf(pointsFromByes),
                     toImmutableSetEntriedMultiset(totalMatchupsSoFar),
                     toImmutableMultisetOfSetsValuedMap(matchupsSoFarByGame),
-                    toImmutableMultisetOfSetsValuedMap(nonFixedSumMatchupsSoFarByNumPlayers),
                     ImmutableList.copyOf(standingsHistory),
                     latestStartTimeSeen);
         }
@@ -812,8 +781,6 @@ public class SwissFormat1Runner implements FormatRunner {
             result = prime * result + ((latestStartTimeSeen == null) ? 0 : latestStartTimeSeen.hashCode());
             result = prime * result + ((matchupsSoFarByGame == null) ? 0 : matchupsSoFarByGame.hashCode());
             result = prime * result + ((mostRecentGame == null) ? 0 : mostRecentGame.hashCode());
-            result = prime * result + ((nonFixedSumMatchupsSoFarByNumPlayers == null) ? 0
-                    : nonFixedSumMatchupsSoFarByNumPlayers.hashCode());
             result = prime * result + ((pointsFromByes == null) ? 0 : pointsFromByes.hashCode());
             result = prime * result + ((pointsScoredByGame == null) ? 0 : pointsScoredByGame.hashCode());
             result = prime * result + roundNum;
@@ -854,13 +821,6 @@ public class SwissFormat1Runner implements FormatRunner {
                     return false;
                 }
             } else if (!mostRecentGame.equals(other.mostRecentGame)) {
-                return false;
-            }
-            if (nonFixedSumMatchupsSoFarByNumPlayers == null) {
-                if (other.nonFixedSumMatchupsSoFarByNumPlayers != null) {
-                    return false;
-                }
-            } else if (!nonFixedSumMatchupsSoFarByNumPlayers.equals(other.nonFixedSumMatchupsSoFarByNumPlayers)) {
                 return false;
             }
             if (pointsFromByes == null) {
@@ -909,8 +869,7 @@ public class SwissFormat1Runner implements FormatRunner {
             return "Swiss1EndOfRoundState [roundNum=" + roundNum + ", mostRecentGame=" + mostRecentGame
                     + ", totalPointsScored=" + totalPointsScored + ", pointsScoredByGame=" + pointsScoredByGame
                     + ", pointsFromByes=" + pointsFromByes + ", totalMatchupsSoFar=" + totalMatchupsSoFar
-                    + ", matchupsSoFarByGame=" + matchupsSoFarByGame + ", nonFixedSumMatchupsSoFarByNumPlayers="
-                    + nonFixedSumMatchupsSoFarByNumPlayers + ", standingsHistory=" + standingsHistory
+                    + ", matchupsSoFarByGame=" + matchupsSoFarByGame + ", standingsHistory=" + standingsHistory
                     + ", latestStartTimeSeen=" + latestStartTimeSeen + "]";
         }
     }
