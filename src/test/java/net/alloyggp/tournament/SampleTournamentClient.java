@@ -4,10 +4,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import org.junit.Test;
-
-import com.google.common.collect.Lists;
-
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TMatchSetup;
 import net.alloyggp.tournament.api.TPlayer;
@@ -16,13 +12,14 @@ import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.api.TTournament;
 import net.alloyggp.tournament.api.TTournamentStatus;
 
+import com.google.common.collect.Lists;
+
 /*
  * As much as anything else, this is to help me get a better understanding of what
  * the API should look like from a client's perspective...
  */
 public class SampleTournamentClient {
-    @Test
-    public void testSingleElimination() {
+    public static void main(String[] args) {
         TTournament spec = TestSpecs.load("swiss1test7");
         TSeeding initialSeeding = toSeeding("1", "2", "3", "4", "5", "6", "7");
         TTournamentStatus status = TTournamentStatus.getInitialStatus(spec, initialSeeding);
@@ -38,7 +35,7 @@ public class SampleTournamentClient {
         System.out.println("Standings are: " + standings);
     }
 
-    private TSeeding toSeeding(String... playerNames) {
+    private static TSeeding toSeeding(String... playerNames) {
         List<TPlayer> playersBestFirst = Lists.newArrayList();
         for (String playerName : playerNames) {
             playersBestFirst.add(TPlayer.create(playerName));
@@ -46,7 +43,7 @@ public class SampleTournamentClient {
         return TSeeding.create(playersBestFirst);
     }
 
-    private List<TMatchResult> getRandomOutcomes(Set<TMatchSetup> nextMatches) {
+    private static List<TMatchResult> getRandomOutcomes(Set<TMatchSetup> nextMatches) {
         Random random = new Random();
         List<TMatchResult> outcomes = Lists.newArrayList();
         for (TMatchSetup setup : nextMatches) {
