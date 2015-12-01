@@ -24,7 +24,6 @@ import net.alloyggp.tournament.api.TNextMatchesResult;
  * a non-zero value, the client should wait instead of scheduling
  * additional matches.
  */
-//TODO: Make the public-facing part an interface
 public class StandardNextMatchesResult implements TNextMatchesResult {
     private final ImmutableSet<TMatchSetup> matchesToRun;
     //Note: These may be moved into individual matches in the future.

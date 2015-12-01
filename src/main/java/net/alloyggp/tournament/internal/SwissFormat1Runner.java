@@ -14,20 +14,6 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 
-import net.alloyggp.tournament.api.TGame;
-import net.alloyggp.tournament.api.TMatchResult.Outcome;
-import net.alloyggp.tournament.api.TMatchSetup;
-import net.alloyggp.tournament.api.TNextMatchesResult;
-import net.alloyggp.tournament.api.TPlayer;
-import net.alloyggp.tournament.api.TPlayerScore;
-import net.alloyggp.tournament.api.TRanking;
-import net.alloyggp.tournament.api.TScore;
-import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.internal.quasirandom.QuasiRandomMatchGenerator;
-import net.alloyggp.tournament.internal.quasirandom.RolesFirstImpl3p2;
-import net.alloyggp.tournament.internal.spec.MatchSpec;
-import net.alloyggp.tournament.internal.spec.RoundSpec;
-
 import org.joda.time.DateTime;
 
 import com.google.common.base.Function;
@@ -46,6 +32,20 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+
+import net.alloyggp.tournament.api.TGame;
+import net.alloyggp.tournament.api.TMatchResult.Outcome;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TPlayerScore;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TScore;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.internal.quasirandom.QuasiRandomMatchGenerator;
+import net.alloyggp.tournament.internal.quasirandom.RolesFirstImpl3p2;
+import net.alloyggp.tournament.internal.spec.MatchSpec;
+import net.alloyggp.tournament.internal.spec.RoundSpec;
 
 public class SwissFormat1Runner implements FormatRunner {
     private static final SwissFormat1Runner INSTANCE = new SwissFormat1Runner();
@@ -70,7 +70,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final ImmutableSet<InternalMatchResult> resultsFromEarlierStages;
         private final ImmutableSet<InternalMatchResult> resultsInStage;
         private final Set<TMatchSetup> matchesToRun = Sets.newHashSet();
-        //TODO: Double-check that all these stats are updated appropriately
+
         private TGame mostRecentGame = null; //of a fully completed round
         private final Map<TPlayer, Double> totalPointsScored = Maps.newHashMap();
         private final Map<Game, Map<TPlayer, Double>> pointsScoredByGame = Maps.newHashMap();
@@ -229,8 +229,6 @@ public class SwissFormat1Runner implements FormatRunner {
                             TPlayer player = playersInRoleOrder.get(role);
                             double goalValue = result.getGoals().get(role) * match.getWeight();
 
-                            //TODO: Add to stats here, including stats yet to be introduced
-                            //such as player-player meetings
                             addToSumWithKey(player, goalValue, totalPointsScored);
                             addToSumWithKey(player, goalValue, pointsScoredByGame.get(game));
 
@@ -690,7 +688,6 @@ public class SwissFormat1Runner implements FormatRunner {
 
     @Override
     public void validateRounds(ImmutableList<RoundSpec> rounds) {
-        //TODO: Implement
         for (RoundSpec round : rounds) {
             //Validates all matches in the round are the same game
             getOnlyGame(round);

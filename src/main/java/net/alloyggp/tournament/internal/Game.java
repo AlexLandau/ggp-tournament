@@ -24,7 +24,6 @@ public class Game implements TGame {
         this.fixedSum = fixedSum;
     }
 
-    //TODO: Clients don't need to instantiate this
     public static Game create(String id, String url, int numRoles, boolean fixedSum) {
         return new Game(id, url, numRoles, fixedSum);
     }
