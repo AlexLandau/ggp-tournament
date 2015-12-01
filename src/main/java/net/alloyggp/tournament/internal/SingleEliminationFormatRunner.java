@@ -1,5 +1,6 @@
 package net.alloyggp.tournament.internal;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -7,6 +8,18 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
+
+import org.joda.time.DateTime;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 
 import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.api.TMatchResult.Outcome;
@@ -19,17 +32,6 @@ import net.alloyggp.tournament.api.TScore;
 import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.internal.spec.MatchSpec;
 import net.alloyggp.tournament.internal.spec.RoundSpec;
-
-import org.joda.time.DateTime;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 /*
  * Non-obvious aspects of this format implementation:
@@ -165,8 +167,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             Preconditions.checkArgument(position1 < position2);
             TPlayer player1 = playersByPosition.get(position1);
             TPlayer player2 = playersByPosition.get(position2);
-            //TODO: Do we want to define roles according to seeding rather than bracket position?
-            //If so, pass in seeding here
+
             if (wonInRound(player1, pairingNum, numRoundsLeft, round)) {
                 playerEliminationRounds.put(player2, numRoundsLeft);
             } else if (wonInRound(player2, pairingNum, numRoundsLeft, round)) {
@@ -273,10 +274,10 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             Preconditions.checkNotNull(specToUse);
             //If we make it here, repeat the last match type
             String matchId = MatchId.create(stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts).toString();
-            //TODO: Correctly define roles?
-            //TODO: Accurate seeding
             //TODO: Alternate roles each time if we do have to repeat the last match type
-            return specToUse.createMatchSetup(matchId, ImmutableList.of(player1, player2));
+            List<TPlayer> playersBestFirst = Lists.newArrayList(player1, player2);
+            Collections.sort(playersBestFirst, Ordering.explicit(initialSeeding.getPlayersBestFirst()));
+            return specToUse.createMatchSetup(matchId, playersBestFirst);
         }
 
         private boolean haveCompleted(int matchNumber, List<InternalMatchResult> completedSoFar) {
@@ -359,7 +360,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             for (int i = 0; i < playersBestFirst.size(); i++) {
                 TPlayer player = playersBestFirst.get(i);
                 Integer mapValue = playerEliminationRounds.get(player);
-                TScore score = new EliminationScore(mapValue != null ? mapValue : 0);
+                TScore score = new EliminationScore(mapValue != null ? mapValue : 0, getNumRounds(playersBestFirst.size()));
                 playerScores.add(TPlayerScore.create(player, score, i));
             }
             return StandardRanking.create(playerScores.build());
@@ -496,9 +497,11 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
     private static class EliminationScore implements TScore {
         private final int roundEliminated; //0 if not yet eliminated
+        private final int totalNumRounds; //just for human-friendly output
 
-        private EliminationScore(int roundEliminated) {
+        private EliminationScore(int roundEliminated, int totalNumRounds) {
             this.roundEliminated = roundEliminated;
+            this.totalNumRounds = totalNumRounds;
         }
 
         @Override
@@ -546,8 +549,10 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             if (roundEliminated == 0) {
                 return "in contention";
             }
-            //TODO: This is confusing, change this (play-in round is round 1, etc.)
-            return "eliminated in round " + roundEliminated;
+            // 2 rounds: 2 -> 1, 1 -> 2
+            // 3 rounds: 3 -> 1, 2 -> 2, 1 -> 3
+            // etc.
+            return "eliminated in round " + (totalNumRounds - roundEliminated + 1);
         }
     }
 
