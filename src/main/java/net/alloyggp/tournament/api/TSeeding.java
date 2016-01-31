@@ -8,17 +8,20 @@ import java.util.Random;
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+
+import net.alloyggp.escaperope.Delimiter;
+import net.alloyggp.escaperope.Delimiters;
 
 @Immutable
 public class TSeeding {
     private final ImmutableList<TPlayer> playersBestFirst;
 
     private TSeeding(ImmutableList<TPlayer> playersBestFirst) {
+        Preconditions.checkArgument(!playersBestFirst.isEmpty(), "There must be at least one player in a seeding");
         this.playersBestFirst = playersBestFirst;
     }
 
@@ -58,16 +61,17 @@ public class TSeeding {
      * memory so that if the server crashes, the tournament can be
      * continued.
      */
-    //TODO: Escape this string properly to prevent commas in player IDs
-    // along with newlines and other problems (instead of requiring them
-    // to not be in the player ID)
     public String toPersistedString() {
-        return Joiner.on(',').join(Lists.transform(playersBestFirst, new Function<TPlayer, String>() {
+        Delimiter delimiter = Delimiters.getEscapeCharDelimiterConvertingNulls(',', '\\');
+        String delimited = delimiter.delimit(Lists.transform(playersBestFirst, new Function<TPlayer, String>() {
             @Override
             public String apply(TPlayer player) {
                 return player.getId();
             }
         }));
+        //Remove the last comma for backwards-compatibility reasons
+        Preconditions.checkState(!delimited.isEmpty());
+        return delimited.substring(0, delimited.length() - 1);
     }
 
     /**
@@ -75,8 +79,11 @@ public class TSeeding {
      * {@link #toPersistedString()}.
      */
     public static TSeeding fromPersistedString(String persistedString) {
+        Delimiter delimiter = Delimiters.getEscapeCharDelimiterConvertingNulls(',', '\\');
+        List<String> playerIds = delimiter.undelimit(persistedString + ",");
+
         List<TPlayer> players = Lists.newArrayList();
-        for (String playerId : Splitter.on(",").split(persistedString)) {
+        for (String playerId : playerIds) {
             players.add(TPlayer.create(playerId));
         }
         return create(players);

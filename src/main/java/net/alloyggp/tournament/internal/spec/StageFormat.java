@@ -7,18 +7,18 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import net.alloyggp.tournament.internal.FormatRunner;
-import net.alloyggp.tournament.internal.SingleEliminationFormatRunner;
-import net.alloyggp.tournament.internal.SwissFormat1Runner;
+import net.alloyggp.tournament.internal.runner.FormatRunner;
+import net.alloyggp.tournament.internal.runner.SingleEliminationFormatRunner;
+import net.alloyggp.tournament.internal.runner.SwissFormat1Runner;
 
 public enum StageFormat {
-    SINGLE_ELIMINATION("singleElimination1", new Supplier<FormatRunner>() {
+    SINGLE_ELIMINATION("singleElimination1", true, new Supplier<FormatRunner>() {
         @Override
         public FormatRunner get() {
             return SingleEliminationFormatRunner.create();
         }
     }),
-    SWISS1("swiss1", new Supplier<FormatRunner>() {
+    SWISS1("swiss1", true, new Supplier<FormatRunner>() {
         @Override
         public FormatRunner get() {
             return SwissFormat1Runner.create();
@@ -26,10 +26,12 @@ public enum StageFormat {
     }),
     ;
     private final String yamlName;
+    private final boolean stable;
     private final Supplier<FormatRunner> runnerSupplier;
 
-    private StageFormat(String yamlName, Supplier<FormatRunner> runnerSupplier) {
+    private StageFormat(String yamlName, boolean stable, Supplier<FormatRunner> runnerSupplier) {
         this.yamlName = yamlName;
+        this.stable = stable;
         this.runnerSupplier = runnerSupplier;
     }
 
@@ -64,5 +66,9 @@ public enum StageFormat {
 
     public void validateRounds(ImmutableList<RoundSpec> rounds) {
         getRunner().validateRounds(rounds);
+    }
+
+    public boolean isStable() {
+        return stable;
     }
 }

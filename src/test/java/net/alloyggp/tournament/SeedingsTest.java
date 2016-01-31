@@ -14,6 +14,7 @@ import net.alloyggp.tournament.api.TPlayerScore;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.internal.Seedings;
+import net.alloyggp.tournament.internal.SimpleScore;
 import net.alloyggp.tournament.internal.StandardRanking;
 
 public class SeedingsTest {

@@ -23,7 +23,7 @@ import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.api.TTournament;
 import net.alloyggp.tournament.api.TTournamentStatus;
-import net.alloyggp.tournament.internal.TournamentStateCache;
+import net.alloyggp.tournament.internal.runner.TournamentStateCache;
 
 /**
  * This is a fuzz test for the following invariant:

@@ -9,12 +9,12 @@ import javax.annotation.concurrent.Immutable;
 import net.alloyggp.tournament.api.TNextMatchesResult;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.internal.FormatRunner;
 import net.alloyggp.tournament.internal.Game;
 import net.alloyggp.tournament.internal.InternalMatchResult;
 import net.alloyggp.tournament.internal.Seedings;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.YamlUtils;
+import net.alloyggp.tournament.internal.runner.FormatRunner;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

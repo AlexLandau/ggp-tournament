@@ -6,6 +6,20 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
+import org.joda.time.DateTime;
+
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+import net.alloyggp.escaperope.rope.ropify.ListRopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.RopeBuilder;
+import net.alloyggp.escaperope.rope.ropify.RopeList;
+import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TNextMatchesResult;
 import net.alloyggp.tournament.api.TPlayer;
@@ -21,16 +35,7 @@ import net.alloyggp.tournament.internal.StandardNextMatchesResult;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.TimeUtils;
 import net.alloyggp.tournament.internal.YamlUtils;
-
-import org.joda.time.DateTime;
-
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import net.alloyggp.tournament.internal.rope.Weavers;
 
 @Immutable
 public class TournamentSpec implements TTournament {
@@ -258,6 +263,22 @@ public class TournamentSpec implements TTournament {
             }
         }
     }
+
+    public static final RopeWeaver<TScore> CUTOFF_SCORE_WEAVER = new ListRopeWeaver<TScore>() {
+        @Override
+        protected void addToList(TScore object, RopeBuilder list) {
+            CutoffScore score = (CutoffScore) object;
+            list.add(score.madeCutoff);
+            list.add(score.score, Weavers.SCORE);
+        }
+
+        @Override
+        protected TScore fromRope(RopeList list) {
+            boolean madeCutoff = list.getBoolean(0);
+            TScore score = list.get(1, Weavers.SCORE);
+            return new CutoffScore(madeCutoff, score);
+        }
+    };
 
     @Override
     public List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
