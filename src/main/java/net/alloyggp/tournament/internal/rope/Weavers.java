@@ -145,8 +145,6 @@ public class Weavers {
         @Override
         protected void addToList(TMatchResult object, RopeBuilder list) {
             list.add(object.getMatchId());
-            //TODO: Finish removing
-//            list.add(object.getPlayers(), CoreWeavers.listOf(PLAYER));
             list.add(object.getOutcome(), CoreWeavers.enumOf(Outcome.class));
             if (!object.wasAborted()) {
                 list.add(object.getGoals(), CoreWeavers.listOfIntegers());
@@ -155,12 +153,10 @@ public class Weavers {
 
         @Override
         protected TMatchResult fromRope(RopeList list) {
-            Outcome outcome = list.get(2, CoreWeavers.enumOf(Outcome.class));
+            Outcome outcome = list.get(1, CoreWeavers.enumOf(Outcome.class));
             String matchId = list.getString(0);
-            //TODO: Remove
-            List<TPlayer> players = list.get(1, CoreWeavers.listOf(PLAYER));
             if (outcome == Outcome.COMPLETED) {
-                List<Integer> goals = list.get(3, CoreWeavers.listOfIntegers());
+                List<Integer> goals = list.get(2, CoreWeavers.listOfIntegers());
                 return TMatchResult.getSuccessfulMatchResult(matchId, goals);
             } else {
                 return TMatchResult.getAbortedMatchResult(matchId);
