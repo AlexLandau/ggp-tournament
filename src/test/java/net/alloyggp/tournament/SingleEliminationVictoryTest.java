@@ -8,14 +8,6 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import net.alloyggp.tournament.api.TMatchResult;
-import net.alloyggp.tournament.api.TMatchResult.Outcome;
-import net.alloyggp.tournament.api.TMatchSetup;
-import net.alloyggp.tournament.api.TPlayer;
-import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.api.TTournament;
-import net.alloyggp.tournament.api.TTournamentStatus;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -24,6 +16,14 @@ import org.junit.runners.Parameterized.Parameters;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TMatchResult.Outcome;
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournament;
+import net.alloyggp.tournament.api.TTournamentStatus;
 
 /**
  * This is a fuzz test for the following property of single-elimination

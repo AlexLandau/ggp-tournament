@@ -4,13 +4,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TMatchResult.Outcome;
-import net.alloyggp.tournament.api.TPlayer;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * This is used internally to avoid repeated parsing of the match ID string.
@@ -73,10 +71,6 @@ public class InternalMatchResult {
 
     public Outcome getOutcome() {
         return result.getOutcome();
-    }
-
-    public ImmutableList<TPlayer> getPlayers() {
-        return result.getPlayers();
     }
 
     public List<Integer> getGoals() {

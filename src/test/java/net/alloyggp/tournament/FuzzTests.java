@@ -67,10 +67,10 @@ public class FuzzTests {
      */
     public static TMatchResult getResult(Random random, TMatchSetup match) {
         if (random.nextDouble() > 0.7) {
-            return TMatchResult.getAbortedMatchResult(match.getMatchId(), match.getPlayers());
+            return TMatchResult.getAbortedMatchResult(match.getMatchId());
         }
         List<Integer> goals = getGoals(random, match.getGame());
-        return TMatchResult.getSuccessfulMatchResult(match.getMatchId(), match.getPlayers(), goals);
+        return TMatchResult.getSuccessfulMatchResult(match.getMatchId(), goals);
     }
 
     private static List<Integer> getGoals(Random random, TGame game) {

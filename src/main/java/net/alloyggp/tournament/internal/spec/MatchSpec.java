@@ -88,6 +88,10 @@ public class MatchSpec {
         return playClock;
     }
 
+    public ImmutableList<Integer> getPlayerSeedOrder() {
+        return playerSeedOrder;
+    }
+
     //From seed order (best first), to the order of their roles
     public ImmutableList<TPlayer> putInOrder(List<TPlayer> playersBestSeedFirst) {
         ImmutableList.Builder<TPlayer> players = ImmutableList.builder();

@@ -11,13 +11,10 @@ import com.google.common.collect.ImmutableList;
 @Immutable
 public class TMatchResult {
     private final String matchId;
-    //TODO: Eliminate this. This may require significant refactoring of the
-    //SingleEliminationFormatRunner.
-    private final ImmutableList<TPlayer> players;
     private final Outcome outcome;
     private final Optional<ImmutableList<Integer>> goals;
 
-    private TMatchResult(String matchId, ImmutableList<TPlayer> players,
+    private TMatchResult(String matchId,
             Outcome outcome, Optional<ImmutableList<Integer>> goals) {
         if (outcome == Outcome.COMPLETED) {
             Preconditions.checkArgument(goals.isPresent());
@@ -28,18 +25,17 @@ public class TMatchResult {
             }
         }
         this.matchId = matchId;
-        this.players = players;
         this.outcome = outcome;
         this.goals = goals;
     }
 
-    public static TMatchResult getAbortedMatchResult(String matchId, List<TPlayer> players) {
-        return new TMatchResult(matchId, ImmutableList.copyOf(players),
+    public static TMatchResult getAbortedMatchResult(String matchId) {
+        return new TMatchResult(matchId,
                 Outcome.ABORTED, Optional.<ImmutableList<Integer>>absent());
     }
 
-    public static TMatchResult getSuccessfulMatchResult(String matchId, List<TPlayer> players, List<Integer> goals) {
-        return new TMatchResult(matchId, ImmutableList.copyOf(players),
+    public static TMatchResult getSuccessfulMatchResult(String matchId, List<Integer> goals) {
+        return new TMatchResult(matchId,
                 Outcome.COMPLETED, Optional.of(ImmutableList.copyOf(goals)));
     }
 
@@ -55,10 +51,6 @@ public class TMatchResult {
         return goals.get();
     }
 
-    public ImmutableList<TPlayer> getPlayers() {
-        return players;
-    }
-
     public boolean wasAborted() {
         return outcome == Outcome.ABORTED;
     }
@@ -70,7 +62,6 @@ public class TMatchResult {
         result = prime * result + ((goals == null) ? 0 : goals.hashCode());
         result = prime * result + ((matchId == null) ? 0 : matchId.hashCode());
         result = prime * result + ((outcome == null) ? 0 : outcome.hashCode());
-        result = prime * result + ((players == null) ? 0 : players.hashCode());
         return result;
     }
 
@@ -103,19 +94,12 @@ public class TMatchResult {
         if (outcome != other.outcome) {
             return false;
         }
-        if (players == null) {
-            if (other.players != null) {
-                return false;
-            }
-        } else if (!players.equals(other.players)) {
-            return false;
-        }
         return true;
     }
 
     @Override
     public String toString() {
-        return "MatchResult [matchId=" + matchId + ", players=" + players + ", outcome=" + outcome + ", goals=" + goals
+        return "MatchResult [matchId=" + matchId + ", outcome=" + outcome + ", goals=" + goals
                 + "]";
     }
 

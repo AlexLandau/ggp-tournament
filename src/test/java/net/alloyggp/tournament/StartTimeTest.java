@@ -81,7 +81,7 @@ public class StartTimeTest {
     private TMatchResult finishOnlyMatch(ImmutableSet<TMatchSetup> matchesToRun) {
         TMatchSetup matchSetup = Iterables.getOnlyElement(matchesToRun);
         return TMatchResult.getSuccessfulMatchResult(
-                matchSetup.getMatchId(), matchSetup.getPlayers(),
+                matchSetup.getMatchId(),
                 ImmutableList.of(100, 0));
     }
 

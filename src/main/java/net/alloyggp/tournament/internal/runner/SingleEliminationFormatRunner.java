@@ -177,9 +177,12 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             TPlayer player1 = playersByPosition.get(position1);
             TPlayer player2 = playersByPosition.get(position2);
 
-            if (wonInRound(player1, pairingNum, numRoundsLeft, round)) {
+            List<TPlayer> playersBestFirst = Lists.newArrayList(player1, player2);
+            Collections.sort(playersBestFirst, Ordering.explicit(initialSeeding.getPlayersBestFirst()));
+
+            if (wonInRound(playersBestFirst.indexOf(player1), pairingNum, numRoundsLeft, round)) {
                 playerEliminationRounds.put(player2, numRoundsLeft);
-            } else if (wonInRound(player2, pairingNum, numRoundsLeft, round)) {
+            } else if (wonInRound(playersBestFirst.indexOf(player2), pairingNum, numRoundsLeft, round)) {
                 playersByPosition.set(position1, player2);
                 playersByPosition.set(position2, player1);
                 playerEliminationRounds.put(player1, numRoundsLeft);
@@ -284,6 +287,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             //If we make it here, repeat the last match type
             String matchId = MatchId.create(stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts).toString();
             //TODO: Alternate roles each time if we do have to repeat the last match type
+            //(Also needs to be done in rolesSwapped)
             List<TPlayer> playersBestFirst = Lists.newArrayList(player1, player2);
             Collections.sort(playersBestFirst, Ordering.explicit(initialSeeding.getPlayersBestFirst()));
             return specToUse.createMatchSetup(matchId, playersBestFirst);
@@ -300,7 +304,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             return false;
         }
 
-        private boolean wonInRound(TPlayer player, int pairingNumber, int numRoundsLeft, RoundSpec round) {
+        private boolean wonInRound(int pairingLevelPlayerIndex, int pairingNumber, int numRoundsLeft, RoundSpec round) {
             int gamesPlayed = 0;
             int pointsAboveOpponent = 0;
             for (InternalMatchResult result : resultsSoFarInStage) {
@@ -315,14 +319,34 @@ public class SingleEliminationFormatRunner implements FormatRunner {
                     continue;
                 }
                 gamesPlayed++;
-                int playerIndex = result.getPlayers().indexOf(player);
-                int playerPoints = result.getGoals().get(playerIndex);
+                //This is the match-level player index, which may not be the
+                //pairing-level player index. i.e. if roles are swapped, these
+                //are opposites.
+                final int playerIndex;
+                if (rolesSwapped(matchId, round)) {
+                    playerIndex = 1 - pairingLevelPlayerIndex;
+                } else {
+                    playerIndex = pairingLevelPlayerIndex;
+                }
                 Preconditions.checkState(playerIndex == 0 || playerIndex == 1);
+                int playerPoints = result.getGoals().get(playerIndex);
                 int oppIndex = 1 - playerIndex;
                 int oppPoints = result.getGoals().get(oppIndex);
                 pointsAboveOpponent += (playerPoints - oppPoints);
             }
             return wonInRound(round, gamesPlayed, pointsAboveOpponent);
+        }
+
+        private boolean rolesSwapped(MatchId matchId, RoundSpec round) {
+            ImmutableList<MatchSpec> matches = round.getMatches();
+
+            int matchNumber = matchId.getMatchNumber();
+            if (matchNumber >= matches.size()) {
+                matchNumber = matches.size() - 1;
+            }
+            MatchSpec spec = matches.get(matchNumber);
+
+            return spec.getPlayerSeedOrder().get(0) == 1;
         }
 
         private boolean wonInRound(RoundSpec round, int gamesPlayed, int pointsAboveOpponent) {
