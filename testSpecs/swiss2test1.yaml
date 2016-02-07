@@ -1,0 +1,49 @@
+nameDisplay: Sample Swiss tournament, 2p fixed sum games only
+nameInternal: swiss2Sample1
+
+games:
+  - name: breakthrough
+    url: http://games.ggp.org/base/games/breakthrough/
+    numRoles: 2
+    fixedSum: true
+  - name: cephalopodMicro
+    url: http://games.ggp.org/base/games/cephalopodMicro/
+    numRoles: 2
+    fixedSum: true
+
+stages:
+  - format: swiss2
+    rounds:
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - startTime: Fri, 4 Dec 2015 10:00:00 -0800 PST
+        matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - matches:
+          - game: breakthrough
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1]
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+      - matches:
+          - game: cephalopodMicro
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0]
+      
+    

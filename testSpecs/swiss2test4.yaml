@@ -1,0 +1,59 @@
+nameDisplay: Sample Swiss tournament, >2p non-fixed-sum games
+nameInternal: swiss2Sample4
+
+games:
+  - name: gt1
+    url: http://games.ggp.org/base/games/gt1/
+    numRoles: 3
+    fixedSum: false
+  - name: gt2
+    url: http://games.ggp.org/base/games/gt2/
+    numRoles: 4
+    fixedSum: false
+  - name: gt3
+    url: http://games.ggp.org/base/games/gt3/
+    numRoles: 4
+    fixedSum: false
+  - name: gt4
+    url: http://games.ggp.org/base/games/gt4/
+    numRoles: 5
+    fixedSum: false
+  - name: gt5
+    url: http://games.ggp.org/base/games/gt5/
+    numRoles: 3
+    fixedSum: false
+
+stages:
+  - format: swiss2
+    rounds:
+      - matches:
+          - game: gt1
+            startClock: 60
+            playClock: 15
+      - matches:
+          - game: gt2
+            startClock: 60
+            playClock: 15
+            seedRoles: [0, 1, 2, 3]
+      - matches:
+          - game: gt3
+            startClock: 60
+            playClock: 15
+      - matches:
+          - game: gt4
+            startClock: 60
+            playClock: 15
+      - matches:
+          - game: gt4
+            startClock: 60
+            playClock: 15
+      - matches:
+          - game: gt5
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 2, 0]
+      - matches:
+          - game: gt5
+            startClock: 60
+            playClock: 15
+            seedRoles: [1, 0, 2]

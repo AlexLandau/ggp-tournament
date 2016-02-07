@@ -54,7 +54,27 @@ public class FuzzTests {
                 new Object[] {6, "swiss1test6"},
                 new Object[] {7, "swiss1test6"},
                 new Object[] {7, "swiss1test7"},
-                new Object[] {8, "swiss1test7"}
+                new Object[] {8, "swiss1test7"},
+                new Object[] {3, "swiss2SingleElimTest1"},
+                new Object[] {4, "swiss2SingleElimTest1"},
+                new Object[] {7, "swiss2SingleElimTest1"},
+                new Object[] {8, "swiss2SingleElimTest1"},
+                new Object[] {10, "swiss2test1"},
+                new Object[] {9, "swiss2test1"},
+                new Object[] {10, "swiss2test2"},
+                new Object[] {9, "swiss2test2"},
+                new Object[] {10, "swiss2test3"},
+                new Object[] {9, "swiss2test3"},
+                new Object[] {10, "swiss2test4"},
+                new Object[] {9, "swiss2test4"},
+                new Object[] {3, "swiss2test4"},
+                new Object[] {10, "swiss2test5"},
+                new Object[] {9, "swiss2test5"},
+                new Object[] {3, "swiss2test5"},
+                new Object[] {6, "swiss2test6"},
+                new Object[] {7, "swiss2test6"},
+                new Object[] {7, "swiss2test7"},
+                new Object[] {8, "swiss2test7"}
                 );
     }
 

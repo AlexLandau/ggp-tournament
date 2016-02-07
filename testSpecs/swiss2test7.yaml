@@ -1,0 +1,100 @@
+nameDisplay: Sample Swiss tournament, includes multi-match rounds
+nameInternal: swiss2Sample7
+
+games:
+  - name: game1
+    url: http://games.ggp.org/base/games/game1/
+    numRoles: 1
+    fixedSum: false
+  - name: game2
+    url: http://games.ggp.org/base/games/game2/
+    numRoles: 2
+    fixedSum: true
+  - name: game3
+    url: http://games.ggp.org/base/games/game3/
+    numRoles: 2
+    fixedSum: false
+  - name: game4
+    url: http://games.ggp.org/base/games/game4/
+    numRoles: 4
+    fixedSum: true
+  - name: game5
+    url: http://games.ggp.org/base/games/game5/
+    numRoles: 4
+    fixedSum: false
+
+stages:
+  - format: swiss2
+    rounds:
+      - matches:
+          - game: game1
+            startClock: 60
+            playClock: 15
+            weight: 0.8
+      - matches:
+          - game: game2
+            startClock: 60
+            playClock: 15
+            weight: 0.5
+            seedRoles: [0, 1]
+          - game: game2
+            startClock: 60
+            playClock: 15
+            weight: 0.5
+            seedRoles: [1, 0]
+      - matches:
+          - game: game2
+            startClock: 60
+            playClock: 15
+            weight: 0.5
+            seedRoles: [0, 1]
+          - game: game2
+            startClock: 60
+            playClock: 15
+            weight: 0.5
+            seedRoles: [1, 0]
+      - matches:
+          - game: game3
+            startClock: 60
+            playClock: 15
+            weight: 0.5
+            seedRoles: [0, 1]
+          - game: game3
+            startClock: 60
+            playClock: 15
+            weight: 0.5
+            seedRoles: [1, 0]
+      - matches:
+          - game: game3
+            startClock: 60
+            playClock: 15
+            weight: 1.0
+      - matches:
+          - game: game4
+            startClock: 60
+            playClock: 15
+            weight: 0.25
+            seedRoles: [0, 1, 2, 3]
+          - game: game4
+            startClock: 60
+            playClock: 15
+            weight: 0.25
+            seedRoles: [1, 2, 3, 0]
+          - game: game4
+            startClock: 60
+            playClock: 15
+            weight: 0.25
+            seedRoles: [2, 3, 0, 1]
+          - game: game4
+            startClock: 60
+            playClock: 15
+            weight: 0.25
+            seedRoles: [3, 0, 1, 2]
+      - matches:
+          - game: game5
+            startClock: 60
+            playClock: 15
+      - matches:
+          - game: game5
+            startClock: 60
+            playClock: 15

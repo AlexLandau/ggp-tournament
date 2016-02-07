@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import net.alloyggp.tournament.internal.runner.FormatRunner;
 import net.alloyggp.tournament.internal.runner.SingleEliminationFormatRunner;
 import net.alloyggp.tournament.internal.runner.SwissFormat1Runner;
+import net.alloyggp.tournament.internal.runner.SwissFormat2Runner;
 
 public enum StageFormat {
     SINGLE_ELIMINATION("singleElimination1", true, new Supplier<FormatRunner>() {
@@ -22,6 +23,12 @@ public enum StageFormat {
         @Override
         public FormatRunner get() {
             return SwissFormat1Runner.create();
+        }
+    }),
+    SWISS2("swiss2", false, new Supplier<FormatRunner>() {
+        @Override
+        public FormatRunner get() {
+            return SwissFormat2Runner.create();
         }
     }),
     ;
