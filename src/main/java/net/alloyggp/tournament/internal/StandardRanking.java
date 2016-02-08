@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
@@ -47,6 +48,15 @@ public class StandardRanking implements TRanking {
         return result;
     }
 
+    /*
+     * Note: Why do we convert to a list in order to do this comparison?
+     * Because ImmutableSortedSet will use compareTo() instead of equals()
+     * to do its equality check, and this is undesirable when we're comparing
+     * scores, which will throw an exception when compared to an incomparable
+     * score. The list implementation instead compares corresponding indices
+     * with equals(), which is valid for incomparable scores and gives us the
+     * same result anyway.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -63,7 +73,7 @@ public class StandardRanking implements TRanking {
             if (other.scores != null) {
                 return false;
             }
-        } else if (!scores.equals(other.scores)) {
+        } else if (!scores.asList().equals(other.scores.asList())) {
             return false;
         }
         return true;
@@ -147,5 +157,18 @@ public class StandardRanking implements TRanking {
         public String getDescription() {
             return "initial seeding for stage";
         }
+    }
+
+    @Override
+    public int getPosition(TPlayer player) {
+        Preconditions.checkNotNull(player);
+        ImmutableList<TPlayerScore> list = scores.asList();
+        for (int i = 0; i < scores.size(); i++) {
+            if (list.get(i).getPlayer().equals(player)) {
+                //Convert to 1-indexing
+                return i + 1;
+            }
+        }
+        throw new IllegalArgumentException("The player " + player + " is not in the ranking: " + toString());
     }
 }

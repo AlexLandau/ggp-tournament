@@ -218,7 +218,7 @@ public class SwissFormat2Runner implements FormatRunner {
             TGame game = getOnlyGame(round);
             //Figure out how to assign players
             List<List<TPlayer>> playerGroups = getPlayerGroups(game, roundNum);
-            double maxScoreAchieved = 0;
+            Map<TPlayer, Double> scoreByPlayerInRound = Maps.newHashMap();
             double scoreSum = 0;
             int scoreCount = 0;
             for (int groupNum = 0; groupNum < playerGroups.size(); groupNum++) {
@@ -243,7 +243,10 @@ public class SwissFormat2Runner implements FormatRunner {
                             addToSumWithKey(player, goalValue, totalPointsScored);
                             addToSumWithKey(player, goalValue, pointsScoredByGame.get(game));
 
-                            maxScoreAchieved = maxScoreAchieved > goalValue ? maxScoreAchieved : goalValue;
+                            if (!scoreByPlayerInRound.containsKey(player)) {
+                                scoreByPlayerInRound.put(player, 0.0);
+                            }
+                            addToSumWithKey(player, goalValue, scoreByPlayerInRound);
                             scoreSum += goalValue;
                             scoreCount++;
                             this.mostRecentGame = game;
@@ -257,8 +260,8 @@ public class SwissFormat2Runner implements FormatRunner {
                 Set<TPlayer> unassignedPlayers = getUnassignedPlayers(initialSeeding.getPlayersBestFirst(), playerGroups);
                 if (!unassignedPlayers.isEmpty()) {
                     //Calculate bye score for the game
-                    double byeScore = getByeScoreForRound(game, maxScoreAchieved, scoreSum, scoreCount);
-                    Preconditions.checkState(byeScore >= 0 && byeScore <= 100);
+                    double byeScore = getByeScoreForRound(game, scoreByPlayerInRound, scoreSum, scoreCount);
+                    Preconditions.checkState(byeScore >= 0 && byeScore <= (100 * getWeightSum(round)) + 1e-7); //Double comparison requires an epsilon
                     for (TPlayer player : unassignedPlayers) {
                         addToSumWithKey(player, byeScore, totalPointsScored);
                         addToSumWithKey(player, byeScore, pointsScoredByGame.get(game));
@@ -268,6 +271,14 @@ public class SwissFormat2Runner implements FormatRunner {
                 //Also...
                 updateMatchupStats(game, playerGroups);
             }
+        }
+
+        private double getWeightSum(RoundSpec round) {
+            double weightSum = 0;
+            for (MatchSpec match : round.getMatches()) {
+                weightSum += match.getWeight();
+            }
+            return weightSum;
         }
 
         private void handleStartTimeForRound(RoundSpec round) {
@@ -299,12 +310,13 @@ public class SwissFormat2Runner implements FormatRunner {
             }
         }
 
-        private static double getByeScoreForRound(TGame game, double maxScoreAchieved, double scoreSum, int scoreCount) {
+        private static double getByeScoreForRound(TGame game, Map<TPlayer, Double> scoreByPlayerInRound, double scoreSum, int scoreCount) {
             if (game.isFixedSum()) {
-                if (game.getNumRoles() == 2) {
-                    return maxScoreAchieved;
+                if (scoreByPlayerInRound.isEmpty()) {
+                    //Not enough players for the round
+                    return 0.0;
                 } else {
-                    return maxScoreAchieved;
+                    return Collections.max(scoreByPlayerInRound.values());
                 }
             } else {
                 if (scoreCount > 0) {

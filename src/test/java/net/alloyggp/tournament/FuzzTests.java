@@ -1,7 +1,6 @@
 package net.alloyggp.tournament;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -142,12 +141,7 @@ public class FuzzTests {
      */
     public static TMatchSetup pickMatchAtRandom(Random random, Set<TMatchSetup> nextMatches) {
         List<TMatchSetup> sortedMatches = Lists.newArrayList(nextMatches);
-        Collections.sort(sortedMatches, new Comparator<TMatchSetup>() {
-            @Override
-            public int compare(TMatchSetup o1, TMatchSetup o2) {
-                return o1.getMatchId().compareTo(o2.getMatchId());
-            }
-        });
+        Collections.sort(sortedMatches, MatchSetups.COMPARATOR);
         return pickAtRandom(random, sortedMatches);
     }
 
