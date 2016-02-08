@@ -27,6 +27,6 @@ public class TimeUtils {
     }
 
     public static final DateTimeFormatter RFC1123_DATE_TIME_FORMATTER =
-            DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss Z z")
+            DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss Z")
             .withZoneUTC().withLocale(Locale.US);
 }

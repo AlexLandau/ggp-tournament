@@ -16,7 +16,7 @@ public class TimeZoneTest {
 
         DateTime startTime = firstRound.getStartTime().get();
         //Check that it equals the intended time in various time zones
-        DateTime pstTime = TimeUtils.RFC1123_DATE_TIME_FORMATTER.parseDateTime("Fri, 4 Dec 2015 10:00:00 -0800 PST");
+        DateTime pstTime = TimeUtils.RFC1123_DATE_TIME_FORMATTER.parseDateTime("Fri, 4 Dec 2015 10:00:00 -0800");
 //        DateTime pstTime = DateTime.of(
 //                LocalDate.of(2015, Months.TWELVE, 4),
 //                LocalTime.of(10, 0),
@@ -29,7 +29,7 @@ public class TimeZoneTest {
 //                LocalDate.of(2015, Month.DECEMBER, 4),
 //                LocalTime.of(18, 0),
 //                ZoneId.of("UTC"));
-        DateTime utcTime = TimeUtils.RFC1123_DATE_TIME_FORMATTER.parseDateTime("Fri, 4 Dec 2015 18:00:00 +0000 UTC");
+        DateTime utcTime = TimeUtils.RFC1123_DATE_TIME_FORMATTER.parseDateTime("Fri, 4 Dec 2015 18:00:00 +0000");
         Assert.assertTrue(startTime.isEqual(utcTime));
     }
 }
