@@ -3,10 +3,18 @@ package net.alloyggp.tournament.internal.spec;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
 import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TPlayer;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.internal.Game;
@@ -16,39 +24,40 @@ import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.YamlUtils;
 import net.alloyggp.tournament.internal.runner.FormatRunner;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-
 @Immutable
 public class StageSpec {
     private final int stageNum;
     private final StageFormat format;
     //Division into groups? Leave for later
     private final ImmutableList<RoundSpec> rounds;
-    private final int playerCutoff;
+    private final int playerLimit;
+    private final ImmutableSet<TPlayer> excludedPlayers;
 
-    private StageSpec(int stageNum, StageFormat format, ImmutableList<RoundSpec> rounds, int playerCutoff) {
+    private StageSpec(int stageNum, StageFormat format,
+            ImmutableList<RoundSpec> rounds, int playerLimit,
+            ImmutableSet<TPlayer> excludedPlayers) {
         Preconditions.checkArgument(stageNum >= 0);
         Preconditions.checkNotNull(format);
         Preconditions.checkArgument(!rounds.isEmpty());
-        Preconditions.checkArgument(playerCutoff > 0, "Player cutoff must be positive if present");
+        Preconditions.checkArgument(playerLimit > 0, "Player cutoff must be positive if present");
         format.validateRounds(rounds);
         this.stageNum = stageNum;
         this.format = format;
         this.rounds = rounds;
-        this.playerCutoff = playerCutoff;
+        this.playerLimit = playerLimit;
+        this.excludedPlayers = excludedPlayers;
     }
 
     private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
             "format",
             "rounds",
-            "playerCutoff"
+            "playerCutoff",
+            "excludedPlayers"
             );
 
     @SuppressWarnings("unchecked")
-    public static StageSpec parseYaml(Object yamlStage, int stageNum, Map<String, Game> games) {
+    public static StageSpec parseYaml(Object yamlStage, int stageNum, Map<String, Game> games,
+            AtomicInteger playerLimitSoFar) {
         Map<String, Object> stageMap = (Map<String, Object>) yamlStage;
         YamlUtils.validateKeys(stageMap, "stage", ALLOWED_KEYS);
         String formatName = (String) stageMap.get("format");
@@ -56,12 +65,26 @@ public class StageSpec {
         for (Object yamlRound : (List<Object>) stageMap.get("rounds")) {
             rounds.add(RoundSpec.parseYaml(yamlRound, games));
         }
-        int playerCutoff = Integer.MAX_VALUE;
+        int playerLimit = playerLimitSoFar.get();
+        if (stageMap.containsKey("playerLimit")) {
+            playerLimit = Math.min(playerLimit, (int) stageMap.get("playerLimit"));
+            playerLimitSoFar.set(playerLimit);
+        }
         if (stageMap.containsKey("playerCutoff")) {
-            playerCutoff = (int) stageMap.get("playerCutoff");
+            //This affects the player limit for the next round, not the current round.
+            playerLimitSoFar.set((int) stageMap.get("playerCutoff"));
+        }
+        Set<TPlayer> excludedPlayers = Sets.newHashSet();
+        if (stageMap.containsKey("excludedPlayers")) {
+            for (Object playerName : (List<Object>) stageMap.get("excludedPlayers")) {
+                // Note that playerName could actually be e.g. an Integer instead
+                // of a String, so we do need toString() instead of a cast.
+                excludedPlayers.add(TPlayer.create(playerName.toString()));
+            }
         }
         return new StageSpec(stageNum, StageFormat.parse(formatName),
-                ImmutableList.copyOf(rounds), playerCutoff);
+                ImmutableList.copyOf(rounds), playerLimit,
+                ImmutableSet.copyOf(excludedPlayers));
     }
 
     public TNextMatchesResult getMatchesToRun(String tournamentInternalName,
@@ -88,16 +111,21 @@ public class StageSpec {
         return format;
     }
 
-    public TSeeding getSeedingsFromFinalStandings(TRanking standings) {
-        return Seedings.getSeedingsFromFinalStandings(standings, playerCutoff);
+    public TSeeding getSeedingsFromPreviousStandings(TRanking standings) {
+        Preconditions.checkNotNull(standings);
+        return Seedings.getSeedingsFromFinalStandings(standings, playerLimit, excludedPlayers);
     }
 
     public ImmutableList<RoundSpec> getRounds() {
         return rounds;
     }
 
-    public int getPlayerCutoff() {
-        return playerCutoff;
+    public int getPlayerLimit() {
+        return playerLimit;
+    }
+
+    public ImmutableSet<TPlayer> getExcludedPlayers() {
+        return excludedPlayers;
     }
 
     public List<TRanking> getStandingsHistory(String tournamentInternalName,

@@ -3,6 +3,7 @@ package net.alloyggp.tournament.internal.spec;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -74,9 +75,10 @@ public class TournamentSpec implements TTournament {
         String tournamentInternalName = (String) rootMap.get("nameInternal");
         String tournamentDisplayName = (String) rootMap.get("nameDisplay");
         List<StageSpec> stages = Lists.newArrayList();
+        AtomicInteger ongoingPlayerLimit = new AtomicInteger(Integer.MAX_VALUE);
         int stageNum = 0;
         for (Object yamlStage : (List<Object>) rootMap.get("stages")) {
-            stages.add(StageSpec.parseYaml(yamlStage, stageNum, games));
+            stages.add(StageSpec.parseYaml(yamlStage, stageNum, games, ongoingPlayerLimit));
             stageNum++;
         }
         return new TournamentSpec(tournamentInternalName, tournamentDisplayName,
@@ -120,17 +122,22 @@ public class TournamentSpec implements TTournament {
     public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
         Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
 
-        TSeeding seeding = initialSeeding;
+        TRanking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
+            TSeeding seeding;
+            if (stageNum == 0) {
+                seeding = initialSeeding;
+            } else {
+                seeding = stage.getSeedingsFromPreviousStandings(standings);
+            }
             TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     seeding, resultsSoFar);
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return matchesForStage;
             }
-            TRanking standings = stage.getCurrentStandings(tournamentInternalName,
+            standings = stage.getCurrentStandings(tournamentInternalName,
                     seeding, resultsSoFar);
-            seeding = stage.getSeedingsFromFinalStandings(standings);
         }
         //No stages had matches left; the tournament is over
         return StandardNextMatchesResult.createEmpty();
@@ -141,10 +148,15 @@ public class TournamentSpec implements TTournament {
             Set<TMatchResult> clientResults) {
         Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
 
-        TSeeding seeding = initialSeeding;
         TRanking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
+            TSeeding seeding;
+            if (stageNum == 0) {
+                seeding = initialSeeding;
+            } else {
+                seeding = stage.getSeedingsFromPreviousStandings(standings);
+            }
             TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     seeding, resultsSoFar);
             standings = mixInStandings(standings,
@@ -152,7 +164,6 @@ public class TournamentSpec implements TTournament {
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return standings;
             }
-            seeding = stage.getSeedingsFromFinalStandings(standings);
         }
         //No stages had matches left; the tournament is over; use the last set of standings
         Preconditions.checkNotNull(standings);
@@ -180,6 +191,7 @@ public class TournamentSpec implements TTournament {
                         score.getSeedFromRoundStart()));
             }
         }
+        Preconditions.checkState(oldStandings.getPlayersBestFirst().size() == allPlayerScores.size());
         return StandardRanking.create(allPlayerScores);
     }
 
@@ -288,9 +300,14 @@ public class TournamentSpec implements TTournament {
 
         Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
 
-        TSeeding seeding = initialSeeding;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
+            TSeeding seeding;
+            if (stageNum == 0) {
+                seeding = initialSeeding;
+            } else {
+                seeding = stage.getSeedingsFromPreviousStandings(lastStageFinalRanking);
+            }
             TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
                     seeding, resultsSoFar);
             for (TRanking ranking : stage.getStandingsHistory(tournamentInternalName, seeding, resultsSoFar)) {
@@ -299,9 +316,9 @@ public class TournamentSpec implements TTournament {
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return result;
             }
-            lastStageFinalRanking = stage.getCurrentStandings(tournamentInternalName,
-                    seeding, resultsSoFar);
-            seeding = stage.getSeedingsFromFinalStandings(lastStageFinalRanking);
+            lastStageFinalRanking = mixInStandings(lastStageFinalRanking,
+                    stage.getCurrentStandings(tournamentInternalName,
+                    seeding, resultsSoFar));
         }
         return result;
     }

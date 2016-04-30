@@ -73,7 +73,11 @@ public class FuzzTests {
                 new Object[] {6, "swiss2test6"},
                 new Object[] {7, "swiss2test6"},
                 new Object[] {7, "swiss2test7"},
-                new Object[] {8, "swiss2test7"}
+                new Object[] {8, "swiss2test7"},
+                new Object[] {5, "excludedPlayersTest1"},
+                new Object[] {6, "excludedPlayersTest1"},
+                new Object[] {7, "excludedPlayersTest1"},
+                new Object[] {8, "excludedPlayersTest1"}
                 );
     }
 

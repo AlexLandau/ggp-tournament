@@ -4,9 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import net.alloyggp.tournament.api.TPlayer;
@@ -30,11 +32,12 @@ public class SeedingsTest {
         TRanking standings = StandardRanking.create(scores);
         ArrayList<TPlayerScore> scoresSorted = Lists.newArrayList(standings.getScores());
         assertEquals(Lists.reverse(scores), scoresSorted);
+        Set<TPlayer> playersToExclude = ImmutableSet.of();
 
-        TSeeding seedingsCutTo6 = Seedings.getSeedingsFromFinalStandings(standings, 6);
-        TSeeding seedingsCutTo5 = Seedings.getSeedingsFromFinalStandings(standings, 5);
-        TSeeding seedingsCutTo4 = Seedings.getSeedingsFromFinalStandings(standings, 4);
-        TSeeding seedingsCutTo3 = Seedings.getSeedingsFromFinalStandings(standings, 3);
+        TSeeding seedingsCutTo6 = Seedings.getSeedingsFromFinalStandings(standings, 6, playersToExclude);
+        TSeeding seedingsCutTo5 = Seedings.getSeedingsFromFinalStandings(standings, 5, playersToExclude);
+        TSeeding seedingsCutTo4 = Seedings.getSeedingsFromFinalStandings(standings, 4, playersToExclude);
+        TSeeding seedingsCutTo3 = Seedings.getSeedingsFromFinalStandings(standings, 3, playersToExclude);
         assertEquals(5, seedingsCutTo6.getPlayersBestFirst().size());
         assertEquals(5, seedingsCutTo5.getPlayersBestFirst().size());
         assertEquals(4, seedingsCutTo4.getPlayersBestFirst().size());
