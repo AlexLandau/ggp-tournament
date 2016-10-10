@@ -39,6 +39,7 @@ import net.alloyggp.tournament.internal.MatchId;
 import net.alloyggp.tournament.internal.MatchResults;
 import net.alloyggp.tournament.internal.StandardNextMatchesResult;
 import net.alloyggp.tournament.internal.StandardRanking;
+import net.alloyggp.tournament.internal.admin.InternalAdminAction;
 import net.alloyggp.tournament.internal.spec.MatchSpec;
 import net.alloyggp.tournament.internal.spec.RoundSpec;
 
@@ -74,6 +75,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
         private final String tournamentInternalName;
         private final int stageNum;
         private final TSeeding initialSeeding;
+        private final ImmutableList<InternalAdminAction> adminActions;
         private final ImmutableList<RoundSpec> rounds;
         private final ImmutableSet<InternalMatchResult> resultsFromEarlierStages;
         private final ImmutableSet<InternalMatchResult> resultsSoFarInStage;
@@ -85,23 +87,25 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
         //Use createAndRun instead
         private SingleEliminationFormatSimulator(String tournamentInternalName, int stageNum, TSeeding initialSeeding,
+                ImmutableList<InternalAdminAction> adminActions,
                 ImmutableList<RoundSpec> rounds, ImmutableSet<InternalMatchResult> resultsFromEarlierStages,
                 ImmutableSet<InternalMatchResult> resultsSoFarInStage) {
             this.tournamentInternalName = tournamentInternalName;
             this.stageNum = stageNum;
             this.initialSeeding = initialSeeding;
+            this.adminActions = adminActions;
             this.rounds = rounds;
             this.resultsFromEarlierStages = resultsFromEarlierStages;
             this.resultsSoFarInStage = resultsSoFarInStage;
         }
 
         public static SingleEliminationFormatSimulator createAndRun(String tournamentInternalName,
-                int stageNum, TSeeding initialSeeding,
+                int stageNum, TSeeding initialSeeding, ImmutableList<InternalAdminAction> adminActions,
                 ImmutableList<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
             Set<InternalMatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
             Set<InternalMatchResult> resultsSoFarInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
             SingleEliminationFormatSimulator simulator = new SingleEliminationFormatSimulator(
-                    tournamentInternalName, stageNum, initialSeeding, rounds,
+                    tournamentInternalName, stageNum, initialSeeding, adminActions, rounds,
                     ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsSoFarInStage));
             simulator.run();
             return simulator;
@@ -114,7 +118,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             int numRoundsLeft = getNumRounds(numPlayers);
 
             EndOfRoundState state = TournamentStateCache.getLatestCachedEndOfRoundState(tournamentInternalName, initialSeeding,
-                    resultsFromEarlierStages, stageNum, resultsSoFarInStage);
+                    adminActions, resultsFromEarlierStages, stageNum, resultsSoFarInStage);
             if (state != null) {
                 SingleEliminationRoundStatus status = (SingleEliminationRoundStatus) state;
                 playersByPosition = Lists.newArrayList(status.playersByPosition);
@@ -214,6 +218,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
             TournamentStateCache.cacheEndOfRoundState(
                     tournamentInternalName,
                     initialSeeding,
+                    adminActions,
                     resultsFromEarlierStages,
                     stageNum,
                     resultsSoFarInStage,
@@ -285,7 +290,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
             Preconditions.checkNotNull(specToUse);
             //If we make it here, repeat the last match type
-            String matchId = MatchId.create(stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts).toString();
+            String matchId = MatchId.create(adminActions.size(), stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts).toString();
             //TODO: Alternate roles each time if we do have to repeat the last match type
             //(Also needs to be done in rolesSwapped)
             List<TPlayer> playersBestFirst = Lists.newArrayList(player1, player2);
@@ -513,18 +518,19 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
     @Override
     public TNextMatchesResult getMatchesToRun(String tournamentInternalName, TSeeding initialSeeding,
+            List<InternalAdminAction> adminActions,
             int stageNum, List<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
-                stageNum, initialSeeding, ImmutableList.copyOf(rounds), allResultsSoFar)
+                stageNum, initialSeeding, ImmutableList.copyOf(adminActions), ImmutableList.copyOf(rounds), allResultsSoFar)
                 .getMatchesToRun();
     }
 
     @Override
     public List<TRanking> getStandingsHistory(String tournamentInternalName,
-            TSeeding initialSeeding, int stageNum, List<RoundSpec> rounds,
+            TSeeding initialSeeding, List<InternalAdminAction> adminActions, int stageNum, List<RoundSpec> rounds,
             Set<InternalMatchResult> allResultsSoFar) {
         return SingleEliminationFormatSimulator.createAndRun(tournamentInternalName,
-                stageNum, initialSeeding, ImmutableList.copyOf(rounds), allResultsSoFar)
+                stageNum, initialSeeding, ImmutableList.copyOf(adminActions), ImmutableList.copyOf(rounds), allResultsSoFar)
                 .getStandingsHistory();
     }
 

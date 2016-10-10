@@ -10,27 +10,32 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
+import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.api.TMatchSetup;
 import net.alloyggp.tournament.api.TPlayer;
 import net.alloyggp.tournament.internal.Game;
 import net.alloyggp.tournament.internal.YamlUtils;
+import net.alloyggp.tournament.internal.admin.InternalAdminAction;
 
 @Immutable
 public class MatchSpec {
-    private final Game game;
+    private final TGame game;
     private final int startClock;
     private final int playClock;
     private final ImmutableList<Integer> playerSeedOrder;
     private final double weight;
+    private final int matchNum;
 
-    private MatchSpec(Game game, int startClock, int playClock,
-            ImmutableList<Integer> playerSeedOrder, double weight) {
+    private MatchSpec(TGame game, int startClock, int playClock,
+            ImmutableList<Integer> playerSeedOrder, double weight,
+            int matchNum) {
         Preconditions.checkArgument(weight >= 0.0);
         this.game = game;
         this.startClock = startClock;
         this.playClock = playClock;
         this.playerSeedOrder = playerSeedOrder;
         this.weight = weight;
+        this.matchNum = matchNum;
     }
 
     private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
@@ -42,7 +47,7 @@ public class MatchSpec {
             );
 
     @SuppressWarnings("unchecked")
-    public static MatchSpec parseYaml(Object yamlMatch, Map<String, Game> games) {
+    public static MatchSpec parseYaml(Object yamlMatch, int matchNum, Map<String, Game> games) {
         Map<String, Object> matchMap = (Map<String, Object>) yamlMatch;
         YamlUtils.validateKeys(matchMap, "match", ALLOWED_KEYS);
         String gameName = (String) matchMap.get("game");
@@ -65,7 +70,7 @@ public class MatchSpec {
             weight = (double) matchMap.get("weight");
         }
 
-        return new MatchSpec(game, startClock, playClock, playerSeedOrder, weight);
+        return new MatchSpec(game, startClock, playClock, playerSeedOrder, weight, matchNum);
     }
 
     private static ImmutableList<Integer> getDefaultPlayerSeedOrder(int numRoles) {
@@ -76,7 +81,7 @@ public class MatchSpec {
         return ImmutableList.copyOf(seeds);
     }
 
-    public Game getGame() {
+    public TGame getGame() {
         return game;
     }
 
@@ -108,5 +113,17 @@ public class MatchSpec {
 
     public double getWeight() {
         return weight;
+    }
+
+    public MatchSpec apply(InternalAdminAction action, int stageNum,
+            int roundNum) {
+        TGame newGame = action.editMatchGame(game, stageNum, roundNum, matchNum);
+        int newStartClock = action.editMatchStartClock(startClock, stageNum, roundNum, matchNum);
+        int newPlayClock = action.editMatchPlayClock(playClock, stageNum, roundNum, matchNum);
+        ImmutableList<Integer> newPlayerSeedOrder = action.editMatchPlayerSeedOrder(
+                playerSeedOrder, stageNum, roundNum, matchNum);
+        double newWeight = action.editMatchWeight(weight, stageNum, roundNum, matchNum);
+
+        return new MatchSpec(newGame, newStartClock, newPlayClock, newPlayerSeedOrder, newWeight, matchNum);
     }
 }

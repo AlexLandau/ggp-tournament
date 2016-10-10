@@ -46,13 +46,13 @@ import net.alloyggp.tournament.api.TPlayerScore;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TScore;
 import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.internal.Game;
 import net.alloyggp.tournament.internal.InternalMatchResult;
 import net.alloyggp.tournament.internal.MatchId;
 import net.alloyggp.tournament.internal.MatchIds;
 import net.alloyggp.tournament.internal.MatchResults;
 import net.alloyggp.tournament.internal.StandardNextMatchesResult;
 import net.alloyggp.tournament.internal.StandardRanking;
+import net.alloyggp.tournament.internal.admin.InternalAdminAction;
 import net.alloyggp.tournament.internal.quasirandom.QuasiRandomMatchGenerator;
 import net.alloyggp.tournament.internal.quasirandom.RolesFirstImpl3p2;
 import net.alloyggp.tournament.internal.spec.MatchSpec;
@@ -77,6 +77,7 @@ public class SwissFormat1Runner implements FormatRunner {
         private final String tournamentInternalName;
         private final int stageNum;
         private final TSeeding initialSeeding;
+        private final ImmutableList<InternalAdminAction> adminActions;
         private final ImmutableList<RoundSpec> rounds;
         private final ImmutableSet<InternalMatchResult> resultsFromEarlierStages;
         private final ImmutableSet<InternalMatchResult> resultsInStage;
@@ -84,10 +85,10 @@ public class SwissFormat1Runner implements FormatRunner {
 
         private TGame mostRecentGame = null; //of a fully completed round
         private final Map<TPlayer, Double> totalPointsScored = Maps.newHashMap();
-        private final Map<Game, Map<TPlayer, Double>> pointsScoredByGame = Maps.newHashMap();
+        private final Map<TGame, Map<TPlayer, Double>> pointsScoredByGame = Maps.newHashMap();
         private final Map<TPlayer, Double> pointsFromByes = Maps.newHashMap();
         private final Multiset<Set<TPlayer>> totalMatchupsSoFar = HashMultiset.create();
-        private final Map<Game, Multiset<Set<TPlayer>>> matchupsSoFarByGame = Maps.newHashMap();
+        private final Map<TGame, Multiset<Set<TPlayer>>> matchupsSoFarByGame = Maps.newHashMap();
 
         private final ImmutableMap<Integer, List<List<TPlayer>>> randomMatchGroupsByRound;
         private final List<TRanking> standingsHistory = Lists.newArrayList();
@@ -97,6 +98,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 String tournamentInternalName,
                 int stageNum,
                 TSeeding initialSeeding,
+                ImmutableList<InternalAdminAction> adminActions,
                 ImmutableList<RoundSpec> rounds,
                 ImmutableSet<InternalMatchResult> resultsFromEarlierStages,
                 ImmutableSet<InternalMatchResult> resultsInStage,
@@ -104,6 +106,7 @@ public class SwissFormat1Runner implements FormatRunner {
             this.tournamentInternalName = tournamentInternalName;
             this.stageNum = stageNum;
             this.initialSeeding = initialSeeding;
+            this.adminActions = adminActions;
             this.rounds = rounds;
             this.resultsFromEarlierStages = resultsFromEarlierStages;
             this.resultsInStage = resultsInStage;
@@ -111,11 +114,11 @@ public class SwissFormat1Runner implements FormatRunner {
         }
 
         public static SwissFormatSimulator createAndRun(String tournamentInternalName, int stageNum, TSeeding initialSeeding,
-                ImmutableList<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
+                ImmutableList<InternalAdminAction> adminActions, ImmutableList<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
             Set<InternalMatchResult> resultsFromEarlierStages = MatchResults.getResultsPriorToStage(allResultsSoFar, stageNum);
             Set<InternalMatchResult> resultsInStage = MatchResults.filterByStage(allResultsSoFar, stageNum);
             SwissFormatSimulator simulator = new SwissFormatSimulator(tournamentInternalName, stageNum, initialSeeding,
-                    rounds, ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsInStage),
+                    adminActions, rounds, ImmutableSet.copyOf(resultsFromEarlierStages), ImmutableSet.copyOf(resultsInStage),
                     ImmutableMap.copyOf(getRandomMatchGroupsByRound(rounds, initialSeeding.getPlayersBestFirst())));
             simulator.run();
             return simulator;
@@ -156,7 +159,7 @@ public class SwissFormat1Runner implements FormatRunner {
             int roundNum = 0;
             SetMultimap<Integer, InternalMatchResult> matchesByRound = MatchResults.mapByRound(resultsInStage, stageNum);
 
-            @Nullable EndOfRoundState endOfRoundState = TournamentStateCache.getLatestCachedEndOfRoundState(tournamentInternalName, initialSeeding, resultsFromEarlierStages, stageNum, resultsInStage);
+            @Nullable EndOfRoundState endOfRoundState = TournamentStateCache.getLatestCachedEndOfRoundState(tournamentInternalName, initialSeeding, adminActions, resultsFromEarlierStages, stageNum, resultsInStage);
             if (endOfRoundState != null) {
                 Swiss1EndOfRoundState state = (Swiss1EndOfRoundState) endOfRoundState;
                 roundNum = state.roundNum + 1;
@@ -181,7 +184,7 @@ public class SwissFormat1Runner implements FormatRunner {
                             standingsHistory,
                             latestStartTimeSeen);
 
-                    TournamentStateCache.cacheEndOfRoundState(tournamentInternalName, initialSeeding, resultsFromEarlierStages, stageNum, resultsInStage, state);
+                    TournamentStateCache.cacheEndOfRoundState(tournamentInternalName, initialSeeding, adminActions, resultsFromEarlierStages, stageNum, resultsInStage, state);
                 }
             }
         }
@@ -539,7 +542,7 @@ public class SwissFormat1Runner implements FormatRunner {
                 pointsFromByes.put(player, 0.0);
             }
             Set<Integer> possiblePlayerCounts = Sets.newHashSet();
-            for (Game game : RoundSpec.getAllGames(rounds)) {
+            for (TGame game : RoundSpec.getAllGames(rounds)) {
                 HashMap<TPlayer, Double> pointsScoredForGame = Maps.newHashMap();
                 pointsScoredByGame.put(game, pointsScoredForGame);
                 for (TPlayer player : initialSeeding.getPlayersBestFirst()) {
@@ -688,10 +691,11 @@ public class SwissFormat1Runner implements FormatRunner {
     };
 
     @Override
-    public TNextMatchesResult getMatchesToRun(String tournamentInternalName, TSeeding initialSeeding, int stageNum,
+    public TNextMatchesResult getMatchesToRun(String tournamentInternalName, TSeeding initialSeeding,
+            List<InternalAdminAction> adminActions, int stageNum,
             List<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
-                ImmutableList.copyOf(rounds), allResultsSoFar).getMatchesToRun();
+                ImmutableList.copyOf(adminActions), ImmutableList.copyOf(rounds), allResultsSoFar).getMatchesToRun();
     }
 
     public static Set<TPlayer> getUnassignedPlayers(Collection<TPlayer> allPlayers, List<List<TPlayer>> playerGroups) {
@@ -705,10 +709,11 @@ public class SwissFormat1Runner implements FormatRunner {
     }
 
     @Override
-    public List<TRanking> getStandingsHistory(String tournamentInternalName, TSeeding initialSeeding, int stageNum,
+    public List<TRanking> getStandingsHistory(String tournamentInternalName, TSeeding initialSeeding,
+            List<InternalAdminAction> adminActions, int stageNum,
             List<RoundSpec> rounds, Set<InternalMatchResult> allResultsSoFar) {
         return SwissFormatSimulator.createAndRun(tournamentInternalName, stageNum, initialSeeding,
-                ImmutableList.copyOf(rounds), allResultsSoFar).getStandingsHistory();
+                ImmutableList.copyOf(adminActions), ImmutableList.copyOf(rounds), allResultsSoFar).getStandingsHistory();
     }
 
     private static TGame getOnlyGame(RoundSpec round) {
@@ -738,17 +743,17 @@ public class SwissFormat1Runner implements FormatRunner {
         private final int roundNum;
         private final TGame mostRecentGame;
         private final ImmutableMap<TPlayer, Double> totalPointsScored;
-        private final ImmutableMap<Game, ImmutableMap<TPlayer, Double>> pointsScoredByGame;
+        private final ImmutableMap<TGame, ImmutableMap<TPlayer, Double>> pointsScoredByGame;
         private final ImmutableMap<TPlayer, Double> pointsFromByes;
         private final ImmutableMultiset<ImmutableSet<TPlayer>> totalMatchupsSoFar;
-        private final ImmutableMap<Game, ImmutableMultiset<ImmutableSet<TPlayer>>> matchupsSoFarByGame;
+        private final ImmutableMap<TGame, ImmutableMultiset<ImmutableSet<TPlayer>>> matchupsSoFarByGame;
         private final ImmutableList<TRanking> standingsHistory;
         private final @Nullable DateTime latestStartTimeSeen;
 
         private Swiss1EndOfRoundState(int roundNum, TGame mostRecentGame, ImmutableMap<TPlayer, Double> totalPointsScored,
-                ImmutableMap<Game, ImmutableMap<TPlayer, Double>> pointsScoredByGame,
+                ImmutableMap<TGame, ImmutableMap<TPlayer, Double>> pointsScoredByGame,
                 ImmutableMap<TPlayer, Double> pointsFromByes, ImmutableMultiset<ImmutableSet<TPlayer>> totalMatchupsSoFar,
-                ImmutableMap<Game, ImmutableMultiset<ImmutableSet<TPlayer>>> matchupsSoFarByGame,
+                ImmutableMap<TGame, ImmutableMultiset<ImmutableSet<TPlayer>>> matchupsSoFarByGame,
                 ImmutableList<TRanking> standingsHistory, @Nullable DateTime latestStartTimeSeen) {
             this.roundNum = roundNum;
             this.mostRecentGame = mostRecentGame;
@@ -764,10 +769,10 @@ public class SwissFormat1Runner implements FormatRunner {
         public static Swiss1EndOfRoundState create(int roundNum,
                 TGame mostRecentGame,
                 Map<TPlayer, Double> totalPointsScored,
-                Map<Game, Map<TPlayer, Double>> pointsScoredByGame,
+                Map<TGame, Map<TPlayer, Double>> pointsScoredByGame,
                 Map<TPlayer, Double> pointsFromByes,
                 Multiset<Set<TPlayer>> totalMatchupsSoFar,
-                Map<Game, Multiset<Set<TPlayer>>> matchupsSoFarByGame,
+                Map<TGame, Multiset<Set<TPlayer>>> matchupsSoFarByGame,
                 List<TRanking> standingsHistory,
                 @Nullable DateTime latestStartTimeSeen) {
             return new Swiss1EndOfRoundState(roundNum,

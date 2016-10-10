@@ -10,16 +10,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
-import net.alloyggp.tournament.api.TSeeding;
-import net.alloyggp.tournament.internal.InternalMatchResult;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.internal.InternalMatchResult;
+import net.alloyggp.tournament.internal.admin.InternalAdminAction;
 
 /**
  * This is a process-wide cache meant to short-circuit some of
@@ -54,13 +56,16 @@ public class TournamentStateCache {
     //much more accessible.
     private static class CacheKey {
         private final String tournamentInternalName;
+        private final ImmutableList<InternalAdminAction> adminActions;
         private final TSeeding initialSeeding;
         private final int stageNum;
         private final ImmutableSet<InternalMatchResult> resultsFromEarlierStages;
 
-        public CacheKey(String tournamentInternalName, TSeeding initialSeeding, int stageNum,
+        public CacheKey(String tournamentInternalName, ImmutableList<InternalAdminAction> adminActions,
+                TSeeding initialSeeding, int stageNum,
                 ImmutableSet<InternalMatchResult> resultsFromEarlierStages) {
             this.tournamentInternalName = tournamentInternalName;
+            this.adminActions = adminActions;
             this.initialSeeding = initialSeeding;
             this.stageNum = stageNum;
             this.resultsFromEarlierStages = resultsFromEarlierStages;
@@ -179,11 +184,12 @@ public class TournamentStateCache {
     }
 
     public static void cacheEndOfRoundState(String tournamentInternalName, TSeeding initialSeeding,
+            ImmutableList<InternalAdminAction> adminActions,
             ImmutableSet<InternalMatchResult> resultsFromEarlierStages, int stageNum, Set<InternalMatchResult> resultsInStage, EndOfRoundState state) {
         if (!CACHE_ENABLED.get()) {
             return;
         }
-        CacheKey key = new CacheKey(tournamentInternalName, initialSeeding, stageNum, resultsFromEarlierStages);
+        CacheKey key = new CacheKey(tournamentInternalName, adminActions, initialSeeding, stageNum, resultsFromEarlierStages);
 
         SortedMap<Integer, List<CacheEntry>> stageCache = STAGE_CACHES.getUnchecked(key);
         int size = resultsInStage.size();
@@ -196,11 +202,12 @@ public class TournamentStateCache {
     }
 
     public static @Nullable EndOfRoundState getLatestCachedEndOfRoundState(String tournamentInternalName,
-            TSeeding initialSeeding, ImmutableSet<InternalMatchResult> resultsFromEarlierStages,  int stageNum, ImmutableSet<InternalMatchResult> resultsInStage) {
+            TSeeding initialSeeding, ImmutableList<InternalAdminAction> adminActions,
+            ImmutableSet<InternalMatchResult> resultsFromEarlierStages,  int stageNum, ImmutableSet<InternalMatchResult> resultsInStage) {
         if (!CACHE_ENABLED.get()) {
             return null;
         }
-        CacheKey key = new CacheKey(tournamentInternalName, initialSeeding, stageNum, resultsFromEarlierStages);
+        CacheKey key = new CacheKey(tournamentInternalName, adminActions, initialSeeding, stageNum, resultsFromEarlierStages);
 
         SortedMap<Integer, List<CacheEntry>> results = STAGE_CACHES.getUnchecked(key);
         synchronized (results) {

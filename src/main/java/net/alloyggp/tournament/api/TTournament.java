@@ -56,5 +56,4 @@ public interface TTournament {
      * that start time. Otherwise, returns zero.
      */
     long getSecondsToWaitUntilInitialStartTime();
-
 }

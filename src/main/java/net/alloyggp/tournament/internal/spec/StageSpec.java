@@ -22,6 +22,7 @@ import net.alloyggp.tournament.internal.InternalMatchResult;
 import net.alloyggp.tournament.internal.Seedings;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.YamlUtils;
+import net.alloyggp.tournament.internal.admin.InternalAdminAction;
 import net.alloyggp.tournament.internal.runner.FormatRunner;
 
 @Immutable
@@ -62,8 +63,10 @@ public class StageSpec {
         YamlUtils.validateKeys(stageMap, "stage", ALLOWED_KEYS);
         String formatName = (String) stageMap.get("format");
         List<RoundSpec> rounds = Lists.newArrayList();
+        int roundNum = 0;
         for (Object yamlRound : (List<Object>) stageMap.get("rounds")) {
-            rounds.add(RoundSpec.parseYaml(yamlRound, games));
+            rounds.add(RoundSpec.parseYaml(yamlRound, roundNum, games));
+            roundNum++;
         }
         int playerLimit = playerLimitSoFar.get();
         if (stageMap.containsKey("playerLimit")) {
@@ -88,15 +91,15 @@ public class StageSpec {
     }
 
     public TNextMatchesResult getMatchesToRun(String tournamentInternalName,
-            TSeeding initialSeeding, Set<InternalMatchResult> resultsSoFar) {
+            TSeeding initialSeeding, List<InternalAdminAction> adminActions, Set<InternalMatchResult> resultsSoFar) {
         FormatRunner runner = format.getRunner();
-        return runner.getMatchesToRun(tournamentInternalName, initialSeeding, stageNum,
+        return runner.getMatchesToRun(tournamentInternalName, initialSeeding, adminActions, stageNum,
                 rounds, resultsSoFar);
     }
 
     public TRanking getCurrentStandings(String tournamentInternalName,
-            TSeeding initialSeeding, Set<InternalMatchResult> resultsSoFar) {
-        List<TRanking> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, resultsSoFar);
+            TSeeding initialSeeding, List<InternalAdminAction> adminActions, Set<InternalMatchResult> resultsSoFar) {
+        List<TRanking> standingsHistory = getStandingsHistory(tournamentInternalName, initialSeeding, adminActions, resultsSoFar);
         if (standingsHistory.isEmpty()) {
             return StandardRanking.createForSeeding(initialSeeding);
         }
@@ -129,8 +132,21 @@ public class StageSpec {
     }
 
     public List<TRanking> getStandingsHistory(String tournamentInternalName,
-            TSeeding initialSeeding, Set<InternalMatchResult> resultsSoFar) {
+            TSeeding initialSeeding, List<InternalAdminAction> adminActions, Set<InternalMatchResult> resultsSoFar) {
         return format.getRunner().getStandingsHistory(tournamentInternalName, initialSeeding,
-                stageNum, rounds, resultsSoFar);
+                adminActions, stageNum, rounds, resultsSoFar);
+    }
+
+    public StageSpec apply(InternalAdminAction action) {
+        StageFormat newFormat = action.editStageFormat(stageNum, format);
+        int newPlayerLimit = action.editStagePlayerLimit(stageNum, playerLimit);
+        Set<TPlayer> newExcludedPlayers = action.editStageExcludedPlayers(stageNum, excludedPlayers);
+        List<RoundSpec> newRounds = Lists.newArrayList();
+        for (RoundSpec round : rounds) {
+            newRounds.add(round.apply(action, stageNum));
+        }
+
+        return new StageSpec(stageNum, newFormat, ImmutableList.copyOf(newRounds),
+                newPlayerLimit, ImmutableSet.copyOf(newExcludedPlayers));
     }
 }

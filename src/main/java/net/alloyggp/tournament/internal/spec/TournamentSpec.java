@@ -21,6 +21,7 @@ import net.alloyggp.escaperope.rope.ropify.ListRopeWeaver;
 import net.alloyggp.escaperope.rope.ropify.RopeBuilder;
 import net.alloyggp.escaperope.rope.ropify.RopeList;
 import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
+import net.alloyggp.tournament.api.TAdminAction;
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TNextMatchesResult;
 import net.alloyggp.tournament.api.TPlayer;
@@ -32,10 +33,12 @@ import net.alloyggp.tournament.api.TTournament;
 import net.alloyggp.tournament.api.TTournamentSpecParser;
 import net.alloyggp.tournament.internal.Game;
 import net.alloyggp.tournament.internal.InternalMatchResult;
+import net.alloyggp.tournament.internal.MatchId;
 import net.alloyggp.tournament.internal.StandardNextMatchesResult;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.TimeUtils;
 import net.alloyggp.tournament.internal.YamlUtils;
+import net.alloyggp.tournament.internal.admin.InternalAdminAction;
 import net.alloyggp.tournament.internal.rope.Weavers;
 
 @Immutable
@@ -43,9 +46,11 @@ public class TournamentSpec implements TTournament {
     private final String tournamentInternalName;
     private final String tournamentDisplayName;
     private final ImmutableList<StageSpec> stages;
+    private final ImmutableList<InternalAdminAction> revisionsApplied; //Tracks application of admin actions.
+//    private final MatchFilter filter;
 
     private TournamentSpec(String tournamentInternalName, String tournamentDisplayName,
-            ImmutableList<StageSpec> stages) {
+            ImmutableList<StageSpec> stages, ImmutableList<InternalAdminAction> revisionsApplied) {
         Preconditions.checkNotNull(tournamentInternalName);
         Preconditions.checkNotNull(tournamentDisplayName);
         Preconditions.checkArgument(!stages.isEmpty());
@@ -54,6 +59,7 @@ public class TournamentSpec implements TTournament {
         this.tournamentInternalName = tournamentInternalName;
         this.tournamentDisplayName = tournamentDisplayName;
         this.stages = stages;
+        this.revisionsApplied = revisionsApplied;
     }
 
     private static final ImmutableSet<String> ALLOWED_KEYS = ImmutableSet.of(
@@ -82,7 +88,7 @@ public class TournamentSpec implements TTournament {
             stageNum++;
         }
         return new TournamentSpec(tournamentInternalName, tournamentDisplayName,
-                ImmutableList.copyOf(stages));
+                ImmutableList.copyOf(stages), ImmutableList.<InternalAdminAction>of());
     }
 
     @SuppressWarnings("unchecked")
@@ -118,6 +124,10 @@ public class TournamentSpec implements TTournament {
         return stages;
     }
 
+    public ImmutableList<? extends TAdminAction> getRevisionsApplied() {
+        return revisionsApplied;
+    }
+
     @Override
     public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
         Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
@@ -132,12 +142,12 @@ public class TournamentSpec implements TTournament {
                 seeding = stage.getSeedingsFromPreviousStandings(standings);
             }
             TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    seeding, resultsSoFar);
+                    seeding, revisionsApplied, resultsSoFar);
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return matchesForStage;
             }
             standings = stage.getCurrentStandings(tournamentInternalName,
-                    seeding, resultsSoFar);
+                    seeding, revisionsApplied, resultsSoFar);
         }
         //No stages had matches left; the tournament is over
         return StandardNextMatchesResult.createEmpty();
@@ -158,9 +168,9 @@ public class TournamentSpec implements TTournament {
                 seeding = stage.getSeedingsFromPreviousStandings(standings);
             }
             TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    seeding, resultsSoFar);
+                    seeding, revisionsApplied, resultsSoFar);
             standings = mixInStandings(standings,
-                    stage.getCurrentStandings(tournamentInternalName, seeding, resultsSoFar));
+                    stage.getCurrentStandings(tournamentInternalName, seeding, revisionsApplied, resultsSoFar));
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
                 return standings;
             }
@@ -309,8 +319,8 @@ public class TournamentSpec implements TTournament {
                 seeding = stage.getSeedingsFromPreviousStandings(lastStageFinalRanking);
             }
             TNextMatchesResult matchesForStage = stage.getMatchesToRun(tournamentInternalName,
-                    seeding, resultsSoFar);
-            for (TRanking ranking : stage.getStandingsHistory(tournamentInternalName, seeding, resultsSoFar)) {
+                    seeding, revisionsApplied, resultsSoFar);
+            for (TRanking ranking : stage.getStandingsHistory(tournamentInternalName, seeding, revisionsApplied, resultsSoFar)) {
                 result.add(mixInStandings(lastStageFinalRanking, ranking));
             }
             if (!matchesForStage.getMatchesToRun().isEmpty()) {
@@ -318,7 +328,7 @@ public class TournamentSpec implements TTournament {
             }
             lastStageFinalRanking = mixInStandings(lastStageFinalRanking,
                     stage.getCurrentStandings(tournamentInternalName,
-                    seeding, resultsSoFar));
+                    seeding, revisionsApplied, resultsSoFar));
         }
         return result;
     }
@@ -331,5 +341,113 @@ public class TournamentSpec implements TTournament {
     @Override
     public long getSecondsToWaitUntilInitialStartTime() {
         return TimeUtils.getSecondsToWaitUntilStartTime(getInitialStartTime());
+    }
+
+    private TournamentSpec apply(InternalAdminAction action) {
+        ImmutableList.Builder<StageSpec> newStages = ImmutableList.builder();
+        for (StageSpec stage : stages) {
+            newStages.add(stage.apply(action));
+        }
+        List<InternalAdminAction> newRevisions = Lists.newArrayList(revisionsApplied);
+        newRevisions.add(action);
+        return new TournamentSpec(tournamentInternalName, tournamentDisplayName,
+                newStages.build(), ImmutableList.copyOf(newRevisions));
+    }
+
+    public TTournament apply(List<TAdminAction> adminActions) {
+        List<InternalAdminAction> internalActions = Lists.newArrayList();
+        for (TAdminAction action : adminActions) {
+            if (!(action instanceof InternalAdminAction)) {
+                throw new IllegalArgumentException("Custom implementations of TAdminAction are not supported");
+            }
+            internalActions.add((InternalAdminAction) action);
+        }
+        //TODO: This may not be the most efficient way to apply this
+        TournamentSpec spec = this;
+        for (InternalAdminAction action : internalActions) {
+            spec = spec.apply(action);
+        }
+        //TODO: Also needs something that filters matches
+        return MatchFilteringTournament.create(internalActions, spec);
+    }
+
+    private static class MatchFilteringTournament implements TTournament {
+        private final ImmutableList<InternalAdminAction> adminActions;
+        private final TTournament delegate;
+
+        private MatchFilteringTournament(
+                ImmutableList<InternalAdminAction> adminActions,
+                TTournament delegate) {
+            this.adminActions = adminActions;
+            this.delegate = delegate;
+        }
+
+        public static MatchFilteringTournament create(
+                List<InternalAdminAction> adminActions,
+                TournamentSpec delegate) {
+            return new MatchFilteringTournament(ImmutableList.copyOf(adminActions), delegate);
+        }
+
+        @Override
+        public String getInternalName() {
+            return delegate.getInternalName();
+        }
+
+        @Override
+        public String getDisplayName() {
+            return delegate.getDisplayName();
+        }
+
+        @Override
+        public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding,
+                Set<TMatchResult> resultsSoFar) {
+            resultsSoFar = filterResults(resultsSoFar);
+            return delegate.getMatchesToRun(initialSeeding, resultsSoFar);
+        }
+
+        @Override
+        public TRanking getCurrentStandings(TSeeding initialSeeding,
+                Set<TMatchResult> resultsSoFar) {
+            resultsSoFar = filterResults(resultsSoFar);
+            return delegate.getCurrentStandings(initialSeeding, resultsSoFar);
+        }
+
+        @Override
+        public List<TRanking> getStandingsHistory(TSeeding initialSeeding,
+                Set<TMatchResult> resultsSoFar) {
+            resultsSoFar = filterResults(resultsSoFar);
+            return delegate.getStandingsHistory(initialSeeding, resultsSoFar);
+        }
+
+        //TODO: Return InternalMatchResults instead (?)
+        private Set<TMatchResult> filterResults(
+                Set<TMatchResult> resultsSoFar) {
+            Set<TMatchResult> remainingResults = Sets.newHashSet();
+            for (TMatchResult result : resultsSoFar) {
+                MatchId matchId = MatchId.create(result.getMatchId());
+                int actionsAlreadyApplied = matchId.getNumActionsApplied();
+
+                //Check if any later action invalidates the match result
+                boolean invalidated = false;
+                for (int i = actionsAlreadyApplied; i < adminActions.size(); i++) {
+                    InternalAdminAction action = adminActions.get(i);
+                    invalidated |= action.invalidates(matchId);
+                }
+                if (!invalidated) {
+                    remainingResults.add(result);
+                }
+            }
+            return remainingResults;
+        }
+
+        @Override
+        public Optional<DateTime> getInitialStartTime() {
+            return delegate.getInitialStartTime();
+        }
+
+        @Override
+        public long getSecondsToWaitUntilInitialStartTime() {
+            return delegate.getSecondsToWaitUntilInitialStartTime();
+        }
     }
 }
