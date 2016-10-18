@@ -23,7 +23,7 @@ public class InternalMatchResult {
         this.matchId = matchId;
     }
 
-    private static InternalMatchResult create(TMatchResult result) {
+    public static InternalMatchResult create(TMatchResult result) {
         return new InternalMatchResult(result, MatchId.create(result.getMatchId()));
     }
 

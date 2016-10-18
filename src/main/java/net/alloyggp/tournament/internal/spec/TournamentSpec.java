@@ -33,7 +33,6 @@ import net.alloyggp.tournament.api.TTournament;
 import net.alloyggp.tournament.api.TTournamentSpecParser;
 import net.alloyggp.tournament.internal.Game;
 import net.alloyggp.tournament.internal.InternalMatchResult;
-import net.alloyggp.tournament.internal.MatchId;
 import net.alloyggp.tournament.internal.StandardNextMatchesResult;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.TimeUtils;
@@ -130,7 +129,7 @@ public class TournamentSpec implements TTournament {
 
     @Override
     public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
-        Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
+        Set<InternalMatchResult> resultsSoFar = handleInputResults(clientResults);
 
         TRanking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
@@ -153,10 +152,34 @@ public class TournamentSpec implements TTournament {
         return StandardNextMatchesResult.createEmpty();
     }
 
+    //TODO: In addition to filtering results coming in, we'll want to make sure results
+    //going back out have the right numbers. If we're modifying round 3, we don't want to
+    //suddenly force a rerun of round 2 as a result, so round 2 should have the older
+    //numActionsApplied numbers, but round 3 should have newer numActionsApplied numbers.
+    //TODO: Settle on actions vs. revisions for naming
+    private Set<InternalMatchResult> handleInputResults(Set<TMatchResult> clientResults) {
+        Set<InternalMatchResult> filteredResults = Sets.newHashSet();
+        for (TMatchResult unformattedResult : clientResults) {
+            InternalMatchResult result = InternalMatchResult.create(unformattedResult);
+            boolean invalidated = false;
+            for (int i = result.getMatchId().getNumActionsApplied(); i < revisionsApplied.size(); i++) {
+                InternalAdminAction adminAction = revisionsApplied.get(i);
+                if (adminAction.invalidates(result.getMatchId())) {
+                    invalidated = true;
+                    break;
+                }
+            }
+            if (!invalidated) {
+                filteredResults.add(result);
+            }
+        }
+        return filteredResults;
+    }
+
     @Override
     public TRanking getCurrentStandings(TSeeding initialSeeding,
             Set<TMatchResult> clientResults) {
-        Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
+        Set<InternalMatchResult> resultsSoFar = handleInputResults(clientResults);
 
         TRanking standings = null;
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
@@ -308,7 +331,7 @@ public class TournamentSpec implements TTournament {
         result.add(StandardRanking.createForSeeding(initialSeeding));
         TRanking lastStageFinalRanking = null;
 
-        Set<InternalMatchResult> resultsSoFar = InternalMatchResult.convertResults(clientResults);
+        Set<InternalMatchResult> resultsSoFar = handleInputResults(clientResults);
 
         for (int stageNum = 0; stageNum < stages.size(); stageNum++) {
             StageSpec stage = stages.get(stageNum);
@@ -367,87 +390,7 @@ public class TournamentSpec implements TTournament {
         for (InternalAdminAction action : internalActions) {
             spec = spec.apply(action);
         }
-        //TODO: Also needs something that filters matches
-        return MatchFilteringTournament.create(internalActions, spec);
-    }
 
-    private static class MatchFilteringTournament implements TTournament {
-        private final ImmutableList<InternalAdminAction> adminActions;
-        private final TTournament delegate;
-
-        private MatchFilteringTournament(
-                ImmutableList<InternalAdminAction> adminActions,
-                TTournament delegate) {
-            this.adminActions = adminActions;
-            this.delegate = delegate;
-        }
-
-        public static MatchFilteringTournament create(
-                List<InternalAdminAction> adminActions,
-                TournamentSpec delegate) {
-            return new MatchFilteringTournament(ImmutableList.copyOf(adminActions), delegate);
-        }
-
-        @Override
-        public String getInternalName() {
-            return delegate.getInternalName();
-        }
-
-        @Override
-        public String getDisplayName() {
-            return delegate.getDisplayName();
-        }
-
-        @Override
-        public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding,
-                Set<TMatchResult> resultsSoFar) {
-            resultsSoFar = filterResults(resultsSoFar);
-            return delegate.getMatchesToRun(initialSeeding, resultsSoFar);
-        }
-
-        @Override
-        public TRanking getCurrentStandings(TSeeding initialSeeding,
-                Set<TMatchResult> resultsSoFar) {
-            resultsSoFar = filterResults(resultsSoFar);
-            return delegate.getCurrentStandings(initialSeeding, resultsSoFar);
-        }
-
-        @Override
-        public List<TRanking> getStandingsHistory(TSeeding initialSeeding,
-                Set<TMatchResult> resultsSoFar) {
-            resultsSoFar = filterResults(resultsSoFar);
-            return delegate.getStandingsHistory(initialSeeding, resultsSoFar);
-        }
-
-        //TODO: Return InternalMatchResults instead (?)
-        private Set<TMatchResult> filterResults(
-                Set<TMatchResult> resultsSoFar) {
-            Set<TMatchResult> remainingResults = Sets.newHashSet();
-            for (TMatchResult result : resultsSoFar) {
-                MatchId matchId = MatchId.create(result.getMatchId());
-                int actionsAlreadyApplied = matchId.getNumActionsApplied();
-
-                //Check if any later action invalidates the match result
-                boolean invalidated = false;
-                for (int i = actionsAlreadyApplied; i < adminActions.size(); i++) {
-                    InternalAdminAction action = adminActions.get(i);
-                    invalidated |= action.invalidates(matchId);
-                }
-                if (!invalidated) {
-                    remainingResults.add(result);
-                }
-            }
-            return remainingResults;
-        }
-
-        @Override
-        public Optional<DateTime> getInitialStartTime() {
-            return delegate.getInitialStartTime();
-        }
-
-        @Override
-        public long getSecondsToWaitUntilInitialStartTime() {
-            return delegate.getSecondsToWaitUntilInitialStartTime();
-        }
+        return spec;
     }
 }
