@@ -68,7 +68,7 @@ public class AllRoundsAreRunTest {
                     numPlayersInStage = stage.getPlayerLimit();
                 }
                 int numRounds;
-                if (stage.getFormat() == StageFormat.SINGLE_ELIMINATION) {
+                if (stage.getFormat() == StageFormat.SINGLE_ELIMINATION1) {
                     numRounds = getNumRoundsSingleElim(numPlayersInStage);
                     for (int i = 1; i <= numRounds; i++) {
                         checkResultExists(status.getResultsSoFar(), stage.getStageNum(), i);

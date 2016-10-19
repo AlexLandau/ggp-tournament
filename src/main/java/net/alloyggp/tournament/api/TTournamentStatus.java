@@ -8,6 +8,8 @@ import javax.annotation.concurrent.Immutable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import net.alloyggp.tournament.internal.spec.TournamentSpec;
+
 /**
  * An immutable object representing a particular state of a tournament. This includes
  * the specification of the tournament, the initial seeding of players, and any match
@@ -88,5 +90,9 @@ public class TTournamentStatus {
 
     public List<TRanking> getStandingsHistory() {
         return spec.getStandingsHistory(initialSeeding, resultsSoFar);
+    }
+
+    public TTournamentStatus apply(TAdminAction adminAction) {
+        return new TTournamentStatus(((TournamentSpec) spec).apply(adminAction), initialSeeding, resultsSoFar);
     }
 }

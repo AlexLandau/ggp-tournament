@@ -1,5 +1,7 @@
 package net.alloyggp.tournament.internal.admin;
 
+import java.util.Comparator;
+
 import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.internal.MatchId;
 
@@ -68,17 +70,17 @@ public class ReplaceGameAction extends InternalAdminAction {
     }
 
     @Override
-    public boolean invalidates(MatchId matchId) {
+    public boolean invalidates(MatchId matchId, Comparator<Integer> roundComparator) {
         if (matchId.getStageNumber() < stageNum) {
             return false;
         }
         if (matchId.getStageNumber() > stageNum) {
             return true;
         }
-        if (matchId.getRoundNumber() < roundNum) {
+        if (roundComparator.compare(matchId.getRoundNumber(), roundNum) < 0) {
             return false;
         }
-        if (matchId.getRoundNumber() > roundNum) {
+        if (roundComparator.compare(matchId.getRoundNumber(), roundNum) > 0) {
             return true;
         }
         if (matchId.getMatchNumber() < matchNum) {

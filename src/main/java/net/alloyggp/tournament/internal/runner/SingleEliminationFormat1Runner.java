@@ -36,12 +36,14 @@ import net.alloyggp.tournament.api.TScore;
 import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.internal.InternalMatchResult;
 import net.alloyggp.tournament.internal.MatchId;
+import net.alloyggp.tournament.internal.MatchIds;
 import net.alloyggp.tournament.internal.MatchResults;
 import net.alloyggp.tournament.internal.StandardNextMatchesResult;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.admin.InternalAdminAction;
 import net.alloyggp.tournament.internal.spec.MatchSpec;
 import net.alloyggp.tournament.internal.spec.RoundSpec;
+import net.alloyggp.tournament.internal.spec.StageFormat;
 
 /*
  * Non-obvious aspects of this format implementation:
@@ -57,14 +59,14 @@ import net.alloyggp.tournament.internal.spec.RoundSpec;
  *   so on. If the number of rounds needed exceeds the number of rounds defined,
  *   the first round defined is reused for the additional rounds.
  */
-public class SingleEliminationFormatRunner implements FormatRunner {
+public class SingleEliminationFormat1Runner implements FormatRunner {
 
-    private static final SingleEliminationFormatRunner INSTANCE = new SingleEliminationFormatRunner();
+    private static final SingleEliminationFormat1Runner INSTANCE = new SingleEliminationFormat1Runner();
 
-    private SingleEliminationFormatRunner() {
+    private SingleEliminationFormat1Runner() {
     }
 
-    public static SingleEliminationFormatRunner create() {
+    public static SingleEliminationFormat1Runner create() {
         return INSTANCE;
     }
 
@@ -290,7 +292,7 @@ public class SingleEliminationFormatRunner implements FormatRunner {
 
             Preconditions.checkNotNull(specToUse);
             //If we make it here, repeat the last match type
-            String matchId = MatchId.create(adminActions.size(), stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts).toString();
+            String matchId = MatchIds.create(adminActions, StageFormat.SINGLE_ELIMINATION1, stageNum, numRoundsLeft, pairingNum, matchNum, priorMatchAttempts).toString();
             //TODO: Alternate roles each time if we do have to repeat the last match type
             //(Also needs to be done in rolesSwapped)
             List<TPlayer> playersBestFirst = Lists.newArrayList(player1, player2);

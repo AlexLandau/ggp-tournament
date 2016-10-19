@@ -57,6 +57,7 @@ import net.alloyggp.tournament.internal.quasirandom.QuasiRandomMatchGenerator;
 import net.alloyggp.tournament.internal.quasirandom.RolesFirstImpl3p2;
 import net.alloyggp.tournament.internal.spec.MatchSpec;
 import net.alloyggp.tournament.internal.spec.RoundSpec;
+import net.alloyggp.tournament.internal.spec.StageFormat;
 
 public class SwissFormat2Runner implements FormatRunner {
     private static final SwissFormat2Runner INSTANCE = new SwissFormat2Runner();
@@ -231,7 +232,7 @@ public class SwissFormat2Runner implements FormatRunner {
                     MatchSpec match = round.getMatches().get(matchNum);
                     Optional<Integer> attemptNum = getAttemptNumberIfUnfinished(groupNum, matchNum, roundResults);
                     if (attemptNum.isPresent()) {
-                        String matchId = MatchIds.create(stageNum,
+                        String matchId = MatchIds.create(adminActions, StageFormat.SWISS2, stageNum,
                                 roundNum, groupNum, matchNum, attemptNum.get());
 
                         matchesToRun.add(match.createMatchSetup(matchId, players));

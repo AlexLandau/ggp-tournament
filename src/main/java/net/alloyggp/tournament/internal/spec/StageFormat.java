@@ -1,45 +1,50 @@
 package net.alloyggp.tournament.internal.spec;
 
+import java.util.Comparator;
 import java.util.Map;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Ordering;
 
 import net.alloyggp.tournament.internal.runner.FormatRunner;
-import net.alloyggp.tournament.internal.runner.SingleEliminationFormatRunner;
+import net.alloyggp.tournament.internal.runner.SingleEliminationFormat1Runner;
 import net.alloyggp.tournament.internal.runner.SwissFormat1Runner;
 import net.alloyggp.tournament.internal.runner.SwissFormat2Runner;
 
 public enum StageFormat {
-    SINGLE_ELIMINATION("singleElimination1", true, new Supplier<FormatRunner>() {
+    SINGLE_ELIMINATION1("singleElimination1", true, new Supplier<FormatRunner>() {
         @Override
         public FormatRunner get() {
-            return SingleEliminationFormatRunner.create();
+            return SingleEliminationFormat1Runner.create();
         }
-    }),
+    }, Ordering.<Integer>natural().reverse()),
     SWISS1("swiss1", true, new Supplier<FormatRunner>() {
         @Override
         public FormatRunner get() {
             return SwissFormat1Runner.create();
         }
-    }),
+    }, Ordering.<Integer>natural()),
     SWISS2("swiss2", false, new Supplier<FormatRunner>() {
         @Override
         public FormatRunner get() {
             return SwissFormat2Runner.create();
         }
-    }),
+    }, Ordering.<Integer>natural()),
     ;
     private final String yamlName;
     private final boolean stable;
     private final Supplier<FormatRunner> runnerSupplier;
+    private final Comparator<Integer> roundComparator;
 
-    private StageFormat(String yamlName, boolean stable, Supplier<FormatRunner> runnerSupplier) {
+    private StageFormat(String yamlName, boolean stable, Supplier<FormatRunner> runnerSupplier,
+            Comparator<Integer> roundComparator) {
         this.yamlName = yamlName;
         this.stable = stable;
         this.runnerSupplier = runnerSupplier;
+        this.roundComparator = roundComparator;
     }
 
     /*package-private*/ FormatRunner getRunner() {
@@ -77,5 +82,14 @@ public enum StageFormat {
 
     public boolean isStable() {
         return stable;
+    }
+
+    /**
+     * Returns a comparator that sorts round numbers from those that should take place earlier in the tournament
+     * to those that should take place later. This is used to determine, for example, if a round's
+     * results need to be thrown out because of a modification made to an earlier round.
+     */
+    public Comparator<Integer> getRoundComparator() {
+        return roundComparator;
     }
 }

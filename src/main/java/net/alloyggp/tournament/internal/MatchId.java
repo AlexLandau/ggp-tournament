@@ -18,6 +18,7 @@ public class MatchId {
 
     private MatchId(int numActionsApplied, int stage, int round, int playerMatching, int match,
             int attempt) {
+        Preconditions.checkArgument(numActionsApplied >= 0);
         Preconditions.checkArgument(stage >= 0);
         Preconditions.checkArgument(round >= 0);
         Preconditions.checkArgument(playerMatching >= 0);

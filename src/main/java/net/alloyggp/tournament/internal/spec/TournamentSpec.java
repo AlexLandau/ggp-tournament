@@ -1,5 +1,6 @@
 package net.alloyggp.tournament.internal.spec;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -161,10 +162,12 @@ public class TournamentSpec implements TTournament {
         Set<InternalMatchResult> filteredResults = Sets.newHashSet();
         for (TMatchResult unformattedResult : clientResults) {
             InternalMatchResult result = InternalMatchResult.create(unformattedResult);
+            int stageNumber = result.getMatchId().getStageNumber();
+            Comparator<Integer> roundComparator = stages.get(stageNumber).getFormat().getRoundComparator();
             boolean invalidated = false;
             for (int i = result.getMatchId().getNumActionsApplied(); i < revisionsApplied.size(); i++) {
                 InternalAdminAction adminAction = revisionsApplied.get(i);
-                if (adminAction.invalidates(result.getMatchId())) {
+                if (adminAction.invalidates(result.getMatchId(), roundComparator)) {
                     invalidated = true;
                     break;
                 }
@@ -366,7 +369,15 @@ public class TournamentSpec implements TTournament {
         return TimeUtils.getSecondsToWaitUntilStartTime(getInitialStartTime());
     }
 
-    private TournamentSpec apply(InternalAdminAction action) {
+    public TTournament apply(TAdminAction action) {
+        if (!(action instanceof InternalAdminAction)) {
+            throw new IllegalArgumentException("Custom implementations of TAdminAction are not supported");
+        }
+
+        return applyInternal((InternalAdminAction) action);
+    }
+
+    private TournamentSpec applyInternal(InternalAdminAction action) {
         ImmutableList.Builder<StageSpec> newStages = ImmutableList.builder();
         for (StageSpec stage : stages) {
             newStages.add(stage.apply(action));
@@ -388,7 +399,7 @@ public class TournamentSpec implements TTournament {
         //TODO: This may not be the most efficient way to apply this
         TournamentSpec spec = this;
         for (InternalAdminAction action : internalActions) {
-            spec = spec.apply(action);
+            spec = spec.applyInternal(action);
         }
 
         return spec;

@@ -1,5 +1,6 @@
 package net.alloyggp.tournament.internal.admin;
 
+import java.util.Comparator;
 import java.util.Set;
 
 import org.joda.time.DateTime;
@@ -68,5 +69,6 @@ public abstract class InternalAdminAction implements TAdminAction {
     /**
      * Returns true iff the match result should be ignored because this action invalidates it.
      */
-    public abstract boolean invalidates(MatchId matchId);
+    //TODO: Put this in some superclass.
+    public abstract boolean invalidates(MatchId matchId, Comparator<Integer> roundComparator);
 }

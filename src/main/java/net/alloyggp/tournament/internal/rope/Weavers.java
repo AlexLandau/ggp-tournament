@@ -24,7 +24,7 @@ import net.alloyggp.tournament.internal.Game;
 import net.alloyggp.tournament.internal.SimpleScore;
 import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.StandardRanking.EmptyScore;
-import net.alloyggp.tournament.internal.runner.SingleEliminationFormatRunner;
+import net.alloyggp.tournament.internal.runner.SingleEliminationFormat1Runner;
 import net.alloyggp.tournament.internal.runner.SwissFormat1Runner;
 import net.alloyggp.tournament.internal.spec.TournamentSpec;
 
@@ -89,7 +89,7 @@ public class Weavers {
     private static final ImmutableMap<String, RopeWeaver<TScore>> SCORE_SUBCLASS_WEAVERS =
             ImmutableMap.<String, RopeWeaver<TScore>>builder()
             .put("CutoffScore", TournamentSpec.CUTOFF_SCORE_WEAVER)
-            .put("EliminationScore", SingleEliminationFormatRunner.SCORE_WEAVER)
+            .put("EliminationScore", SingleEliminationFormat1Runner.SCORE_WEAVER)
             .put("EmptyScore", EmptyScore.WEAVER)
             .put("SwissScore", SwissFormat1Runner.SCORE_WEAVER)
             .put("SimpleScore", SimpleScore.WEAVER)
