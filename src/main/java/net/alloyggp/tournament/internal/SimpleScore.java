@@ -2,7 +2,7 @@ package net.alloyggp.tournament.internal;
 
 import net.alloyggp.escaperope.rope.Rope;
 import net.alloyggp.escaperope.rope.StringRope;
-import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.Weaver;
 import net.alloyggp.tournament.api.TScore;
 
 public class SimpleScore implements TScore {
@@ -60,7 +60,7 @@ public class SimpleScore implements TScore {
         return Integer.toString(score);
     }
 
-    public static final RopeWeaver<TScore> WEAVER = new RopeWeaver<TScore>() {
+    public static final Weaver<TScore> WEAVER = new Weaver<TScore>() {
         @Override
         public Rope toRope(TScore object) {
             SimpleScore score = (SimpleScore) object;

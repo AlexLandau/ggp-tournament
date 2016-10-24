@@ -2,8 +2,13 @@ package net.alloyggp.tournament.internal.admin;
 
 import java.util.Comparator;
 
+import net.alloyggp.escaperope.rope.ropify.ListWeaver;
+import net.alloyggp.escaperope.rope.ropify.RopeBuilder;
+import net.alloyggp.escaperope.rope.ropify.RopeList;
+import net.alloyggp.escaperope.rope.ropify.Weaver;
 import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.internal.MatchId;
+import net.alloyggp.tournament.internal.rope.Weavers;
 
 public class ReplaceGameAction extends InternalAdminAction {
     private final int stageNum;
@@ -87,5 +92,29 @@ public class ReplaceGameAction extends InternalAdminAction {
             return false;
         }
         return true;
+    }
+
+    public static final Weaver<ReplaceGameAction> WEAVER = new ListWeaver<ReplaceGameAction>() {
+        @Override
+        protected void addToList(ReplaceGameAction object, RopeBuilder list) {
+            list.add(object.stageNum);
+            list.add(object.roundNum);
+            list.add(object.matchNum);
+            list.add(object.newGame, Weavers.GAME);
+        }
+
+        @Override
+        protected ReplaceGameAction fromRope(RopeList list) {
+            int stageNum = list.getInt(0);
+            int roundNum = list.getInt(1);
+            int matchNum = list.getInt(2);
+            TGame game = list.get(3, Weavers.GAME);
+            return create(stageNum, roundNum, matchNum, game);
+        }
+    };
+
+    @Override
+    public String toPersistedString() {
+        return InternalAdminActions.toPersistedString(this);
     }
 }

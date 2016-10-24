@@ -33,10 +33,10 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
-import net.alloyggp.escaperope.rope.ropify.ListRopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.ListWeaver;
 import net.alloyggp.escaperope.rope.ropify.RopeBuilder;
 import net.alloyggp.escaperope.rope.ropify.RopeList;
-import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.Weaver;
 import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.api.TMatchResult.Outcome;
 import net.alloyggp.tournament.api.TMatchSetup;
@@ -671,7 +671,7 @@ public class SwissFormat1Runner implements FormatRunner {
         }
     }
 
-    public static final RopeWeaver<TScore> SCORE_WEAVER = new ListRopeWeaver<TScore>() {
+    public static final Weaver<TScore> SCORE_WEAVER = new ListWeaver<TScore>() {
         @Override
         protected void addToList(TScore object, RopeBuilder list) {
             SwissScore score = (SwissScore) object;

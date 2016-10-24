@@ -1,5 +1,7 @@
 package net.alloyggp.tournament.api;
 
 public interface TAdminAction {
-    //This is all handled internally.
+    String toPersistedString();
+
+    //The effects of the actions are all handled internally.
 }

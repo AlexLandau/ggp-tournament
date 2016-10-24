@@ -33,10 +33,10 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
-import net.alloyggp.escaperope.rope.ropify.ListRopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.ListWeaver;
 import net.alloyggp.escaperope.rope.ropify.RopeBuilder;
 import net.alloyggp.escaperope.rope.ropify.RopeList;
-import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.Weaver;
 import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.api.TMatchResult.Outcome;
 import net.alloyggp.tournament.api.TMatchSetup;
@@ -584,7 +584,7 @@ public class SwissFormat2Runner implements FormatRunner {
                     mostRecentGamePoints = pointsScoredByGame.get(mostRecentGame).get(player);
                     mostRecentGameName = mostRecentGame.getId();
                 }
-                TScore score = SwissScore.create(totalPointsScored.get(player),
+                TScore score = Swiss2Score.create(totalPointsScored.get(player),
                         mostRecentGameName, mostRecentGamePoints,
                         pointsFromByes.get(player));
                 scores.add(TPlayerScore.create(player, score, i));
@@ -598,7 +598,7 @@ public class SwissFormat2Runner implements FormatRunner {
 
     }
 
-    private static class SwissScore implements TScore {
+    private static class Swiss2Score implements TScore {
         //T1K stands for "times 1000".
         private final long pointsSoFarT1K;
         //Just for display purposes; this makes it more obvious why matchups are selected
@@ -606,7 +606,7 @@ public class SwissFormat2Runner implements FormatRunner {
         private final long pointsInMostRecentGameT1K;
         private final long pointsFromByesT1K;
 
-        private SwissScore(long pointsSoFarT1K, String mostRecentGameName, long pointsInMostRecentGameT1K,
+        private Swiss2Score(long pointsSoFarT1K, String mostRecentGameName, long pointsInMostRecentGameT1K,
                 long pointsFromByesT1K) {
             this.pointsSoFarT1K = pointsSoFarT1K;
             this.mostRecentGameName = mostRecentGameName;
@@ -614,12 +614,12 @@ public class SwissFormat2Runner implements FormatRunner {
             this.pointsFromByesT1K = pointsFromByesT1K;
         }
 
-        public static SwissScore create(double pointsSoFar, @Nullable String mostRecentGameName,
+        public static Swiss2Score create(double pointsSoFar, @Nullable String mostRecentGameName,
                 double pointsInMostRecentGame, double pointsFromByes) {
             long pointsSoFarT1K = roundToThreePlacesT1K(pointsSoFar);
             long pointsInMostRecentGameT1K = roundToThreePlacesT1K(pointsInMostRecentGame);
             long pointsFromByesT1K = roundToThreePlacesT1K(pointsFromByes);
-            return new SwissScore(pointsSoFarT1K, mostRecentGameName, pointsInMostRecentGameT1K, pointsFromByesT1K);
+            return new Swiss2Score(pointsSoFarT1K, mostRecentGameName, pointsInMostRecentGameT1K, pointsFromByesT1K);
         }
 
         private static long roundToThreePlacesT1K(double value) {
@@ -628,10 +628,10 @@ public class SwissFormat2Runner implements FormatRunner {
 
         @Override
         public int compareTo(TScore other) {
-            if (!(other instanceof SwissScore)) {
+            if (!(other instanceof Swiss2Score)) {
                 throw new IllegalArgumentException();
             }
-            return Long.compare(pointsSoFarT1K, ((SwissScore)other).pointsSoFarT1K);
+            return Long.compare(pointsSoFarT1K, ((Swiss2Score)other).pointsSoFarT1K);
         }
 
         @Override
@@ -653,7 +653,7 @@ public class SwissFormat2Runner implements FormatRunner {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            SwissScore other = (SwissScore) obj;
+            Swiss2Score other = (Swiss2Score) obj;
             if (pointsSoFarT1K != other.pointsSoFarT1K) {
                 return false;
             }
@@ -684,10 +684,10 @@ public class SwissFormat2Runner implements FormatRunner {
         }
     }
 
-    public static final RopeWeaver<TScore> SCORE_WEAVER = new ListRopeWeaver<TScore>() {
+    public static final Weaver<TScore> SCORE_WEAVER = new ListWeaver<TScore>() {
         @Override
         protected void addToList(TScore object, RopeBuilder list) {
-            SwissScore score = (SwissScore) object;
+            Swiss2Score score = (Swiss2Score) object;
             list.add(score.pointsSoFarT1K);
             list.add(score.mostRecentGameName);
             list.add(score.pointsInMostRecentGameT1K);
@@ -700,7 +700,7 @@ public class SwissFormat2Runner implements FormatRunner {
             String mostRecentGameName = list.getString(1);
             long pointsInMostRecentGameT1K = list.getLong(2);
             long pointsFromByesT1K = list.getLong(3);
-            return new SwissScore(pointsSoFarT1K, mostRecentGameName, pointsInMostRecentGameT1K, pointsFromByesT1K);
+            return new Swiss2Score(pointsSoFarT1K, mostRecentGameName, pointsInMostRecentGameT1K, pointsFromByesT1K);
         }
     };
 

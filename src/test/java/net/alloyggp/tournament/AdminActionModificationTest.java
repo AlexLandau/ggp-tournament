@@ -2,6 +2,7 @@ package net.alloyggp.tournament;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
@@ -119,8 +120,9 @@ public class AdminActionModificationTest {
         Map<PartialMatchId, TMatchSetup> referenceSetups = putIntoMap(referenceNext.getMatchesToRun());
 
         Assert.assertEquals(referenceSetups.keySet(), originalSetups.keySet());
-        for (PartialMatchId id : referenceSetups.keySet()) {
-            TMatchSetup referenceSetup = referenceSetups.get(id);
+        for (Entry<PartialMatchId, TMatchSetup> entry : referenceSetups.entrySet()) {
+            PartialMatchId id = entry.getKey();
+            TMatchSetup referenceSetup = entry.getValue();
             TMatchSetup originalSetup = originalSetups.get(id);
 
             Assert.assertEquals(referenceSetup.getGame(), originalSetup.getGame());

@@ -8,10 +8,10 @@ import com.google.common.collect.ImmutableMap;
 import net.alloyggp.escaperope.rope.Rope;
 import net.alloyggp.escaperope.rope.StringRope;
 import net.alloyggp.escaperope.rope.ropify.CoreWeavers;
-import net.alloyggp.escaperope.rope.ropify.ListRopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.ListWeaver;
 import net.alloyggp.escaperope.rope.ropify.RopeBuilder;
 import net.alloyggp.escaperope.rope.ropify.RopeList;
-import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.Weaver;
 import net.alloyggp.tournament.api.TGame;
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TMatchResult.Outcome;
@@ -26,11 +26,12 @@ import net.alloyggp.tournament.internal.StandardRanking;
 import net.alloyggp.tournament.internal.StandardRanking.EmptyScore;
 import net.alloyggp.tournament.internal.runner.SingleEliminationFormat1Runner;
 import net.alloyggp.tournament.internal.runner.SwissFormat1Runner;
+import net.alloyggp.tournament.internal.runner.SwissFormat2Runner;
 import net.alloyggp.tournament.internal.spec.TournamentSpec;
 
 public class Weavers {
 
-    public static final RopeWeaver<TMatchSetup> MATCH_SETUP = new ListRopeWeaver<TMatchSetup>() {
+    public static final Weaver<TMatchSetup> MATCH_SETUP = new ListWeaver<TMatchSetup>() {
         @Override
         protected void addToList(TMatchSetup object, RopeBuilder list) {
             list.add(object.getMatchId());
@@ -53,7 +54,7 @@ public class Weavers {
 
     };
 
-    public static final RopeWeaver<TGame> GAME = new ListRopeWeaver<TGame>() {
+    public static final Weaver<TGame> GAME = new ListWeaver<TGame>() {
         @Override
         public void addToList(TGame object, RopeBuilder list) {
             list.add(object.getId());
@@ -73,7 +74,7 @@ public class Weavers {
         }
     };
 
-    public static final RopeWeaver<TPlayer> PLAYER = new RopeWeaver<TPlayer>() {
+    public static final Weaver<TPlayer> PLAYER = new Weaver<TPlayer>() {
         @Override
         public Rope toRope(TPlayer object) {
             return StringRope.create(object.getId());
@@ -86,19 +87,20 @@ public class Weavers {
     };
 
     //TODO: Make this kind of subclass-delegating thing a core weaver?
-    private static final ImmutableMap<String, RopeWeaver<TScore>> SCORE_SUBCLASS_WEAVERS =
-            ImmutableMap.<String, RopeWeaver<TScore>>builder()
+    private static final ImmutableMap<String, Weaver<TScore>> SCORE_SUBCLASS_WEAVERS =
+            ImmutableMap.<String, Weaver<TScore>>builder()
             .put("CutoffScore", TournamentSpec.CUTOFF_SCORE_WEAVER)
             .put("EliminationScore", SingleEliminationFormat1Runner.SCORE_WEAVER)
             .put("EmptyScore", EmptyScore.WEAVER)
             .put("SwissScore", SwissFormat1Runner.SCORE_WEAVER)
+            .put("Swiss2Score", SwissFormat2Runner.SCORE_WEAVER)
             .put("SimpleScore", SimpleScore.WEAVER)
             .build();
 
-    public static final RopeWeaver<TScore> SCORE = new ListRopeWeaver<TScore>() {
+    public static final Weaver<TScore> SCORE = new ListWeaver<TScore>() {
         @Override
         protected void addToList(TScore score, RopeBuilder list) {
-            RopeWeaver<TScore> weaver = SCORE_SUBCLASS_WEAVERS.get(score.getClass().getSimpleName());
+            Weaver<TScore> weaver = SCORE_SUBCLASS_WEAVERS.get(score.getClass().getSimpleName());
             list.add(score.getClass().getSimpleName());
             list.add(weaver.toRope(score));
         }
@@ -106,12 +108,12 @@ public class Weavers {
         @Override
         protected TScore fromRope(RopeList list) {
             String className = list.getString(0);
-            RopeWeaver<TScore> weaver = SCORE_SUBCLASS_WEAVERS.get(className);
+            Weaver<TScore> weaver = SCORE_SUBCLASS_WEAVERS.get(className);
             return list.get(1, weaver);
         }
     };
 
-    public static final RopeWeaver<TPlayerScore> PLAYER_SCORE = new ListRopeWeaver<TPlayerScore>() {
+    public static final Weaver<TPlayerScore> PLAYER_SCORE = new ListWeaver<TPlayerScore>() {
         @Override
         protected void addToList(TPlayerScore object, RopeBuilder list) {
             list.add(object.getPlayer(), PLAYER);
@@ -128,7 +130,7 @@ public class Weavers {
         }
     };
 
-    public static final RopeWeaver<TRanking> RANKING = new ListRopeWeaver<TRanking>() {
+    public static final Weaver<TRanking> RANKING = new ListWeaver<TRanking>() {
         @Override
         protected void addToList(TRanking object, RopeBuilder list) {
             list.add(object.getScores(), CoreWeavers.setOf(PLAYER_SCORE));
@@ -141,7 +143,7 @@ public class Weavers {
         }
     };
 
-    public static final RopeWeaver<TMatchResult> MATCH_RESULT = new ListRopeWeaver<TMatchResult>() {
+    public static final Weaver<TMatchResult> MATCH_RESULT = new ListWeaver<TMatchResult>() {
         @Override
         protected void addToList(TMatchResult object, RopeBuilder list) {
             list.add(object.getMatchId());

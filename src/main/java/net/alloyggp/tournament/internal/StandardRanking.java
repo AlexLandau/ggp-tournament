@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 
 import net.alloyggp.escaperope.rope.ropify.CoreWeavers;
-import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.Weaver;
 import net.alloyggp.tournament.api.TPlayer;
 import net.alloyggp.tournament.api.TPlayerScore;
 import net.alloyggp.tournament.api.TRanking;
@@ -111,7 +111,7 @@ public class StandardRanking implements TRanking {
     }
 
     public static class EmptyScore implements TScore {
-        public static final RopeWeaver<TScore> WEAVER = CoreWeavers.singletonOf(EmptyScore.create());
+        public static final Weaver<TScore> WEAVER = CoreWeavers.singletonOf(EmptyScore.create());
 
         private EmptyScore() {
             // Use create()

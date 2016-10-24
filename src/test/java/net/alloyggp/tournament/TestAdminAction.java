@@ -54,4 +54,9 @@ public class TestAdminAction extends InternalAdminAction {
         }
         return roundComparator.compare(matchId.getRoundNumber(), roundNum) >= 0;
     }
+
+    @Override
+    public String toPersistedString() {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -18,10 +18,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import net.alloyggp.escaperope.rope.ropify.ListRopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.ListWeaver;
 import net.alloyggp.escaperope.rope.ropify.RopeBuilder;
 import net.alloyggp.escaperope.rope.ropify.RopeList;
-import net.alloyggp.escaperope.rope.ropify.RopeWeaver;
+import net.alloyggp.escaperope.rope.ropify.Weaver;
 import net.alloyggp.tournament.api.TAdminAction;
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TNextMatchesResult;
@@ -322,7 +322,7 @@ public class TournamentSpec implements TTournament {
         }
     }
 
-    public static final RopeWeaver<TScore> CUTOFF_SCORE_WEAVER = new ListRopeWeaver<TScore>() {
+    public static final Weaver<TScore> CUTOFF_SCORE_WEAVER = new ListWeaver<TScore>() {
         @Override
         protected void addToList(TScore object, RopeBuilder list) {
             CutoffScore score = (CutoffScore) object;
