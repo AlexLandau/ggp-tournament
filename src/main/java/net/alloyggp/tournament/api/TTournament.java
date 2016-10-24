@@ -31,29 +31,29 @@ public interface TTournament {
     /**
      * Returns the set of matches that should be run in the given tournament state.
      */
-    TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar);
+    TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar, List<TAdminAction> adminActions);
 
     /**
      * Returns the most recent standings in the given tournament state.
      */
-    TRanking getCurrentStandings(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar);
+    TRanking getCurrentStandings(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar, List<TAdminAction> adminActions);
 
     /**
      * Returns a history of the standings throughout the tournament, starting with the initial
      * seeding and progressing through each round.
      */
-    List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar);
+    List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> resultsSoFar, List<TAdminAction> adminActions);
 
     /**
      * Gets the start time for the first round of the tournament if it has
      * been defined.
      */
-    Optional<DateTime> getInitialStartTime();
+    Optional<DateTime> getInitialStartTime(List<TAdminAction> adminActions);
 
     /**
      * If a restriction on the start time for the tournament is defined and
      * has not yet passed, returns the number of seconds left until
      * that start time. Otherwise, returns zero.
      */
-    long getSecondsToWaitUntilInitialStartTime();
+    long getSecondsToWaitUntilInitialStartTime(List<TAdminAction> adminActions);
 }

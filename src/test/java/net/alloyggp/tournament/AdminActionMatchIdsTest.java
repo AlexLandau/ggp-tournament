@@ -26,7 +26,7 @@ import net.alloyggp.tournament.internal.MatchIds;
 
 @RunWith(Parameterized.class)
 public class AdminActionMatchIdsTest {
-    @Parameters(name = "{index}: {0} players, {1}")
+    @Parameters(name = "{index}: {0} players, {1}, round {2}")
     public static Iterable<Object[]> data() {
         return ImmutableList.of(
                 new Object[] {4, "swiss2test2", 5},

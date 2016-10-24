@@ -17,6 +17,8 @@ import net.alloyggp.tournament.internal.spec.TournamentSpec;
  */
 @Immutable
 public class TTournamentStatus {
+    private static final List<TAdminAction> NO_ACTIONS = ImmutableList.of();
+
     private final TTournament spec;
     private final TSeeding initialSeeding;
     private final ImmutableSet<TMatchResult> resultsSoFar;
@@ -81,15 +83,15 @@ public class TTournamentStatus {
      * Returns the next set of matches to run.
      */
     public TNextMatchesResult getNextMatchesToRun() {
-        return spec.getMatchesToRun(initialSeeding, resultsSoFar);
+        return spec.getMatchesToRun(initialSeeding, resultsSoFar, NO_ACTIONS);
     }
 
     public TRanking getCurrentStandings() {
-        return spec.getCurrentStandings(initialSeeding, resultsSoFar);
+        return spec.getCurrentStandings(initialSeeding, resultsSoFar, NO_ACTIONS);
     }
 
     public List<TRanking> getStandingsHistory() {
-        return spec.getStandingsHistory(initialSeeding, resultsSoFar);
+        return spec.getStandingsHistory(initialSeeding, resultsSoFar, NO_ACTIONS);
     }
 
     public TTournamentStatus apply(TAdminAction adminAction) {

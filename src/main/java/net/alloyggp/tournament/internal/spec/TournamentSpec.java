@@ -129,7 +129,12 @@ public class TournamentSpec implements TTournament {
     }
 
     @Override
-    public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
+    public TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> clientResults,
+            List<TAdminAction> adminActions) {
+        return applyInternal(adminActions).getMatchesToRun(initialSeeding, clientResults);
+    }
+
+    private TNextMatchesResult getMatchesToRun(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
         Set<InternalMatchResult> resultsSoFar = handleInputResults(clientResults);
 
         TRanking standings = null;
@@ -181,6 +186,11 @@ public class TournamentSpec implements TTournament {
 
     @Override
     public TRanking getCurrentStandings(TSeeding initialSeeding,
+            Set<TMatchResult> clientResults, List<TAdminAction> adminActions) {
+        return applyInternal(adminActions).getCurrentStandings(initialSeeding, clientResults);
+    }
+
+    private TRanking getCurrentStandings(TSeeding initialSeeding,
             Set<TMatchResult> clientResults) {
         Set<InternalMatchResult> resultsSoFar = handleInputResults(clientResults);
 
@@ -329,7 +339,12 @@ public class TournamentSpec implements TTournament {
     };
 
     @Override
-    public List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
+    public List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> clientResults,
+            List<TAdminAction> adminActions) {
+        return applyInternal(adminActions).getStandingsHistory(initialSeeding, clientResults);
+    }
+
+    private List<TRanking> getStandingsHistory(TSeeding initialSeeding, Set<TMatchResult> clientResults) {
         List<TRanking> result = Lists.newArrayList();
         result.add(StandardRanking.createForSeeding(initialSeeding));
         TRanking lastStageFinalRanking = null;
@@ -360,15 +375,23 @@ public class TournamentSpec implements TTournament {
     }
 
     @Override
-    public Optional<DateTime> getInitialStartTime() {
+    public Optional<DateTime> getInitialStartTime(List<TAdminAction> adminActions) {
+        return applyInternal(adminActions).getInitialStartTime();
+    }
+
+    private Optional<DateTime> getInitialStartTime() {
         return stages.get(0).getRounds().get(0).getStartTime();
     }
 
     @Override
-    public long getSecondsToWaitUntilInitialStartTime() {
-        return TimeUtils.getSecondsToWaitUntilStartTime(getInitialStartTime());
+    public long getSecondsToWaitUntilInitialStartTime(List<TAdminAction> adminActions) {
+        return TimeUtils.getSecondsToWaitUntilStartTime(getInitialStartTime(adminActions));
     }
 
+    /**
+     * Note: This is internal code not covered by the API guarantees. Clients should not be
+     * using this directly.
+     */
     public TTournament apply(TAdminAction action) {
         if (!(action instanceof InternalAdminAction)) {
             throw new IllegalArgumentException("Custom implementations of TAdminAction are not supported");
@@ -388,7 +411,15 @@ public class TournamentSpec implements TTournament {
                 newStages.build(), ImmutableList.copyOf(newRevisions));
     }
 
+    /**
+     * Note: This is internal code not covered by the API guarantees. Clients should not be
+     * using this directly.
+     */
     public TTournament apply(List<TAdminAction> adminActions) {
+        return applyInternal(adminActions);
+    }
+
+    private TournamentSpec applyInternal(List<TAdminAction> adminActions) {
         List<InternalAdminAction> internalActions = Lists.newArrayList();
         for (TAdminAction action : adminActions) {
             if (!(action instanceof InternalAdminAction)) {

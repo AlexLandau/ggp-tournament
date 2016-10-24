@@ -63,9 +63,6 @@ public class MatchId {
 
     private static final Pattern MATCH_ID_WITH_ACTIONS_PATTERN = Pattern.compile("^ggpta-(\\d+)-(\\d+)-(\\d+)-(\\d+)-(\\d+)-(\\d+)$");
     public static MatchId createWithActionsApplied(String matchIdString) {
-        if (matchIdString.startsWith("ggpta-")) {
-            return createWithActionsApplied(matchIdString);
-        }
         Matcher matcher = MATCH_ID_WITH_ACTIONS_PATTERN.matcher(matchIdString);
         boolean matches = matcher.matches();
         if (!matches) {
