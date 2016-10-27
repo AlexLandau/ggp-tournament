@@ -12,6 +12,7 @@ public class InternalAdminActions {
         //Not instantiable
     }
 
+    @SuppressWarnings("deprecation")
     public static final Weaver<TAdminAction> WEAVER = SubclassWeaver.builder(TAdminAction.class)
             .add(ReplaceGameAction.class, "ReplaceGame", ReplaceGameAction.WEAVER)
             .build();

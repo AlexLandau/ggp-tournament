@@ -75,6 +75,7 @@ public class TournamentStateCache {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
+            result = prime * result + ((adminActions == null) ? 0 : adminActions.hashCode());
             result = prime * result + ((initialSeeding == null) ? 0 : initialSeeding.hashCode());
             result = prime * result + ((resultsFromEarlierStages == null) ? 0 : resultsFromEarlierStages.hashCode());
             result = prime * result + stageNum;
@@ -84,47 +85,43 @@ public class TournamentStateCache {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) {
+            if (this == obj)
                 return true;
-            }
-            if (obj == null) {
+            if (obj == null)
                 return false;
-            }
-            if (getClass() != obj.getClass()) {
+            if (getClass() != obj.getClass())
                 return false;
-            }
             CacheKey other = (CacheKey) obj;
+            if (adminActions == null) {
+                if (other.adminActions != null)
+                    return false;
+            } else if (!adminActions.equals(other.adminActions))
+                return false;
             if (initialSeeding == null) {
-                if (other.initialSeeding != null) {
+                if (other.initialSeeding != null)
                     return false;
-                }
-            } else if (!initialSeeding.equals(other.initialSeeding)) {
+            } else if (!initialSeeding.equals(other.initialSeeding))
                 return false;
-            }
             if (resultsFromEarlierStages == null) {
-                if (other.resultsFromEarlierStages != null) {
+                if (other.resultsFromEarlierStages != null)
                     return false;
-                }
-            } else if (!resultsFromEarlierStages.equals(other.resultsFromEarlierStages)) {
+            } else if (!resultsFromEarlierStages.equals(other.resultsFromEarlierStages))
                 return false;
-            }
-            if (stageNum != other.stageNum) {
+            if (stageNum != other.stageNum)
                 return false;
-            }
             if (tournamentInternalName == null) {
-                if (other.tournamentInternalName != null) {
+                if (other.tournamentInternalName != null)
                     return false;
-                }
-            } else if (!tournamentInternalName.equals(other.tournamentInternalName)) {
+            } else if (!tournamentInternalName.equals(other.tournamentInternalName))
                 return false;
-            }
             return true;
         }
 
         @Override
         public String toString() {
-            return "CacheKey [tournamentInternalName=" + tournamentInternalName + ", initialSeeding=" + initialSeeding
-                    + ", stageNum=" + stageNum + ", resultsFromEarlierStages=" + resultsFromEarlierStages + "]";
+            return "CacheKey [tournamentInternalName=" + tournamentInternalName + ", adminActions=" + adminActions
+                    + ", initialSeeding=" + initialSeeding + ", stageNum=" + stageNum + ", resultsFromEarlierStages="
+                    + resultsFromEarlierStages + "]";
         }
     }
 
