@@ -4,6 +4,7 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -16,7 +17,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
@@ -59,7 +60,7 @@ public class StableTournamentFormatsTest {
     @Test
     public void testStandingsHistoryNotRewritten() throws IOException {
         TournamentSpec spec = TestSpecs.load(testSpec);
-        assumeStable(spec);
+        Assume.assumeTrue(isStable(spec));
 
         for (long seed = 0L; seed < 100L; seed++) {
             TournamentReport storedReport = loadStoredReport(numPlayers, testSpec, seed);
@@ -70,10 +71,13 @@ public class StableTournamentFormatsTest {
         }
     }
 
-    private static void assumeStable(TournamentSpec spec) {
+    private static boolean isStable(TournamentSpec spec) {
         for (StageSpec stage : spec.getStages()) {
-            Assume.assumeTrue(stage.getFormat().isStable());
+            if (!stage.getFormat().isStable()) {
+                return false;
+            }
         }
+        return true;
     }
 
     private static TournamentReport createReport(int numPlayers, TournamentSpec spec, long seed) {
@@ -102,11 +106,12 @@ public class StableTournamentFormatsTest {
     }
 
     private static class TournamentReport {
-        private final ImmutableSet<TMatchSetup> matchSetups;
-        private final ImmutableSet<TMatchResult> resultsSoFar;
+        // We sort the first two for added stability when acceptable changes are applied.
+        private final ImmutableSortedSet<TMatchSetup> matchSetups;
+        private final ImmutableSortedSet<TMatchResult> resultsSoFar;
         private final ImmutableList<TRanking> finalStandingsHistory;
 
-        private TournamentReport(ImmutableSet<TMatchSetup> matchSetups, ImmutableSet<TMatchResult> resultsSoFar,
+        private TournamentReport(ImmutableSortedSet<TMatchSetup> matchSetups, ImmutableSortedSet<TMatchResult> resultsSoFar,
                 ImmutableList<TRanking> finalStandingsHistory) {
             this.matchSetups = matchSetups;
             this.resultsSoFar = resultsSoFar;
@@ -115,8 +120,8 @@ public class StableTournamentFormatsTest {
 
         public static TournamentReport create(Set<TMatchSetup> matchSetups, Set<TMatchResult> resultsSoFar,
                 List<TRanking> finalStandingsHistory) {
-            return new TournamentReport(ImmutableSet.copyOf(matchSetups),
-                    ImmutableSet.copyOf(resultsSoFar),
+            return new TournamentReport(ImmutableSortedSet.copyOf(MATCH_SETUP_COMPARATOR, matchSetups),
+                    ImmutableSortedSet.copyOf(MATCH_RESULT_COMPARATOR, resultsSoFar),
                     ImmutableList.copyOf(finalStandingsHistory));
         }
 
@@ -180,7 +185,6 @@ public class StableTournamentFormatsTest {
         }
 
         public static TournamentReport fromSerializedString(String fileContents) {
-            // TODO Implement
             RopeDelimiter ropeDelimiter = Delimiters.getPrototypeRopeDelimiter();
             List<Rope> list = ropeDelimiter.undelimit(fileContents).asList();
             Set<TMatchSetup> matchSetups = CoreWeavers.setOf(Weavers.MATCH_SETUP).fromRope(list.get(0));
@@ -201,14 +205,28 @@ public class StableTournamentFormatsTest {
             int numPlayers = (int) data[0];
             String testSpec = (String) data[1];
             TournamentSpec spec = TestSpecs.load(testSpec);
-            assumeStable(spec);
-
-            for (long seed = 0L; seed < 100L; seed++) {
-                TournamentReport report = createReport(numPlayers, spec, seed);
-                storeReport(numPlayers, testSpec, seed, report);
+            if (isStable(spec)) {
+                for (long seed = 0L; seed < 100L; seed++) {
+                    TournamentReport report = createReport(numPlayers, spec, seed);
+                    storeReport(numPlayers, testSpec, seed, report);
+                }
             }
         }
     }
+
+    private final static Comparator<TMatchResult> MATCH_RESULT_COMPARATOR = new Comparator<TMatchResult>() {
+        @Override
+        public int compare(TMatchResult o1, TMatchResult o2) {
+            return o1.getMatchId().compareTo(o2.getMatchId());
+        }
+    };
+
+    private final static Comparator<TMatchSetup> MATCH_SETUP_COMPARATOR = new Comparator<TMatchSetup>() {
+        @Override
+        public int compare(TMatchSetup o1, TMatchSetup o2) {
+            return o1.getMatchId().compareTo(o2.getMatchId());
+        }
+    };
 
     private static TournamentReport loadStoredReport(int numPlayers, String testSpec, long seed) throws IOException {
         File file = getStoredReportFile(numPlayers, testSpec, seed);

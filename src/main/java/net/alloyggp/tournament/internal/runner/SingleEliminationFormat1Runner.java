@@ -1,9 +1,12 @@
 package net.alloyggp.tournament.internal.runner;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -152,6 +155,24 @@ public class SingleEliminationFormat1Runner implements FormatRunner {
                 numRoundsLeft--;
             }
             //We're at the end of the tournament
+            TRanking finalStandings = standingsHistory.get(standingsHistory.size() - 1);
+            finalStandings = labelWinner(finalStandings);
+            standingsHistory.set(standingsHistory.size() - 1, finalStandings);
+        }
+
+        private TRanking labelWinner(TRanking finalStandings) {
+            return StandardRanking.create(labelWinner(finalStandings.getScores()));
+        }
+
+        private Collection<TPlayerScore> labelWinner(SortedSet<TPlayerScore> originalScores) {
+            SortedSet<TPlayerScore> scores = new TreeSet<>(originalScores);
+            TPlayerScore firstPlace = scores.first();
+            EliminationScore originalScore = (EliminationScore) firstPlace.getScore();
+            EliminationScore replacementScore = new EliminationScore(-1, originalScore.totalNumRounds);
+            TPlayerScore newFirstPlace = TPlayerScore.create(firstPlace.getPlayer(), replacementScore, firstPlace.getSeedFromRoundStart());
+            scores.remove(firstPlace);
+            scores.add(newFirstPlace);
+            return scores;
         }
 
         public void runInitialPlayInRound(List<TPlayer> playersByPosition, int numPlayers, int numRoundsLeft) {
@@ -537,7 +558,7 @@ public class SingleEliminationFormat1Runner implements FormatRunner {
     }
 
     private static class EliminationScore implements TScore {
-        private final int roundEliminated; //0 if not yet eliminated
+        private final int roundEliminated; //0 if not yet eliminated, -1 if winner
         private final int totalNumRounds; //just for human-friendly output
 
         private EliminationScore(int roundEliminated, int totalNumRounds) {
@@ -587,6 +608,9 @@ public class SingleEliminationFormat1Runner implements FormatRunner {
 
         @Override
         public String getDescription() {
+            if (roundEliminated == -1) {
+                return "winner";
+            }
             if (roundEliminated == 0) {
                 return "in contention";
             }
