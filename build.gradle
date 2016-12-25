@@ -24,9 +24,5 @@ checkstyle {
     toolVersion = '6.7'
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.5'
-}
-
 // This only needs to be uncommented when publishing to Maven.
 // apply from: 'publish.gradle'
